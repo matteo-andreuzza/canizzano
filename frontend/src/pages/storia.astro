@@ -65,6 +65,7 @@ const TEMPO = [
       'Il soprannome ironico con cui in città si prende in giro l’orgoglio del paese — e con cui qui ci si prende in giro volentieri da soli. La storia amministrativa dietro il modo di dire è ancora da ricostruire per bene: se hai documenti, ci servono.',
     salvia: true,
     nota: 'da verificare in archivio',
+    id: 'principato',
   },
   {
     periodo: '1927',
@@ -190,6 +191,7 @@ const ACQUA = [
               salvia={voce.salvia}
               nota={voce.nota}
               ultima={voce.ultima}
+              id={voce.id}
             />
           ))
         }
@@ -294,11 +296,11 @@ const ACQUA = [
           stesso giorno.
         </p>
         <div class="riga riga--bottoni">
-          <Bottone href={`mailto:${CONTATTI.proLocoEmail}`} variante="chiaro" sfondo="#fff2eb">
-            Scrivi alla Pro Loco
+          <Bottone href={ROTTE.archivio} variante="chiaro" sfondo="#fff2eb">
+            Vai all’archivio fotografico
           </Bottone>
-          <Bottone href={ROTTE.proloco} variante="ghost" class="archivio__ghost">
-            Quando ci troviamo
+          <Bottone href={`mailto:${CONTATTI.proLocoEmail}`} variante="contorno-chiaro">
+            Scrivi alla Pro Loco
           </Bottone>
         </div>
       </div>
@@ -389,8 +391,6 @@ const ACQUA = [
   .archivio__testo { display: flex; flex-direction: column; gap: 18px; position: relative; }
   .archivio__titolo { font-size: 42px; line-height: 1.02; margin: 0; }
   .archivio__paragrafo { font-size: 16.5px; line-height: 1.6; max-width: 52ch; opacity: 0.94; margin: 0; }
-  .archivio__ghost { color: #fff2eb; border: 1px solid rgba(255, 242, 235, 0.5); }
-  .archivio__ghost:hover { background: rgba(255, 242, 235, 0.16); color: #fff2eb; }
   .archivio__foto { position: relative; }
 
   /* — fonti — */

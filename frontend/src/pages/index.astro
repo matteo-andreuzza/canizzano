@@ -39,39 +39,37 @@ const inEvidenza = await eventiInEvidenza(3);
 const appuntamenti = inEvidenza.length >= 3 ? inEvidenza : (await prossimiEventi(3));
 
 const ORARI_MESSE = [
-  ['Domenica', '8.00 · 10.00 · 18.30'],
-  ['Feriali', '18.30, in cappella'],
-  ['Confessioni', 'sabato 17.00 → 18.00'],
+  ['Domenica', '8.00 · 10.00'],
+  ['Feriali', '18.30, mercoledì ore 10.00'],
+  ['Confessioni', 'in Quaresima e Avvento'],
 ];
 
 const FATTI = [
-  ['Canne', 'Il nome nasce dai canneti che crescevano nelle paludi lungo il Sile.'],
+  ['Ambiente', 'Il nome nasce dai canneti che crescevano nelle paludi lungo il Sile.'],
   ['Mulini', 'Il «villaggio dei mulini»: acqua veloce e macine dal Medioevo. L’ultimo, il Granello, si è fermato nel 1985.'],
-  ['1815', 'Per cinquant’anni comune autonomo: da qui l’ironia del «Principato di Canizzano».'],
-  ['Sile', 'Riva destra del fiume, di fronte all’aeroporto: parco, piste ciclabili e campagna verso Quinto.'],
+  ['1815', 'Per cinquant’anni comune autonomo, dal 2011 «Principato di Canizzano».'],
+  ['Sile', 'Attraversa per intero il quartiere, dando vita alle coltivazioni e un paesaggio unico da vivere a piedi e in bicicletta.'],
 ];
 ---
 
 <Base
   pagina="home"
-  titolo="Canizzano, il paese dei canneti"
-  nomeLockup="Canizzano"
-  sottotitoloLockup="il sito del quartiere"
+  titolo="Canizzano, dove il sile incontra la comunità"
+  nomeLockup="Canizzano.it"
+  sottotitoloLockup="quartiere online"
 >
   <!-- Hero -->
   <Sezione stacco="primo">
     <div class="apertura">
       <div class="apertura__testo">
         <Etichetta tono="accent-2" class="apertura__tag">Treviso · sulla riva destra del Sile</Etichetta>
-        <h1 class="titolo-pagina">Canizzano,<br />il paese dei<br />canneti</h1>
+        <h1 class="titolo-pagina">Canizzano, dove il sile incontra la comunità</h1>
         <p class="apertura__occhiello">
-          Un quartiere che si sente paese: la chiesa, il campo, il tendone della sagra, il fiume
-          dietro le case. Qui trovi tutto quello che si muove a Canizzano, raccontato da chi lo
-          organizza.
+A Canizzano c’è ancora un modo speciale di stare insieme. Ci sono luoghi che tutti riconoscono, feste che si aspettano ogni anno e persone che si ritrovano. A raccontarlo sono le persone che lo vivono e che, ogni giorno, contribuiscono a tenerlo vivo.
         </p>
         <div class="riga riga--bottoni">
           <Bottone href={ROTTE.sagra}>La sagra 2026</Bottone>
-          <Bottone href="#calendario" variante="secondario">Cosa succede questa settimana</Bottone>
+          <Bottone href={ROTTE.calendario} variante="secondario">Cosa succede questa settimana</Bottone>
         </div>
       </div>
       <div class="apertura__foto">
@@ -79,26 +77,33 @@ const FATTI = [
           src={foto[0]?.immagine}
           alt={foto[0]?.testo_alternativo ?? 'Il quartiere di Canizzano'}
           attesa="Foto del quartiere: il Sile, la chiesa o il tendone"
-          altezza={420}
+          altezza="clamp(230px, 46vw, 420px)"
+          altezzaIntrinseca={420}
           ombra="md"
         />
         <span class="apertura__bollo" aria-hidden="true"></span>
       </div>
+
+      {/*
+        Il banner dell'appuntamento del momento sta dentro l'apertura, non in
+        una sezione a se': cosi' su telefono puo' salire sopra la foto e
+        restare nella prima schermata.
+      */}
+      {
+        config.mostra_banner_sagra && config.banner_titolo && (
+          <div class="apertura__banner">
+            <BannerSagra
+              occhiello={config.banner_occhiello}
+              titolo={config.banner_titolo}
+              testo={config.banner_testo}
+              href={config.banner_collegamento}
+              etichettaBottone={config.banner_etichetta_bottone}
+            />
+          </div>
+        )
+      }
     </div>
   </Sezione>
-<br><br><br>
-  <!-- Banner della sagra: acceso e scritto dalla redazione -->
-  {
-    config.mostra_banner_sagra && config.banner_titolo && (
-      <Sezione stacco="nessuno" class="banner-sezione">
-        <BannerSagra
-          occhiello={config.banner_occhiello}
-          titolo={config.banner_titolo}
-          testo={config.banner_testo}
-        />
-      </Sezione>
-    )
-  }
 
   <!-- Prossimi appuntamenti: sezione dinamica dal CMS -->
   <SezioneEventi
@@ -106,7 +111,7 @@ const FATTI = [
     titolo="Prossimi appuntamenti"
     eventi={appuntamenti}
     attivita={attivita}
-    link={{ testo: 'Tutto il calendario →', href: ROTTE.proloco + '#anno' }}
+    link={{ testo: 'Tutto il calendario →', href: ROTTE.calendario }}
     vuoto="Nessun appuntamento in calendario al momento: torna a trovarci fra qualche giorno."
   />
 
@@ -143,7 +148,7 @@ const FATTI = [
         <span class="occhiello" style="color:var(--color-accent-300)">
           Parrocchia della Visitazione
         </span>
-        <h2 class="parrocchia__titolo">Le messe e la settimana in patronato</h2>
+        <h2 class="parrocchia__titolo">Le S. Messe e la settimana in oratorio</h2>
 
         <div class="parrocchia__orari">
           {
@@ -157,8 +162,7 @@ const FATTI = [
         </div>
 
         <p class="parrocchia__nota">
-          La chiesa attuale è del XV secolo e sorge a un passo dal fiume: il campo da calcio dietro
-          l’abside è nato bonificando la palude negli anni Cinquanta.
+          La chiesa attuale è del XV secolo e sorge a un passo dal Sile.
         </p>
 
         <div class="riga riga--bottoni">
@@ -185,7 +189,7 @@ const FATTI = [
       <Foto
         src={foto[1]?.immagine}
         alt={foto[1]?.testo_alternativo ?? 'La chiesa della Visitazione'}
-        attesa="Foto della chiesa o del patronato"
+        attesa="Foto della chiesa o del oratorio"
         altezza={400}
       />
     </div>
@@ -234,8 +238,8 @@ const FATTI = [
       testo="Scrivici due righe con data, luogo e una foto: lo mettiamo in calendario e nei post del quartiere."
     >
       <Bottone href={`mailto:${CONTATTI.email}`}>Segnala un evento</Bottone>
-      <Bottone href={`https://wa.me/39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`} variante="secondario" esterno>
-        Gruppo WhatsApp
+      <Bottone href={`https://wa.me/39${CONTATTI.redazioneTelefono.replace(/\s/g, '')}`} variante="secondario" esterno>
+      WhatsApp
       </Bottone>
     </BloccoAzione>
   </Sezione>
@@ -260,6 +264,8 @@ const FATTI = [
     margin: 0;
   }
   .apertura__foto { position: relative; }
+  /* Il banner attraversa tutta la larghezza, sotto testo e foto. */
+  .apertura__banner { grid-column: 1 / -1; margin-top: 4px; }
   /* Il cerchio salvia che spunta da sotto la foto. */
   .apertura__bollo {
     position: absolute;
@@ -271,9 +277,6 @@ const FATTI = [
     background: var(--color-accent-2-300);
     z-index: -1;
   }
-
-  /* — banner della sagra: gli stili stanno in BannerSagra.astro — */
-  .banner-sezione { margin-top: 56px; }
 
   /* — fascia parrocchia — */
   .parrocchia { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; align-items: center; }
@@ -308,5 +311,11 @@ const FATTI = [
     .apertura, .parrocchia { grid-template-columns: 1fr; gap: 34px; }
     .apertura__bollo { display: none; }
     .parrocchia__titolo { font-size: 34px; }
+
+    /* Su telefono l'appuntamento del momento passa davanti alla foto: e' il
+       colpo d'occhio di chi arriva, deve stare nella prima schermata. */
+    .apertura__testo { order: 1; }
+    .apertura__banner { order: 2; margin-top: 0; }
+    .apertura__foto { order: 3; }
   }
 </style>

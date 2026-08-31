@@ -13,11 +13,13 @@ interface Props {
   salvia?: boolean;
   nota?: string;
   ultima?: boolean;
+  /** Ancora della voce, per linkarla da fuori: `/storia#principato`. */
+  id?: string;
 }
-const { periodo, titolo, testo, salvia = false, nota, ultima = false } = Astro.props;
+const { periodo, titolo, testo, salvia = false, nota, ultima = false, id } = Astro.props;
 ---
 
-<div class="voce">
+<div class="voce" id={id}>
   <div class="voce__periodo"><span>{periodo}</span></div>
   <div class={`voce__corpo ${ultima ? 'voce__corpo--ultima' : ''}`.trim()}>
     <span

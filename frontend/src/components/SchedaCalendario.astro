@@ -7,7 +7,8 @@
  * altre restano crema. Se l'evento ha un collegamento diventa un link con
  * la freccia.
  */
-import type { Evento } from '../lib/contenuti.ts';
+import { percorsoEvento, eventoEsterno, type Evento } from '../lib/contenuti.ts';
+import { tonoOpzionale } from '../lib/toni.ts';
 import { quandoBreve } from '../lib/date.ts';
 
 interface Props {
@@ -18,40 +19,27 @@ interface Props {
 }
 const { evento, href, etichettaLink } = Astro.props;
 
-/** Le tinte piene usate dal calendario, con il loro inchiostro. */
-const TINTE: Record<string, { sfondo: string; testo: string; occhiello: string }> = {
-  'accent-2-700': {
-    sfondo: 'var(--color-accent-2-700)',
-    testo: 'var(--color-accent-2-100)',
-    occhiello: 'var(--color-accent-300)',
-  },
-  'accent-2-600': {
-    sfondo: 'var(--color-accent-2-600)',
-    testo: 'var(--color-accent-2-100)',
-    occhiello: 'var(--color-accent-2-200)',
-  },
-  accent: { sfondo: 'var(--color-accent)', testo: '#fff2eb', occhiello: 'var(--color-accent-200)' },
-};
+// Senza tono la card resta crema: e' il caso normale del calendario.
+const tinta = tonoOpzionale(evento.tono);
 
-const tinta = TINTE[evento.tono];
-const collegamento = href ?? (evento.link || undefined);
+const collegamento = href ?? percorsoEvento(evento);
+const fuori = !href && eventoEsterno(evento);
 const Elemento = collegamento ? 'a' : 'div';
 const data = evento.etichetta_data || quandoBreve(evento);
+const freccia =
+  etichettaLink ?? (evento.articolo ? 'Leggi tutto' : evento.link_etichetta || 'Vai');
 ---
 
 <Elemento
   class={`calendario ${tinta ? 'calendario--tinta' : ''}`.trim()}
   href={collegamento}
-  style={tinta ? `background:${tinta.sfondo};color:${tinta.testo}` : undefined}
+  {...(fuori ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+  style={tinta ? `background:${tinta.sfondo};color:${tinta.inchiostro}` : undefined}
 >
-  <span class="calendario__data" style={tinta ? `color:${tinta.occhiello}` : undefined}>{data}</span>
+  <span class="calendario__data" style={tinta ? `color:${tinta.tenue}` : undefined}>{data}</span>
   <strong class="calendario__titolo">{evento.titolo}</strong>
   {evento.sommario && <p class="calendario__testo">{evento.sommario}</p>}
-  {
-    collegamento && (
-      <span class="calendario__freccia">{etichettaLink ?? evento.link_etichetta ?? 'Vai'} →</span>
-    )
-  }
+  {collegamento && <span class="calendario__freccia">{freccia} →</span>}
 </Elemento>
 
 <style>

@@ -26,6 +26,12 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Le regole Python qui sopra valgono per la radice di un pacchetto, ma git le
+# applica a ogni cartella: «lib/» si mangiava `frontend/src/lib/`, cioe' il
+# ponte fra CMS e pagine, le rotte e le date. Senza questa riga un clone
+# fresco non compila.
+!frontend/src/lib/
+
 # PyInstaller
 #   Usually these files are written by a python script from a template
 #   before PyInstaller builds the exe, so as to inject date/other infos into it.

@@ -1,0 +1,259 @@
+---
+/**
+ * Il calendario di tutto Canizzano.
+ *
+ * La home rimandava «tutto il calendario» all'anno della Pro Loco, che pero'
+ * e' il calendario di *una* realta': qui ci sono tutti gli appuntamenti del
+ * quartiere — Pro Loco, sagra, parrocchia, Grest, sport — in ordine di data,
+ * un blocco per mese.
+ *
+ * La pagina e' interamente dinamica: non c'e' una riga di programma scritta
+ * nel codice, tutto arriva dal CMS.
+ */
+import Base from '../layouts/Base.astro';
+import Sezione from '../components/Sezione.astro';
+import TestataSezione from '../components/TestataSezione.astro';
+import RigaCalendario from '../components/RigaCalendario.astro';
+import CardEvento from '../components/CardEvento.astro';
+import DiscoIcona from '../components/DiscoIcona.astro';
+import BloccoAzione from '../components/BloccoAzione.astro';
+import Bottone from '../components/Bottone.astro';
+import Etichetta from '../components/Etichetta.astro';
+import type { NomeIcona } from '../components/Icona.astro';
+import { CONTATTI, ROTTE } from '../lib/sito.ts';
+import { perMese, snapshot, tuttiGliEventi } from '../lib/contenuti.ts';
+
+const { attivita } = await snapshot();
+const futuri = await tuttiGliEventi(true);
+const mesi = perMese(futuri);
+const perSlug = new Map(attivita.map((voce) => [voce.slug, voce]));
+
+// I primi tre in cima: chi arriva qui vuole sapere cosa c'e' *adesso*.
+const imminenti = futuri.slice(0, 3);
+
+// La legenda: solo le realta' che hanno davvero qualcosa in calendario.
+const conEventi = new Set(futuri.map((evento) => evento.attivita));
+const legenda = attivita
+  .filter((voce) => conEventi.has(voce.slug))
+  .sort((a, b) => a.ordine - b.ordine);
+
+const conteggio = (slug: string) => futuri.filter((evento) => evento.attivita === slug).length;
+---
+
+<Base
+  pagina="calendario"
+  titolo="Il calendario di Canizzano"
+  descrizione="Tutti gli appuntamenti del quartiere di Canizzano in un posto solo: sagra, Pro Loco, parrocchia, Grest e sport, mese per mese."
+  nomeLockup="Il calendario"
+  sottotitoloLockup="tutto quello che si muove a Canizzano"
+>
+  <!-- Apertura -->
+  <Sezione stacco="primo">
+    <div class="apertura">
+      <div class="apertura__testo">
+        <Etichetta tono="accent-2" class="apertura__tag">Tutto il quartiere, in ordine di data</Etichetta>
+        <h1 class="titolo-pagina">Il calendario<br />di Canizzano</h1>
+        <p class="apertura__occhiello">
+          Non solo la Pro Loco: qui finiscono gli appuntamenti di tutte le realtà del quartiere,
+          dalla sagra d’ottobre alla messa della processione, dal Grest ai tornei sul campo. Se
+          organizzi qualcosa, scrivici e lo mettiamo in lista.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone href="#anno">Vai a tutto l’anno</Bottone>
+          <Bottone href={`mailto:${CONTATTI.email}?subject=Un%20evento%20per%20il%20calendario`} variante="secondario">
+            Segnala un evento
+          </Bottone>
+        </div>
+      </div>
+
+      {
+        legenda.length > 0 && (
+          <div class="legenda">
+            <span class="legenda__titolo">Chi organizza</span>
+            {legenda.map((voce) => (
+              <div class="legenda__voce">
+                <DiscoIcona
+                  icona={(voce.icona || 'persone') as NomeIcona}
+                  tono={voce.tono}
+                  dimensione={38}
+                />
+                <div class="legenda__testo">
+                  <strong>{voce.nome}</strong>
+                  <span>
+                    {conteggio(voce.slug)}
+                    {conteggio(voce.slug) === 1 ? ' appuntamento' : ' appuntamenti'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </Sezione>
+
+  <!-- I prossimi tre -->
+  {
+    imminenti.length > 0 && (
+      <Sezione id="prossimi">
+        <div class="pila" style="gap:30px">
+          <TestataSezione
+            titolo="Cosa c’è adesso"
+            tag="I prossimi"
+            tonoTag="accent"
+            testo="I tre appuntamenti più vicini, di qualunque realtà siano."
+          />
+          <div class="griglia griglia--3">
+            {imminenti.map((evento) => (
+              <CardEvento evento={evento} attivita={perSlug.get(evento.attivita)} />
+            ))}
+          </div>
+        </div>
+      </Sezione>
+    )
+  }
+
+  <!-- Tutto l'anno, mese per mese -->
+  <Sezione id="anno">
+    <div class="pila" style="gap:34px">
+      <TestataSezione
+        titolo="Tutto l’anno, mese per mese"
+        tag="Il calendario"
+        tonoTag="accent-2"
+        testo="Le date che si sanno. Quelle ancora da confermare portano l’indicazione del periodo invece del giorno preciso."
+      />
+
+      {
+        mesi.length > 0 ? (
+          <div class="pila" style="gap:44px">
+            {mesi.map((mese) => (
+              <section class="mese" aria-label={mese.etichetta}>
+                <header class="mese__testa">
+                  <h3 class="mese__nome">{mese.etichetta}</h3>
+                  <span class="mese__conto">
+                    {mese.eventi.length}
+                    {mese.eventi.length === 1 ? ' appuntamento' : ' appuntamenti'}
+                  </span>
+                </header>
+                <div class="mese__righe">
+                  {mese.eventi.map((evento, indice) => (
+                    <RigaCalendario
+                      evento={evento}
+                      attivita={perSlug.get(evento.attivita)}
+                      ultima={indice === mese.eventi.length - 1}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <p class="vuoto">
+            Il calendario è vuoto: o siamo in un periodo tranquillo, o le date del prossimo anno
+            non sono ancora state confermate. Torna a trovarci fra qualche giorno.
+          </p>
+        )
+      }
+    </div>
+  </Sezione>
+
+  <!-- Chiusura -->
+  <Sezione stacco="corto">
+    <BloccoAzione
+      titolo="Manca qualcosa?"
+      testo="Il calendario lo teniamo a mano: se un appuntamento non c’è, quasi sempre è perché non ce l’hanno detto. Scrivici data, luogo e due righe."
+    >
+      <Bottone href={`mailto:${CONTATTI.email}?subject=Un%20evento%20per%20il%20calendario`}>
+        Segnala un evento
+      </Bottone>
+      <Bottone href={ROTTE.proloco + '#anno'} variante="secondario">
+        L’anno della Pro Loco
+      </Bottone>
+    </BloccoAzione>
+  </Sezione>
+</Base>
+
+<style>
+  /* — apertura — */
+  .apertura { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 52px; align-items: center; }
+  .apertura__testo { display: flex; flex-direction: column; gap: 24px; }
+  .apertura__tag { align-self: flex-start; }
+  .apertura__testo h1 { margin: 0; }
+  .apertura__occhiello {
+    font-size: 18px;
+    line-height: 1.6;
+    max-width: 48ch;
+    color: var(--color-neutral-800);
+    margin: 0;
+  }
+
+  /* — legenda delle realta' — */
+  .legenda {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .legenda__titolo {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+  .legenda__voce { display: flex; align-items: center; gap: 14px; }
+  .legenda__testo { display: flex; flex-direction: column; }
+  .legenda__testo strong { font-size: 15.5px; line-height: 1.25; }
+  .legenda__testo span { font-size: 13px; color: var(--color-neutral-700); }
+
+  /* — le fasce dei mesi — */
+  .mese {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 26px 30px;
+    box-shadow: var(--shadow-sm);
+  }
+  .mese__testa {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--color-accent-300);
+  }
+  .mese__nome {
+    font-size: 30px;
+    line-height: 1;
+    margin: 0;
+    /* I mesi arrivano in minuscolo da `perMese`: qui prendono la maiuscola. */
+    text-transform: capitalize;
+  }
+  .mese__conto {
+    font-size: 12.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+  .mese__righe { display: flex; flex-direction: column; }
+
+  .vuoto {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-neutral-700);
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .apertura { grid-template-columns: 1fr; gap: 34px; }
+    .mese { padding: 22px; }
+    .mese__nome { font-size: 25px; }
+  }
+</style>

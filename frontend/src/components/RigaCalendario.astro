@@ -1,0 +1,125 @@
+---
+/**
+ * Una riga della vista calendario: il francobollo della data, la realta'
+ * che organizza, il titolo e dove si va.
+ *
+ * E' piu' densa della `CardEvento` — nel calendario di tutto l'anno le
+ * righe sono decine, e devono restare leggibili una sotto l'altra.
+ */
+import PastigliaData from './PastigliaData.astro';
+import Etichetta from './Etichetta.astro';
+import DiscoIcona from './DiscoIcona.astro';
+import type { NomeIcona } from './Icona.astro';
+import { percorsoEvento, eventoEsterno } from '../lib/contenuti.ts';
+import type { Attivita, Evento } from '../lib/contenuti.ts';
+import { quandoBreve } from '../lib/date.ts';
+
+interface Props {
+  evento: Evento;
+  attivita?: Attivita;
+  /** Ultima riga della fascia: niente filo sotto. */
+  ultima?: boolean;
+}
+const { evento, attivita, ultima = false } = Astro.props;
+
+const salvia = attivita?.identita === 'salvia';
+const tonoTag = attivita
+  ? salvia
+    ? 'accent-2'
+    : attivita.identita === 'neutro'
+      ? 'neutral'
+      : 'accent'
+  : 'outline';
+
+const destinazione = percorsoEvento(evento);
+const fuori = eventoEsterno(evento);
+const Elemento = destinazione ? 'a' : 'div';
+
+// L'etichetta scritta in redazione («meta' quaresima») vince sulla data
+// esatta: e' quella che la gente riconosce.
+const quando = evento.etichetta_data || quandoBreve(evento);
+const icona = (evento.icona || attivita?.icona || 'stella') as NomeIcona;
+---
+
+<Elemento
+  class={`riga-cal ${ultima ? 'riga-cal--ultima' : ''} ${destinazione ? 'riga-cal--link' : ''}`.trim()}
+  href={destinazione}
+  {...(fuori ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+>
+  <PastigliaData inizio={evento.inizio} tono={salvia ? 'accent-2' : 'accent'} dimensione={54} />
+
+  <div class="riga-cal__testo">
+    <div class="riga-cal__testa">
+      <Etichetta tono={tonoTag}>{attivita?.nome ?? evento.categoria ?? 'Canizzano'}</Etichetta>
+      <span class="riga-cal__quando">{quando}</span>
+    </div>
+    <h3 class="riga-cal__titolo">{evento.titolo}</h3>
+    {evento.sommario && <p class="riga-cal__sommario">{evento.sommario}</p>}
+    {evento.dove && <span class="riga-cal__dove">{evento.dove}</span>}
+  </div>
+
+  <div class="riga-cal__coda">
+    <DiscoIcona icona={icona} tono={salvia ? 'accent-2-200' : 'accent-200'} dimensione={44} />
+    {
+      destinazione && (
+        <span class="riga-cal__freccia">
+          {evento.articolo ? 'Leggi tutto' : evento.link_etichetta || 'Vai'} →
+        </span>
+      )
+    }
+  </div>
+</Elemento>
+
+<style>
+  .riga-cal {
+    display: grid;
+    grid-template-columns: 54px 1fr auto;
+    gap: 20px;
+    align-items: start;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--color-divider);
+    text-decoration: none;
+    color: inherit;
+  }
+  .riga-cal--ultima { border-bottom: 0; padding-bottom: 0; }
+  .riga-cal--link:hover .riga-cal__titolo { text-decoration: underline; }
+
+  .riga-cal__testo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .riga-cal__testa { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .riga-cal__quando {
+    font-size: 12.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+  .riga-cal__titolo { font-size: 21px; line-height: 1.15; margin: 0; }
+  .riga-cal__sommario {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--color-neutral-800);
+    max-width: 68ch;
+    margin: 0;
+  }
+  .riga-cal__dove { font-size: 13.5px; font-weight: 600; color: var(--color-neutral-700); }
+
+  .riga-cal__coda {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .riga-cal__freccia { font-size: 13.5px; font-weight: 700; color: var(--color-accent-700); }
+
+  @media (max-width: 640px) {
+    .riga-cal { grid-template-columns: 46px 1fr; gap: 14px; }
+    /* Il disco icona non serve quando lo spazio e' poco: resta la freccia. */
+    .riga-cal__coda {
+      grid-column: 2;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .riga-cal__coda :global(.disco) { display: none; }
+  }
+</style>

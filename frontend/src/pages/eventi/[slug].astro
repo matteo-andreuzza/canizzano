@@ -1,0 +1,391 @@
+---
+/**
+ * La pagina di approfondimento di un evento — l'«articolo di giornale».
+ *
+ * E' facoltativa: esiste solo per gli eventi a cui la redazione ha
+ * attaccato un `Articolo`. «Apertura degli stand» non ne ha bisogno; «Gita
+ * sul Cansiglio» e «Ama il tuo quartiere» sì, perché hanno un ritrovo, una
+ * quota, un percorso e una storia da raccontare.
+ *
+ * Una rotta sola per tutti: `getStaticPaths` chiede al CMS quali articoli
+ * esistono e genera una pagina per ciascuno.
+ */
+import Base from '../../layouts/Base.astro';
+import Sezione from '../../components/Sezione.astro';
+import CorpoArticolo from '../../components/CorpoArticolo.astro';
+import Foto from '../../components/Foto.astro';
+import Bottone from '../../components/Bottone.astro';
+import Etichetta from '../../components/Etichetta.astro';
+import DiscoIcona from '../../components/DiscoIcona.astro';
+import BloccoAzione from '../../components/BloccoAzione.astro';
+import type { NomeIcona } from '../../components/Icona.astro';
+import { CONTATTI, ROTTE } from '../../lib/sito.ts';
+import { tono as leggiTono } from '../../lib/toni.ts';
+import { quandoEsteso, iso } from '../../lib/date.ts';
+import { snapshot, type Articolo, type Attivita, type Evento } from '../../lib/contenuti.ts';
+
+export async function getStaticPaths() {
+  const { articoli, eventi, attivita } = await snapshot();
+  const perSlugEvento = new Map(eventi.map((evento) => [evento.slug, evento]));
+  const perSlugAttivita = new Map(attivita.map((voce) => [voce.slug, voce]));
+
+  return articoli.map((articolo) => {
+    const evento = articolo.evento ? perSlugEvento.get(articolo.evento) : undefined;
+    return {
+      params: { slug: articolo.slug },
+      props: {
+        articolo,
+        evento,
+        attivita: evento ? perSlugAttivita.get(evento.attivita) : undefined,
+      },
+    };
+  });
+}
+
+interface Props {
+  articolo: Articolo;
+  evento?: Evento;
+  attivita?: Attivita;
+}
+const { articolo, evento, attivita } = Astro.props as Props;
+
+const salvia = articolo.identita !== 'terracotta';
+const tinta = leggiTono(articolo.tono || (salvia ? 'accent-2-700' : 'accent'));
+const accento = salvia ? 'var(--color-accent-2-700)' : 'var(--color-accent-700)';
+
+// La scheda pratica: le righe scritte in redazione. Se non ce ne sono, si
+// ripiega su quello che l'evento ha comunque — data, luogo, ingresso — cosi'
+// la colonna non resta vuota.
+const ripiego: [string, string][] = [];
+if (evento) {
+  ripiego.push(['Quando', evento.etichetta_data || quandoEsteso(evento)]);
+  if (evento.dove) ripiego.push(['Dove', evento.dove]);
+  if (evento.ingresso) ripiego.push(['Ingresso', evento.ingresso]);
+}
+const dettagli: [string, string][] = articolo.dettagli.length
+  ? articolo.dettagli.map((riga) => [riga.etichetta, riga.valore])
+  : ripiego;
+
+const icona = (evento?.icona || attivita?.icona || 'stella') as NomeIcona;
+const galleria = articolo.foto.filter((scatto) => scatto.immagine);
+
+const dataLeggibile = articolo.data_pubblicazione
+  ? new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }).format(
+      new Date(articolo.data_pubblicazione),
+    )
+  : '';
+
+const descrizione =
+  articolo.sottotitolo || evento?.sommario || `${articolo.intestazione} — Canizzano`;
+---
+
+<Base
+  pagina="evento"
+  tema={salvia ? 'verde' : 'terracotta'}
+  titolo={articolo.intestazione}
+  descrizione={descrizione}
+  nomeLockup={articolo.intestazione}
+  sottotitoloLockup={attivita?.nome ?? 'canizzano.it'}
+  coloreAttivo={salvia ? 'var(--color-accent-2-800)' : undefined}
+>
+  <!-- Apertura: fascia colorata con il titolo e la scheda pratica -->
+  <section
+    class="testa"
+    style={`background:${tinta.sfondo};color:${tinta.inchiostro};--tenue:${tinta.tenue}`}
+  >
+    <span class="testa__bolla" aria-hidden="true"></span>
+    <div class="contenitore testa__griglia">
+      <div class="testa__testo">
+        <div class="testa__briciole">
+          <a href={ROTTE.calendario}>Calendario</a>
+          <span aria-hidden="true">·</span>
+          <span>{attivita?.nome ?? 'Canizzano'}</span>
+        </div>
+        {articolo.occhiello && <span class="testa__occhiello">{articolo.occhiello}</span>}
+        <h1 class="testa__titolo">{articolo.intestazione}</h1>
+        {articolo.sottotitolo && <p class="testa__sottotitolo">{articolo.sottotitolo}</p>}
+        <div class="testa__firma">
+          {articolo.firma && <span>di {articolo.firma}</span>}
+          {dataLeggibile && <span>{dataLeggibile}</span>}
+          {
+            evento && (
+              <time datetime={iso(evento.inizio)}>
+                {evento.etichetta_data || quandoEsteso(evento)}
+              </time>
+            )
+          }
+        </div>
+      </div>
+
+      <aside class="scheda" aria-label="In breve">
+        <div class="scheda__testa">
+          <DiscoIcona icona={icona} tono={salvia ? 'accent-2-200' : 'accent-200'} dimensione={46} />
+          <span class="scheda__titolo">In breve</span>
+        </div>
+        <dl class="scheda__righe">
+          {
+            dettagli.map(([etichetta, valore]) => (
+              <div class="scheda__riga">
+                <dt>{etichetta}</dt>
+                <dd>{valore}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        {
+          evento?.link && (
+            <Bottone
+              href={evento.link}
+              variante="chiaro"
+              esterno
+              sfondo="var(--color-neutral-100)"
+              inchiostro="var(--color-neutral-900)"
+              class="scheda__bottone"
+            >
+              {evento.link_etichetta || 'Locandina e iscrizioni'}
+            </Bottone>
+          )
+        }
+      </aside>
+    </div>
+  </section>
+
+  <!-- Copertina -->
+  {
+    (articolo.copertina || articolo.copertina_alt) && (
+      <Sezione stacco="nessuno" class="sezione-copertina">
+        <Foto
+          src={articolo.copertina}
+          alt={articolo.copertina_alt}
+          attesa={articolo.copertina_alt || 'Foto di apertura dell’articolo'}
+          altezza={400}
+          ombra="md"
+        />
+      </Sezione>
+    )
+  }
+
+  <!-- Il testo -->
+  <Sezione class="sezione-corpo">
+    <div class="lettura">
+      <CorpoArticolo corpo={articolo.corpo} accento={accento} />
+
+      <aside class="lato">
+        {
+          attivita && (
+            <div class="lato__blocco">
+              <span class="lato__occhiello">Chi organizza</span>
+              <strong class="lato__nome">{attivita.nome}</strong>
+              {attivita.descrizione_breve && <p>{attivita.descrizione_breve}</p>}
+              {attivita.telefono && <span class="lato__contatto">{attivita.telefono}</span>}
+              {attivita.email && (
+                <a class="lato__contatto" href={`mailto:${attivita.email}`}>
+                  {attivita.email}
+                </a>
+              )}
+              {attivita.collegamento && (
+                <a class="lato__freccia" href={attivita.collegamento}>
+                  {attivita.etichetta_collegamento || 'La pagina'} →
+                </a>
+              )}
+            </div>
+          )
+        }
+        <div class="lato__blocco lato__blocco--chiaro">
+          <span class="lato__occhiello">Serve una mano?</span>
+          <p>
+            Per correggere informazioni, dubbi o perplessità, il metodo più veloce è contattare direttamente la redazione.          </p>
+          <a class="lato__contatto" href={CONTATTI.proLocoTel}>{CONTATTI.redazioneTelefono}</a>
+          <a class="lato__contatto" href={`mailto:${CONTATTI.proLocoEmail}`}>
+            {CONTATTI.proLocoEmail}
+          </a>
+        </div>
+      </aside>
+    </div>
+  </Sezione>
+
+  <!-- Galleria dell'articolo -->
+  {
+    galleria.length > 0 && (
+      <Sezione>
+        <div class="pila" style="gap:22px">
+          <div class="pila" style="gap:10px">
+            <Etichetta tono={salvia ? 'accent-2' : 'accent'} class="galleria__tag">
+              Le foto
+            </Etichetta>
+            <h2 class="titolo-sezione">Com’è andata</h2>
+          </div>
+          <div class="galleria">
+            {galleria.map((scatto) => (
+              <figure class="galleria__voce">
+                <Foto
+                  src={scatto.immagine}
+                  alt={scatto.testo_alternativo || scatto.didascalia}
+                  attesa={scatto.didascalia || 'Foto da caricare'}
+                  altezza={240}
+                />
+                {scatto.didascalia && <figcaption>{scatto.didascalia}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        </div>
+      </Sezione>
+    )
+  }
+
+  <!-- Chiusura -->
+  <!--<Sezione stacco="corto">
+    <BloccoAzione
+      titolo="Ci sei anche tu?"
+      testo="Scrivi o telefona: per iscriversi, per chiedere un passaggio o per dare una mano a organizzare."
+    >
+      <Bottone href={`mailto:${CONTATTI.proLocoEmail}?subject=${encodeURIComponent(articolo.intestazione)}`}>
+        Scrivi alla Pro Loco
+      </Bottone>
+      <Bottone href={ROTTE.calendario} variante="secondario">Torna al calendario</Bottone>
+    </BloccoAzione>
+  </Sezione>-->
+</Base>
+
+<style>
+  /* — apertura — */
+  .testa { position: relative; overflow: hidden; }
+  .testa__bolla {
+    position: absolute;
+    right: -180px;
+    top: -230px;
+    width: 620px;
+    height: 620px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+  }
+  .testa__griglia {
+    position: relative;
+    padding-top: 62px;
+    padding-bottom: 68px;
+    display: grid;
+    grid-template-columns: 1.25fr 0.75fr;
+    gap: 46px;
+    align-items: start;
+  }
+  .testa__testo { display: flex; flex-direction: column; gap: 18px; }
+  .testa__briciole {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tenue);
+  }
+  .testa__briciole a { color: inherit; }
+  .testa__occhiello {
+    font-size: 12.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--tenue);
+  }
+  .testa__titolo { font-size: 58px; line-height: 1; margin: 0; }
+  .testa__sottotitolo {
+    font-size: 20px;
+    line-height: 1.55;
+    max-width: 46ch;
+    opacity: 0.94;
+    margin: 0;
+  }
+  .testa__firma {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--tenue);
+  }
+
+  /* — scheda pratica — */
+  .scheda {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-lg);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .scheda__testa { display: flex; align-items: center; gap: 14px; }
+  .scheda__titolo {
+    font-family: var(--font-heading);
+    font-size: 23px;
+    line-height: 1;
+  }
+  .scheda__righe { display: flex; flex-direction: column; gap: 12px; margin: 0; }
+  .scheda__riga {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 11px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .scheda__riga:last-child { border-bottom: 0; padding-bottom: 0; }
+  .scheda__riga dt {
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--tenue);
+  }
+  .scheda__riga dd { font-size: 15.5px; line-height: 1.45; margin: 0; }
+  .scheda__bottone { align-self: flex-start; }
+
+  /* — corpo — */
+  .sezione-copertina { margin-top: -44px; position: relative; z-index: 1; }
+  .sezione-corpo { margin-top: 62px; }
+  .lettura { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 52px; align-items: start; }
+
+  .lato { display: flex; flex-direction: column; gap: 18px; position: sticky; top: 96px; }
+  .lato__blocco {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 24px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: var(--shadow-sm);
+  }
+  .lato__blocco--chiaro { background: var(--color-neutral-100); }
+  .lato__occhiello {
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+  .lato__nome { font-family: var(--font-heading); font-size: 21px; line-height: 1.1; font-weight: 400; }
+  .lato__blocco p { font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-800); margin: 0; }
+  .lato__contatto { font-size: 14.5px; font-weight: 600; }
+  .lato__freccia { font-size: 14px; font-weight: 700; margin-top: 4px; }
+
+  /* — galleria — */
+  .galleria__tag { align-self: flex-start; }
+  .galleria { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .galleria__voce { display: flex; flex-direction: column; gap: 8px; }
+  .galleria__voce figcaption {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-neutral-700);
+    margin: 0;
+  }
+
+  @media (max-width: 1000px) {
+    .lettura { grid-template-columns: 1fr; gap: 36px; }
+    .lato { position: static; }
+    .galleria { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .testa__griglia { grid-template-columns: 1fr; gap: 30px; padding-top: 44px; padding-bottom: 52px; }
+    .testa__titolo { font-size: 38px; }
+    .testa__sottotitolo { font-size: 17px; }
+    .sezione-copertina { margin-top: -30px; }
+  }
+  @media (max-width: 560px) {
+    .galleria { grid-template-columns: 1fr; }
+  }
+</style>

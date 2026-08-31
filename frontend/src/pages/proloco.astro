@@ -90,7 +90,7 @@ const TRE_GRANDI = [
       'La tradizione trevigiana come si fa qui: il fantoccio della Vecchia in mezzo al prato, il processo recitato in dialetto con accuse, testimoni e sentenza, e alla fine il falò. Vin brulè, frittelle e tutto il quartiere intorno al fuoco.',
     righe: [
       ['Quando', 'sabato di metà quaresima, ore 20.30'],
-      ['Dove', 'prato dietro il patronato'],
+      ['Dove', 'prato dietro il oratorio'],
       ['Da portare', 'sciarpa e voce per le accuse'],
     ] as [string, string][],
   },
@@ -113,7 +113,7 @@ const RESTO = [
     titolo: 'Gite e trasferte',
     icona: 'bici' as const,
     testo:
-      "Un pullman all'anno: mercatini, santuari, una città. Iscrizioni al bar del patronato.",
+      "Un pullman all'anno: mercatini, santuari, una città. Iscrizioni al bar del oratorio.",
   },
   {
     titolo: 'Assemblea aperta',
@@ -193,7 +193,8 @@ const RESTO = [
           occhiello={config.banner_occhiello}
           titolo={config.banner_titolo}
           testo={config.banner_testo}
-          etichettaBottone="Vai al programma della sagra"
+          href={config.banner_collegamento}
+          etichettaBottone={config.banner_etichetta_bottone || 'Vai al programma della sagra'}
         />
       </Sezione>
     )
@@ -304,7 +305,7 @@ const RESTO = [
         <p class="socio__paragrafo">
           Non serve saper cucinare per ottanta persone. Serve dire quando hai due ore libere: c’è
           chi monta i tavoli, chi sta in cassa, chi porta i piatti, chi scatta le foto. La tessera
-          vale un anno e si fa al bar del patronato.
+          vale un anno e si fa al bar del oratorio.
         </p>
         <div class="riga riga--bottoni">
           <Bottone

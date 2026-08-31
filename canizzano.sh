@@ -197,7 +197,7 @@ MSG
 # ripristino fallito a meta' si scoprirebbe solo aprendo l'admin.
 verifica_schema() {
     info "verifico lo schema del database…"
-    local attese="attivita edizione evento foto giornata impostazionisito luogo"
+    local attese="album articolo attivita dettaglioarticolo edizione evento foto giornata impostazionisito luogo"
     local presenti
     presenti="$(compose exec -T backend python manage.py shell --no-imports -c \
         "from django.db import connection; print(' '.join(sorted(t.removeprefix('eventi_') for t in connection.introspection.table_names() if t.startswith('eventi_'))))" \

@@ -4,9 +4,14 @@
  *
  * E' la riga del programma della sagra e, con `compatta`, quella della
  * giornata tipo del Grest.
+ *
+ * Gli appuntamenti «in risalto» diventano un blocco pieno: la tinta arriva
+ * dal CMS (`Evento.tono`), cosi' la serata dei video del Grest puo' essere
+ * azzurra mentre il resto della sagra resta terracotta.
  */
 import DiscoIcona from './DiscoIcona.astro';
 import type { NomeIcona } from './Icona.astro';
+import { tono as leggiTono } from '../lib/toni.ts';
 
 interface Props {
   ora: string;
@@ -17,7 +22,11 @@ interface Props {
   tonoIcona?: string;
   /** Riga a blocco pieno: il momento speciale della giornata. */
   risalto?: boolean;
-  sfondoRisalto?: string;
+  /** Tono del blocco in risalto, dal CMS. Vuoto = salvia scura, come prima. */
+  tono?: string;
+  /** Se l'evento ha una pagina dedicata la riga diventa un link. */
+  href?: string;
+  esterno?: boolean;
 }
 
 const {
@@ -28,22 +37,40 @@ const {
   icona,
   tonoIcona = 'accent-200',
   risalto = false,
-  sfondoRisalto = 'var(--color-accent-2-700)',
+  tono,
+  href,
+  esterno = false,
 } = Astro.props;
+
+const tinta = leggiTono(tono || 'accent-2-700');
+
+// Nel blocco pieno il disco prende il gradino chiaro della stessa famiglia.
+const tonoDisco = risalto ? (tono || 'accent-2-600') : tonoIcona;
+
+const stile = risalto
+  ? `background:${tinta.sfondo};color:${tinta.inchiostro};--riga-tenue:${tinta.tenue}`
+  : undefined;
+
+const Elemento = href ? 'a' : 'div';
+const attributi = href
+  ? { href, ...(esterno ? { target: '_blank', rel: 'noopener noreferrer' } : {}) }
+  : {};
 ---
 
-<div
-  class={`riga-orario ${risalto ? 'riga-orario--risalto' : ''}`.trim()}
-  style={risalto ? `background:${sfondoRisalto}` : undefined}
+<Elemento
+  class={`riga-orario ${risalto ? 'riga-orario--risalto' : ''} ${href ? 'riga-orario--link' : ''}`.trim()}
+  style={stile}
+  {...attributi}
 >
-  {icona && <DiscoIcona icona={icona} tono={risalto ? 'accent-2-600' : tonoIcona} dimensione={42} />}
+  {icona && <DiscoIcona icona={icona} tono={tonoDisco} dimensione={42} />}
   <span class="riga-orario__ora">{ora}</span>
   <div class="riga-orario__testo">
     <strong>{titolo}</strong>
     {piatto && <span class="riga-orario__piatto">{piatto}</span>}
     {nota && <span class="riga-orario__nota">{nota}</span>}
+    {href && <span class="riga-orario__freccia">Leggi tutto →</span>}
   </div>
-</div>
+</Elemento>
 
 <style>
   .riga-orario {
@@ -51,6 +78,8 @@ const {
     grid-template-columns: 42px 58px 1fr;
     gap: 14px;
     align-items: start;
+    text-decoration: none;
+    color: inherit;
   }
   .riga-orario__ora {
     font-family: var(--font-heading);
@@ -63,16 +92,25 @@ const {
   /* Il piatto del giorno e' l'informazione che la gente cerca per prima. */
   .riga-orario__piatto { font-size: 15px; font-weight: 700; color: var(--color-accent-2-700); }
   .riga-orario__nota { font-size: 14.5px; line-height: 1.5; color: var(--color-neutral-700); }
+  .riga-orario__freccia {
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-top: 3px;
+    color: var(--color-accent-700);
+  }
+  a.riga-orario:hover .riga-orario__testo strong { text-decoration: underline; }
 
   .riga-orario--risalto {
     grid-column: 1 / -1;
     padding: 16px 18px;
     border-radius: var(--radius-md);
-    color: var(--color-accent-2-100);
   }
-  .riga-orario--risalto .riga-orario__ora { color: var(--color-accent-2-200); }
-  .riga-orario--risalto .riga-orario__nota { color: rgba(240, 250, 225, 0.82); }
-  .riga-orario--risalto .riga-orario__piatto { color: var(--color-accent-200); }
+  /* Dentro al blocco pieno tutto il testo vive sul fondo colorato: i toni
+     secondari arrivano dalla variabile impostata sopra. */
+  .riga-orario--risalto .riga-orario__ora,
+  .riga-orario--risalto .riga-orario__piatto,
+  .riga-orario--risalto .riga-orario__freccia { color: var(--riga-tenue); }
+  .riga-orario--risalto .riga-orario__nota { color: inherit; opacity: 0.86; }
 
   @media (max-width: 520px) {
     .riga-orario { grid-template-columns: 34px 52px 1fr; gap: 10px; }

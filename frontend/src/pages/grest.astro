@@ -62,7 +62,7 @@ const GIORNATA = [
   ['15.50', 'Il racconto del giorno', 'Una tappa della vita di Francesco, messa in scena dagli animatori.', false],
   ['16.15', 'Laboratori a rotazione', 'Ogni squadra il suo: manualità, cucina, musica, sport.', true],
   ['17.15', 'Merenda', 'Offerta dal Circolo NOI. Segnalaci allergie e intolleranze.', false],
-  ['17.35', 'Grande gioco', 'Nel prato dietro il patronato, con punteggio per le squadre.', false],
+  ['17.35', 'Grande gioco', 'Nel prato dietro il oratorio, con punteggio per le squadre.', false],
   ['18.30', 'Preghiera e saluti', 'Classifica del giorno e ritiro dei bambini all’ingresso.', false],
 ] as const;
 
@@ -133,7 +133,7 @@ const LETTERE = [
           <Bottone href="#iscrizioni" sfondo="var(--color-accent)" inchiostro="#fff2eb">
             Iscriviti ora
           </Bottone>
-          <Bottone href="#giornata" variante="ghost" class="apertura__ghost">
+          <Bottone href="#giornata" variante="contorno-chiaro">
             Com’è una giornata
           </Bottone>
         </div>
@@ -464,8 +464,6 @@ const LETTERE = [
     transform: rotate(1.5deg);
   }
   .apertura__bottoni { margin-top: 6px; }
-  .apertura__ghost { color: #fbfff2; border: 1px solid rgba(251, 255, 242, 0.5); }
-  .apertura__ghost:hover { background: rgba(251, 255, 242, 0.16); color: #fbfff2; }
 
   .apertura__lato { position: relative; display: flex; justify-content: center; }
   .apertura__cornice {

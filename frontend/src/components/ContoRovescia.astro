@@ -2,67 +2,124 @@
 /**
  * Il conto alla rovescia della sagra.
  *
- * Il sito e' statico, quindi i numeri li calcola il browser: un piccolo
- * script aggiorna ogni 30 secondi e nasconde il blocco quando la sagra e'
- * cominciata. Senza JavaScript restano i valori calcolati al build, che
- * e' comunque un'informazione utile.
+ * Il sito e' statico: i numeri stampati nell'HTML sono quelli del momento
+ * del build, quindi invecchiano di giorno in giorno. Il conto vero lo fa il
+ * browser — un tick al secondo, cosi' si vede che e' vivo — e quando la
+ * sagra e' cominciata il blocco non sparisce: cambia messaggio, perche'
+ * «e' in corso» e' l'informazione utile in quei dieci giorni.
+ *
+ * Senza JavaScript restano i valori del build, che sono comunque un'idea
+ * di quanto manca.
  */
 interface Props {
   dataInizio: string;
+  /** La fine della festa: fino a li' il blocco dice «e' in corso». */
+  dataFine?: string | null;
+  class?: string;
 }
-const { dataInizio } = Astro.props;
+const { dataInizio, dataFine, class: classe = '' } = Astro.props;
 
-const mancano = Math.max(0, new Date(dataInizio).getTime() - Date.now());
-const giorni = Math.floor(mancano / 86_400_000);
-const ore = Math.floor((mancano % 86_400_000) / 3_600_000);
-const minuti = Math.floor((mancano % 3_600_000) / 60_000);
+const inizio = new Date(dataInizio).getTime();
+const mancano = Math.max(0, inizio - Date.now());
 
 const VOCI = [
-  ['giorni', giorni],
-  ['ore', ore],
-  ['minuti', minuti],
+  ['giorni', Math.floor(mancano / 86_400_000)],
+  ['ore', Math.floor((mancano % 86_400_000) / 3_600_000)],
+  ['minuti', Math.floor((mancano % 3_600_000) / 60_000)],
+  ['secondi', Math.floor((mancano % 60_000) / 1_000)],
 ] as const;
+
+/** Sotto la decina i numeri ballano: due cifre fisse tengono ferma la riga. */
+const cifre = (valore: number) => String(valore).padStart(2, '0');
 ---
 
-<div class="conto" data-inizio={dataInizio} hidden={mancano === 0}>
-  <span class="conto__occhiello">Si comincia tra</span>
-  <div class="conto__numeri">
+<div
+  class={`conto ${classe}`.trim()}
+  data-conto-rovescia
+  data-inizio={dataInizio}
+  data-fine={dataFine ?? ''}
+>
+  <span class="conto__occhiello" data-conto-titolo>Si comincia tra</span>
+  <div class="conto__numeri" data-conto-numeri>
     {
       VOCI.map(([nome, valore]) => (
         <div class="conto__voce">
-          <span class="conto__valore" data-conto={nome}>{valore}</span>
+          <span class="conto__valore" data-conto={nome}>
+            {nome === 'giorni' ? valore : cifre(valore)}
+          </span>
           <span class="conto__unita">{nome}</span>
         </div>
       ))
     }
   </div>
+  <span class="conto__adesso" data-conto-adesso hidden>Il tendone è aperto: si mangia stasera.</span>
 </div>
 
 <script>
-  // Un solo tick ogni 30 secondi: la precisione al minuto basta.
-  const blocco = document.querySelector<HTMLElement>('.conto');
-  const inizio = blocco?.dataset.inizio ? new Date(blocco.dataset.inizio).getTime() : 0;
+  /**
+   * Un tick al secondo. Il conto si ferma da solo quando la sagra comincia
+   * e il blocco passa al messaggio «è in corso»; a festa finita sparisce.
+   */
+  const UNITA = ['giorni', 'ore', 'minuti', 'secondi'] as const;
 
-  function aggiorna() {
-    if (!blocco || !inizio) return;
-    const mancano = inizio - Date.now();
-    if (mancano <= 0) {
-      blocco.hidden = true;
-      return;
+  function avvia(blocco: HTMLElement) {
+    const inizio = Date.parse(blocco.dataset.inizio ?? '');
+    if (Number.isNaN(inizio)) return;
+
+    const fine = Date.parse(blocco.dataset.fine || '') || inizio + 10 * 86_400_000;
+    const titolo = blocco.querySelector<HTMLElement>('[data-conto-titolo]');
+    const numeri = blocco.querySelector<HTMLElement>('[data-conto-numeri]');
+    const adesso = blocco.querySelector<HTMLElement>('[data-conto-adesso]');
+    const celle = new Map(
+      UNITA.map((nome) => [nome, blocco.querySelector<HTMLElement>(`[data-conto="${nome}"]`)]),
+    );
+
+    let ultimo = '';
+
+    function aggiorna() {
+      const mancano = inizio - Date.now();
+
+      // Sagra cominciata: il conto non serve piu', il messaggio si'.
+      if (mancano <= 0) {
+        if (Date.now() > fine) {
+          blocco.hidden = true;
+          return true;
+        }
+        numeri?.setAttribute('hidden', '');
+        adesso?.removeAttribute('hidden');
+        if (titolo) titolo.textContent = 'In questi giorni';
+        return true;
+      }
+
+      const valori = {
+        giorni: Math.floor(mancano / 86_400_000),
+        ore: Math.floor((mancano % 86_400_000) / 3_600_000),
+        minuti: Math.floor((mancano % 3_600_000) / 60_000),
+        secondi: Math.floor((mancano % 60_000) / 1_000),
+      };
+
+      // Ridisegnare quattro celle uguali a se stesse a ogni secondo e'
+      // sprecato: si tocca il DOM solo quando qualcosa cambia davvero.
+      const firma = Object.values(valori).join(':');
+      if (firma === ultimo) return false;
+      ultimo = firma;
+
+      for (const nome of UNITA) {
+        const cella = celle.get(nome);
+        if (!cella) continue;
+        const valore = valori[nome];
+        cella.textContent = nome === 'giorni' ? String(valore) : String(valore).padStart(2, '0');
+      }
+      return false;
     }
-    const valori = {
-      giorni: Math.floor(mancano / 86_400_000),
-      ore: Math.floor((mancano % 86_400_000) / 3_600_000),
-      minuti: Math.floor((mancano % 3_600_000) / 60_000),
-    };
-    for (const [nome, valore] of Object.entries(valori)) {
-      const cella = blocco.querySelector(`[data-conto="${nome}"]`);
-      if (cella) cella.textContent = String(valore);
-    }
+
+    if (aggiorna()) return;
+    const battito = setInterval(() => {
+      if (aggiorna()) clearInterval(battito);
+    }, 1000);
   }
 
-  aggiorna();
-  setInterval(aggiorna, 30_000);
+  document.querySelectorAll<HTMLElement>('[data-conto-rovescia]').forEach(avvia);
 </script>
 
 <style>
@@ -83,13 +140,29 @@ const VOCI = [
     color: var(--color-accent-200);
   }
   .conto__numeri { display: flex; gap: 22px; }
+  .conto__numeri[hidden] { display: none; }
   .conto__voce { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .conto__valore { font-family: var(--font-heading); font-size: 44px; line-height: 1; }
+  .conto__valore {
+    font-family: var(--font-heading);
+    font-size: 44px;
+    line-height: 1;
+    /* I secondi cambiano ogni tick: le cifre a larghezza fissa evitano che
+       la riga si allarghi e si stringa da sola. */
+    font-variant-numeric: tabular-nums;
+  }
   .conto__unita {
     font-size: 11.5px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     font-weight: 700;
     color: var(--color-accent-200);
+  }
+  .conto__adesso { font-size: 17px; line-height: 1.4; font-weight: 700; }
+  .conto__adesso[hidden] { display: none; }
+
+  @media (max-width: 520px) {
+    .conto { padding: 22px; }
+    .conto__numeri { gap: 14px; }
+    .conto__valore { font-size: 34px; }
   }
 </style>

@@ -1,0 +1,111 @@
+---
+/**
+ * La card di una raccolta d'archivio: copertina, epoca, titolo e le prime
+ * miniature.
+ *
+ * Le foto d'archivio non stanno sull'hosting — lo spazio e' poco — ma su un
+ * servizio esterno: qui si mostrano i link che la redazione ha incollato.
+ * Finche' non ne arriva nessuno la card resta «in preparazione», che e' una
+ * risposta onesta e non un buco nella pagina.
+ */
+import Foto from './Foto.astro';
+import Etichetta from './Etichetta.astro';
+import type { Album } from '../lib/contenuti.ts';
+
+interface Props {
+  album: Album;
+  /** Quante miniature mostrare sotto la copertina. */
+  miniature?: number;
+}
+const { album, miniature = 4 } = Astro.props;
+
+const scatti = album.foto.filter((foto) => foto.immagine);
+const copertina = album.copertina ?? scatti[0]?.immagine ?? null;
+const epoca = album.periodo || (album.anno ? String(album.anno) : '');
+const altre = Math.max(0, scatti.length - miniature);
+---
+
+<article class="album" id={album.slug}>
+  <Foto
+    src={copertina}
+    alt={album.copertina_alt || album.titolo}
+    attesa={`Copertina di «${album.titolo}» — da collegare`}
+    altezza={200}
+  />
+
+  <div class="album__testo">
+    <div class="album__testa">
+      {epoca && <Etichetta tono="outline">{epoca}</Etichetta>}
+      <span class="album__conto">
+        {scatti.length > 0 ? `${scatti.length} foto` : 'in preparazione'}
+      </span>
+    </div>
+    <h3 class="album__titolo">{album.titolo}</h3>
+    {album.descrizione && <p class="album__descrizione">{album.descrizione}</p>}
+  </div>
+
+  {
+    scatti.length > 0 && (
+      <div class="album__miniature">
+        {scatti.slice(0, miniature).map((scatto) => (
+          <Foto
+            src={scatto.immagine}
+            alt={scatto.testo_alternativo || scatto.didascalia}
+            attesa={scatto.didascalia}
+            altezza={72}
+            raggio="var(--radius-sm)"
+          />
+        ))}
+        {altre > 0 && <span class="album__altre">+{altre}</span>}
+      </div>
+    )
+  }
+
+  {
+    album.album_url && (
+      <a class="album__link" href={album.album_url} target="_blank" rel="noopener noreferrer">
+        Sfoglia l’album completo →
+      </a>
+    )
+  }
+</article>
+
+<style>
+  .album {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .album__testo { display: flex; flex-direction: column; gap: 8px; }
+  .album__testa { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .album__conto {
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+  .album__titolo { font-size: 23px; line-height: 1.12; margin: 0; }
+  .album__descrizione {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--color-neutral-800);
+    margin: 0;
+    flex: 1;
+  }
+
+  .album__miniature { display: flex; align-items: center; gap: 8px; }
+  .album__miniature > :global(.foto) { flex: 1; min-width: 0; }
+  .album__altre {
+    flex: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+
+  .album__link { font-size: 14px; font-weight: 700; }
+</style>

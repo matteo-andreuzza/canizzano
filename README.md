@@ -1,9 +1,10 @@
 # canizzano.it
 
-Il sito del quartiere di **Canizzano** (Treviso): cinque pagine pubbliche —
-home, Pro Loco tutto l'anno, la sagra d'ottobre, il Grest e la storia del
-quartiere — generate come **HTML statico** e caricate via FTP su un hosting
-condiviso, senza bisogno di un VPS.
+Il sito del quartiere di **Canizzano** (Treviso): home, il calendario di
+tutto il quartiere, Pro Loco tutto l'anno, la sagra d'ottobre, il Grest, la
+storia, l'archivio fotografico e una pagina di approfondimento per ogni
+evento che ne merita una — generate come **HTML statico** e caricate via FTP
+su un hosting condiviso, senza bisogno di un VPS.
 
 I contenuti che cambiano (eventi, programma della sagra, foto, interruttori
 delle sezioni) si redigono in un **CMS Django** che gira solo sul server di
@@ -80,13 +81,30 @@ canizzano/
 ├── frontend/                 sito Astro 7, output statico
 │   ├── src/components/       la libreria di componenti (vedi sotto)
 │   ├── src/layouts/Base.astro  testata + contenuto + footer comuni
-│   ├── src/pages/            le cinque pagine
-│   ├── src/lib/              contenuti dal CMS, date, configurazione del sito
+│   ├── src/pages/            le pagine (`eventi/[slug]` e' generata dal CMS)
+│   ├── src/lib/              contenuti dal CMS, date, toni, testi, configurazione
 │   └── src/styles/           il design system Organic + le primitive di pagina
 │
 ├── deploy/                   container usa e getta che carica via FTP (lftp)
 └── dist/                     il sito generato (non versionato)
 ```
+
+### Le pagine
+
+| Indirizzo | Cosa c'e' |
+| --- | --- |
+| `/` | La home: cosa si muove a Canizzano, in trenta secondi |
+| `/calendario` | **Tutti** gli appuntamenti del quartiere, mese per mese |
+| `/proloco` | La Pro Loco Cannetum tutto l'anno |
+| `/sagra` | «Canizzano in Festa», il programma giorno per giorno |
+| `/grest` | Il Grest dei ragazzi |
+| `/storia` | La storia del quartiere, dalle paludi a oggi |
+| `/archivio` | L'archivio fotografico (bozza: le foto stanno su cloud) |
+| `/eventi/<slug>` | L'approfondimento di un evento — una pagina per articolo |
+
+`/calendario` e `/eventi/<slug>` sono generate interamente dal CMS: la prima
+mette in fila gli eventi di tutte le realta', la seconda esiste solo per gli
+eventi a cui la redazione ha attaccato un **articolo**.
 
 ### I componenti
 
@@ -102,10 +120,15 @@ foto manca), `Scheda`, `Sezione`, `Fascia`.
 `BarraCifre`, `Cifra`, `MosaicoFoto`.
 
 **Di contenuto** — `CardEvento`, `SezioneEventi`, `CardGiornata`,
-`SchedaCalendario`, `ColonnaStagione`, `RigaOrario`, `RigaGiornata`,
-`PastigliaData`, `CardCollegamento`, `SchedaRitratto`, `SchedaNota`,
-`SchedaTesto`, `VoceTempo`, `RigaElenco`, `CardContatto`, `PassoNumerato`,
-`ContoRovescia`, `ModuloPrenotazione`.
+`SchedaCalendario`, `RigaCalendario`, `ColonnaStagione`, `RigaOrario`,
+`RigaGiornata`, `PastigliaData`, `CardCollegamento`, `SchedaRitratto`,
+`SchedaNota`, `SchedaTesto`, `SchedaAlbum`, `CorpoArticolo`, `VoceTempo`,
+`RigaElenco`, `CardContatto`, `PassoNumerato`, `ContoRovescia`,
+`ModuloPrenotazione`.
+
+I colori che la redazione sceglie («tono» di una card, di un disco, di una
+pastiglia) stanno **una volta sola** in `src/lib/toni.ts`: aggiungere una
+tinta e' una riga li', non quattro tabelle sparse nei componenti.
 
 ### Il design system
 
@@ -127,14 +150,61 @@ Su <http://localhost:8000/admin/>:
   Pro Loco, iscrizioni al Grest aperte, foto del Grest, modalità sagra.
 - **Attività** — le realtà del quartiere: nome, testo, icona, tinta del disco
   e destinazione delle card della home.
-- **Eventi** — l'appuntamento singolo. Lo stesso record alimenta tre viste:
-  la card dei «prossimi appuntamenti» in home, la riga oraria del programma
-  della sagra (con piatto del giorno e prenotazioni) e la colonna stagionale
-  dell'anno Pro Loco.
+- **Eventi** — l'appuntamento singolo. Lo stesso record alimenta quattro
+  viste: la card dei «prossimi appuntamenti» in home, la riga del calendario
+  di quartiere, la riga oraria del programma della sagra (con piatto del
+  giorno e prenotazioni) e la colonna stagionale dell'anno Pro Loco.
+- **Articoli** — la pagina di approfondimento di un evento, **facoltativa**:
+  vedi sotto.
 - **Giornate** — come si presenta la card di ogni giorno della sagra: titolo,
   riga di richiamo, colore della pastiglia.
+- **Album d'archivio** — le raccolte di `/archivio`: vedi sotto.
 - **Edizioni**, **Luoghi**, **Foto** — annate, sedi ricorrenti e raccolte
   fotografiche delle pagine.
+
+### Quando un evento merita la sua pagina
+
+Quasi nessun evento ne ha bisogno: «Apertura degli stand» si esaurisce in una
+riga di programma. Ma «Gita sul Cansiglio» ha un ritrovo, una quota, un
+percorso e un pranzo da spiegare — e allora si apre **Articoli → aggiungi**,
+si sceglie l'evento e si scrive.
+
+Da quel momento *tutte* le card di quell'evento — home, calendario, colonna
+stagionale, riga della sagra — diventano un link a `/eventi/<slug>`, e la
+pagina viene generata al build successivo. Senza articolo non cambia niente:
+la card resta un blocco di testo, che va benissimo.
+
+Il corpo si scrive in una textarea, con quattro segni:
+
+```
+## Un sottotitolo
+Un paragrafo qualsiasi. Una riga vuota separa i paragrafi.
+- una voce di elenco
+> una nota da mettere in evidenza
+```
+
+Sotto il titolo compare la **scheda pratica**: le righe «Dettagli
+dell'articolo» (`Ritrovo · ore 7.00 in piazza`). Se non ne scrivi nessuna, la
+pagina ripiega su data, luogo e ingresso dell'evento.
+
+### L'archivio: le foto stanno fuori
+
+Lo spazio sull'hosting condiviso è poco, e un archivio di scansioni lo
+riempirebbe in un pomeriggio. Quindi le foto d'archivio **non si caricano nel
+CMS**: si mettono su un servizio cloud (Google Foto, Flickr, Immich…) e in
+admin si incolla il link.
+
+1. **Album d'archivio → aggiungi**: titolo, anno o epoca («anni '70»),
+   descrizione. `Album completo` è il link alla raccolta sul servizio esterno.
+2. Nelle foto dell'album si compila **`url esterna`** — l'indirizzo diretto
+   dell'immagine — invece di caricare il file.
+3. Finché un album non ha foto collegate, `/archivio` lo mostra come «in
+   preparazione»: la pagina resta impaginata, senza buchi.
+
+Il campo `url esterna` c'è su **tutte** le foto, non solo quelle d'archivio:
+funziona ovunque, e l'immagine caricata ha comunque la precedenza sul link.
+`/archivio` è al momento una **bozza**: la struttura è quella definitiva, i
+contenuti no.
 
 ### Il giro di lavoro
 
@@ -148,7 +218,7 @@ Su <http://localhost:8000/admin/>:
 In **anteprima** i contenuti vengono riletti a ogni caricamento di pagina:
 una modifica fatta in admin si vede ricaricando il browser, senza riavviare
 niente. In **build** invece il CMS viene letto una volta sola per tutte e
-cinque le pagine, cosi' il sito pubblicato e' uno stato coerente.
+le pagine, cosi' il sito pubblicato e' uno stato coerente.
 
 Le modifiche finiscono online **al build successivo**: `./canizzano.sh tutto`.
 
@@ -172,7 +242,7 @@ applicate e non crea le tabelle nuove.
 ./canizzano.sh ripristina-db  # ricrea il database, tiene le foto caricate
 ```
 
-`ripristina-db` a fine corsa controlla da solo che le sette tabelle esistano:
+`ripristina-db` a fine corsa controlla da solo che tutte le tabelle esistano:
 se qualcosa non ha funzionato te lo dice, invece di lasciartelo scoprire
 aprendo l'admin.
 
@@ -214,3 +284,8 @@ senza le sezioni dinamiche. Controlla che il CMS sia su con
   Grest, orari della giornata tipo, date degli eventi Pro Loco minori, i
   numeri della barra Pro Loco, la nota storica sul «Principato di Canizzano».
 - Attivare le caselle `info@canizzano.it` e `proloco@canizzano.it`.
+- **Scegliere il servizio cloud per l'archivio** e cominciare a incollare i
+  link nelle tre raccolte gia' aperte (sagre di una volta, mulini, squadra).
+- Il **Principato di Canizzano** ha la sua card in home e punta a
+  `/storia#principato`: se diventa una realta' con una sua pagina, basta
+  cambiare il collegamento in admin → *Attivita*.

@@ -8,7 +8,8 @@
  */
 import RigaOrario from './RigaOrario.astro';
 import type { NomeIcona } from './Icona.astro';
-import type { Evento, Giornata } from '../lib/contenuti.ts';
+import { percorsoEvento, eventoEsterno, type Evento, type Giornata } from '../lib/contenuti.ts';
+import { tono as leggiTono } from '../lib/toni.ts';
 
 interface Props {
   giornata: Giornata;
@@ -16,14 +17,7 @@ interface Props {
 }
 const { giornata, eventi } = Astro.props;
 
-const TONI_PASTIGLIA: Record<string, [string, string]> = {
-  accent: ['var(--color-accent)', '#fff2eb'],
-  'accent-2-600': ['var(--color-accent-2-600)', '#f0fae1'],
-  'accent-2-700': ['var(--color-accent-2-700)', '#f0fae1'],
-  'accent-400': ['var(--color-accent-400)', '#402310'],
-};
-const [sfondoPastiglia, inchiostroPastiglia] =
-  TONI_PASTIGLIA[giornata.tono] ?? TONI_PASTIGLIA.accent;
+const pastiglia = leggiTono(giornata.tono || 'accent');
 
 const giorno = new Date(`${giornata.data}T12:00:00`);
 const numero = giorno.getDate();
@@ -44,7 +38,7 @@ const ora = (inizio: string) =>
   <header class="giornata__testa">
     <div
       class="giornata__pastiglia"
-      style={`background:${sfondoPastiglia};color:${inchiostroPastiglia}`}
+      style={`background:${pastiglia.sfondo};color:${pastiglia.inchiostro}`}
     >
       <strong>{numero}</strong>
       <span>{abbreviazione}</span>
@@ -65,6 +59,9 @@ const ora = (inizio: string) =>
           piatto={evento.piatto_del_giorno}
           icona={(evento.icona || 'stella') as NomeIcona}
           risalto={evento.risalto}
+          tono={evento.tono}
+          href={percorsoEvento(evento)}
+          esterno={eventoEsterno(evento)}
         />
       ))
     }

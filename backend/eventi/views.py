@@ -5,8 +5,20 @@ from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import Attivita, Edizione, Evento, Foto, Giornata, ImpostazioniSito, Luogo
+from .models import (
+    Album,
+    Articolo,
+    Attivita,
+    Edizione,
+    Evento,
+    Foto,
+    Giornata,
+    ImpostazioniSito,
+    Luogo,
+)
 from .serializers import (
+    AlbumSerializer,
+    ArticoloSerializer,
     AttivitaSerializer,
     EdizioneSerializer,
     EventoSerializer,
@@ -30,7 +42,7 @@ class EdizioneViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class EventoViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Evento.visibili.select_related("attivita", "edizione", "luogo")
+    queryset = Evento.visibili.select_related("attivita", "edizione", "luogo", "articolo")
     serializer_class = EventoSerializer
     lookup_field = "slug"
 
@@ -64,6 +76,18 @@ class FotoViewSet(viewsets.ReadOnlyModelViewSet):
         return qs.filter(raccolta=raccolta) if raccolta else qs
 
 
+class ArticoloViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Articolo.visibili.select_related("evento").prefetch_related("dettagli", "foto")
+    serializer_class = ArticoloSerializer
+    lookup_field = "slug"
+
+
+class AlbumViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Album.visibili.select_related("attivita").prefetch_related("foto")
+    serializer_class = AlbumSerializer
+    lookup_field = "slug"
+
+
 class LuogoViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Luogo.objects.all()
     serializer_class = LuogoSerializer
@@ -86,7 +110,15 @@ def snapshot(request):
                 Edizione.visibili.select_related("attivita"), many=True
             ).data,
             "eventi": EventoSerializer(
-                Evento.visibili.select_related("attivita", "edizione", "luogo"), many=True
+                Evento.visibili.select_related("attivita", "edizione", "luogo", "articolo"),
+                many=True,
+            ).data,
+            "articoli": ArticoloSerializer(
+                Articolo.visibili.select_related("evento").prefetch_related("dettagli", "foto"),
+                many=True,
+            ).data,
+            "album": AlbumSerializer(
+                Album.visibili.select_related("attivita").prefetch_related("foto"), many=True
             ).data,
             "giornate": GiornataSerializer(
                 Giornata.visibili.select_related("edizione"), many=True

@@ -1,0 +1,87 @@
+---
+/**
+ * Il testo di un articolo, impaginato.
+ *
+ * Il corpo arriva dal CMS con la marcatura minima di `lib/testo.ts`; qui
+ * diventa la colonna di lettura: misura stretta, sottotitoli in Caprasimo,
+ * elenchi con il pallino terracotta e le note su fondo crema.
+ */
+import { blocchi } from '../lib/testo.ts';
+
+interface Props {
+  corpo: string;
+  /** Tinta dei richiami: segue l'identita' cromatica dell'articolo. */
+  accento?: string;
+}
+const { corpo, accento = 'var(--color-accent-2-700)' } = Astro.props;
+
+const pezzi = blocchi(corpo);
+---
+
+<div class="corpo" style={`--accento:${accento}`}>
+  {
+    pezzi.map((pezzo) =>
+      pezzo.tipo === 'titolo' ? (
+        <h2 class="corpo__titolo">{pezzo.testo}</h2>
+      ) : pezzo.tipo === 'elenco' ? (
+        <ul class="corpo__elenco">
+          {pezzo.voci.map((voce) => (
+            <li>{voce}</li>
+          ))}
+        </ul>
+      ) : pezzo.tipo === 'nota' ? (
+        <p class="corpo__nota">{pezzo.testo}</p>
+      ) : (
+        <p class="corpo__paragrafo">{pezzo.testo}</p>
+      ),
+    )
+  }
+</div>
+
+<style>
+  .corpo { display: flex; flex-direction: column; gap: 18px; max-width: 66ch; }
+
+  .corpo__titolo {
+    font-size: 30px;
+    line-height: 1.08;
+    margin: 18px 0 0;
+    color: var(--accento);
+  }
+  .corpo__titolo:first-child { margin-top: 0; }
+
+  .corpo__paragrafo {
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--color-neutral-800);
+    margin: 0;
+  }
+
+  .corpo__elenco {
+    margin: 0;
+    padding-left: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--color-neutral-800);
+  }
+  .corpo__elenco li::marker { color: var(--accento); }
+
+  /* La nota e' quello che la gente deve leggere anche se salta il resto. */
+  .corpo__nota {
+    margin: 6px 0;
+    padding: 18px 22px;
+    border-left: 4px solid var(--accento);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    background: var(--color-surface);
+    font-size: 16.5px;
+    line-height: 1.6;
+    font-weight: 600;
+  }
+
+  @media (max-width: 640px) {
+    .corpo__titolo { font-size: 25px; }
+    .corpo__paragrafo, .corpo__elenco { font-size: 16px; }
+  }
+</style>

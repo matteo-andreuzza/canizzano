@@ -8,6 +8,7 @@
 import PastigliaData from './PastigliaData.astro';
 import Etichetta from './Etichetta.astro';
 import { quandoBreve } from '../lib/date.ts';
+import { percorsoEvento, eventoEsterno } from '../lib/contenuti.ts';
 import type { Attivita, Evento } from '../lib/contenuti.ts';
 
 interface Props {
@@ -15,6 +16,15 @@ interface Props {
   attivita?: Attivita;
 }
 const { evento, attivita } = Astro.props;
+
+// La pagina dedicata vince sul link esterno: e' roba nostra, con dentro
+// tutto quello che serve. Se non c'e' ne' l'una ne' l'altro la card resta
+// un blocco di testo, e va benissimo.
+const destinazione = percorsoEvento(evento);
+const fuori = eventoEsterno(evento);
+const etichettaLink = evento.articolo
+  ? 'Leggi tutto'
+  : evento.link_etichetta || 'Scopri di più';
 
 const salvia = attivita?.identita === 'salvia';
 const tonoTag = attivita ? (salvia ? 'accent-2' : attivita.identita === 'neutro' ? 'neutral' : 'accent') : 'accent';
@@ -33,9 +43,13 @@ const luogoEora = [quandoBreve(evento), evento.dove].filter(Boolean).join(' · '
     {evento.sommario && <p>{evento.sommario}</p>}
     <span class="evento__dove">{luogoEora}</span>
     {
-      evento.link && (
-        <a class="evento__link" href={evento.link} target="_blank" rel="noopener noreferrer">
-          {evento.link_etichetta || 'Scopri di più'} →
+      destinazione && (
+        <a
+          class="evento__link"
+          href={destinazione}
+          {...(fuori ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        >
+          {etichettaLink} →
         </a>
       )
     }

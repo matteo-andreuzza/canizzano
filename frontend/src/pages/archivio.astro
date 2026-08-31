@@ -1,0 +1,284 @@
+---
+/**
+ * L'archivio fotografico del quartiere — bozza.
+ *
+ * Il vincolo che decide tutto: sull'hosting condiviso lo spazio è poco, e
+ * un archivio di scansioni lo riempirebbe in un pomeriggio. Quindi le foto
+ * d'archivio **non si caricano nel CMS**: stanno su un servizio esterno
+ * (Google Foto, Flickr, Immich…) e in redazione si incolla l'indirizzo
+ * dell'immagine (`Foto.url_esterna`) o dell'album intero (`Album.album_url`).
+ *
+ * Questa pagina mostra le raccolte già dichiarate; finché i link non
+ * arrivano, ogni raccolta resta «in preparazione». La struttura è quella
+ * definitiva, i contenuti no.
+ */
+import Base from '../layouts/Base.astro';
+import Sezione from '../components/Sezione.astro';
+import Fascia from '../components/Fascia.astro';
+import TestataSezione from '../components/TestataSezione.astro';
+import SchedaAlbum from '../components/SchedaAlbum.astro';
+import SchedaNota from '../components/SchedaNota.astro';
+import PassoNumerato from '../components/PassoNumerato.astro';
+import Bottone from '../components/Bottone.astro';
+import Etichetta from '../components/Etichetta.astro';
+import { CONTATTI, ROTTE } from '../lib/sito.ts';
+import { album as raccolteArchivio } from '../lib/contenuti.ts';
+
+const raccolte = await raccolteArchivio();
+const conFoto = raccolte.filter((voce) => voce.foto.some((foto) => foto.immagine));
+const scatti = raccolte.reduce(
+  (totale, voce) => totale + voce.foto.filter((foto) => foto.immagine).length,
+  0,
+);
+
+const PASSI = [
+  {
+    titolo: 'Porta le foto in sala NOI',
+    testo:
+      'Durante l’assemblea, il primo martedì del mese. Anche una busta con dieci scatti va benissimo: non serve che siano in ordine.',
+  },
+  {
+    titolo: 'Le scansioniamo davanti a te',
+    testo:
+      'Mezz’ora con lo scanner e te le riporti a casa lo stesso giorno. Gli originali non restano mai qui.',
+  },
+  {
+    titolo: 'Ci scrivi cosa c’è dentro',
+    testo:
+      'Anno, luogo, chi si riconosce. È la parte che vale di più: una foto senza nomi, fra vent’anni, è solo una foto.',
+  },
+  {
+    titolo: 'Finiscono qui, in una raccolta',
+    testo:
+      'Le pubblichiamo in un album, con la didascalia. Se preferisci che una foto non si veda online, si tiene fuori: basta dirlo.',
+  },
+];
+
+const REGOLE = [
+  {
+    titolo: 'Le foto stanno fuori',
+    icona: 'fotografia' as const,
+    tono: 'accent-200',
+    testo:
+      'Le immagini sono ospitate su un servizio cloud e da lì vengono mostrate. Il sito ne tiene solo il collegamento: così l’archivio può crescere senza limiti di spazio.',
+  },
+  {
+    titolo: 'Chi le ha prestate resta scritto',
+    icona: 'persone' as const,
+    tono: 'accent-2-200',
+    testo:
+      'Ogni scatto porta la didascalia e, quando si sa, il nome di chi l’ha conservato. Chi cambia idea può chiedere che venga tolto, e viene tolto.',
+  },
+  {
+    titolo: 'Una foto per volta',
+    icona: 'orologio' as const,
+    tono: 'accent-300',
+    testo:
+      'L’archivio si riempie piano, con quello che arriva. Meglio poche foto raccontate bene che mille senza un nome.',
+  },
+];
+---
+
+<Base
+  pagina="archivio"
+  titolo="Archivio fotografico di Canizzano"
+  descrizione="Le foto d’archivio del quartiere di Canizzano: sagre, mulini, squadre e processioni, raccolte album per album."
+  marchio="storia"
+  nomeLockup="Archivio di Canizzano"
+  sottotitoloLockup="le foto del quartiere"
+>
+  <!-- Apertura -->
+  <Sezione stacco="primo">
+    <div class="apertura">
+      <div class="apertura__testo">
+        <Etichetta tono="accent-2" class="apertura__tag">In costruzione, un album alla volta</Etichetta>
+        <h1 class="titolo-pagina">L’archivio<br />del quartiere</h1>
+        <p class="apertura__occhiello">
+          Mulini, campi, processioni, sagre degli anni Settanta, squadre di calcio in posa. Le foto
+          vecchie di Canizzano sono nei cassetti delle case: qui c’è quello che finora è uscito.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone href="#raccolte">Guarda le raccolte</Bottone>
+          <Bottone href={`mailto:${CONTATTI.proLocoEmail}`} variante="secondario">
+            Ho delle foto
+          </Bottone>
+        </div>
+      </div>
+
+      <div class="stato">
+        <span class="stato__occhiello">A che punto siamo</span>
+        <div class="stato__cifre">
+          <div>
+            <strong>{raccolte.length}</strong>
+            <span>{raccolte.length === 1 ? 'raccolta aperta' : 'raccolte aperte'}</span>
+          </div>
+          <div>
+            <strong>{scatti}</strong>
+            <span>{scatti === 1 ? 'foto collegata' : 'foto collegate'}</span>
+          </div>
+        </div>
+        <p class="stato__nota">
+          {
+            conFoto.length === 0
+              ? 'Le raccolte ci sono, le foto no: stiamo scansionando e caricando. Se hai scatti da prestare, è il momento buono.'
+              : 'Le foto sono ospitate su un servizio esterno e mostrate qui: l’archivio può crescere senza occupare lo spazio del sito.'
+          }
+        </p>
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Le raccolte -->
+  <Sezione id="raccolte">
+    <div class="pila" style="gap:30px">
+      <TestataSezione
+        titolo="Le raccolte"
+        tag="Album per album"
+        tonoTag="accent"
+        testo="Ogni album tiene insieme un pezzo di quartiere: un’epoca, un luogo, una squadra."
+        link={{ testo: 'La storia di Canizzano →', href: ROTTE.storia }}
+      />
+      {
+        raccolte.length > 0 ? (
+          <div class="griglia griglia--3">
+            {raccolte.map((voce) => (
+              <SchedaAlbum album={voce} />
+            ))}
+          </div>
+        ) : (
+          <p class="vuoto">
+            Ancora nessuna raccolta pubblicata. Le prime tre sono in lavorazione: le sagre di una
+            volta, i mulini sul Sile e mezzo secolo di squadre sul campo dietro l’abside.
+          </p>
+        )
+      }
+    </div>
+  </Sezione>
+
+  <!-- Come funziona -->
+  <Sezione id="come-funziona">
+    <div class="pila" style="gap:28px">
+      <TestataSezione
+        titolo="Come funziona"
+        tag="Tre regole"
+        tonoTag="accent-2"
+        testo="Poche cose, dette chiare: dove stanno le foto, di chi sono e con che passo cresce l’archivio."
+      />
+      <div class="griglia griglia--3">
+        {
+          REGOLE.map((voce) => (
+            <SchedaNota
+              titolo={voce.titolo}
+              testo={voce.testo}
+              icona={voce.icona}
+              tono={voce.tono}
+              sfondo="var(--color-surface)"
+              dimensioneDisco={52}
+              dimensioneTitolo={24}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Porta le tue foto -->
+  <Fascia id="porta">
+    <div class="porta">
+      <div class="porta__testo">
+        <span class="occhiello" style="color:var(--color-accent-300)">Come si contribuisce</span>
+        <h2 class="porta__titolo">Le foto vecchie sono nei vostri cassetti</h2>
+        <p class="porta__paragrafo">
+          Non serve avere un archivio: bastano quattro fotografie. Le scansioniamo, te le riporti a
+          casa lo stesso giorno e restano al quartiere.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone
+            href={`mailto:${CONTATTI.proLocoEmail}?subject=Foto%20per%20l%27archivio`}
+            variante="chiaro"
+            sfondo="var(--color-accent-2-100)"
+            inchiostro="var(--color-accent-2-800)"
+          >
+            Scrivi alla Pro Loco
+          </Bottone>
+          <Bottone href={CONTATTI.proLocoTel} variante="contorno-chiaro">
+            Chiama {CONTATTI.proLocoTelefono}
+          </Bottone>
+        </div>
+      </div>
+      <div class="porta__passi">
+        {
+          PASSI.map((passo, indice) => (
+            <PassoNumerato numero={indice + 1} titolo={passo.titolo} testo={passo.testo} />
+          ))
+        }
+      </div>
+    </div>
+  </Fascia>
+</Base>
+
+<style>
+  /* — apertura — */
+  .apertura { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 52px; align-items: center; }
+  .apertura__testo { display: flex; flex-direction: column; gap: 24px; }
+  .apertura__tag { align-self: flex-start; }
+  .apertura__testo h1 { margin: 0; }
+  .apertura__occhiello {
+    font-size: 18px;
+    line-height: 1.6;
+    max-width: 48ch;
+    color: var(--color-neutral-800);
+    margin: 0;
+  }
+
+  /* — riquadro «a che punto siamo» — */
+  .stato {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .stato__occhiello {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+  .stato__cifre { display: flex; gap: 34px; }
+  .stato__cifre div { display: flex; flex-direction: column; gap: 2px; }
+  .stato__cifre strong {
+    font-family: var(--font-heading);
+    font-size: 40px;
+    line-height: 1;
+    font-weight: 400;
+    color: var(--color-accent-700);
+  }
+  .stato__cifre span { font-size: 13px; color: var(--color-neutral-700); }
+  .stato__nota { font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-800); margin: 0; }
+
+  .vuoto {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-neutral-700);
+    margin: 0;
+  }
+
+  /* — fascia «porta le tue foto» — */
+  .porta { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; align-items: center; }
+  .porta__testo { display: flex; flex-direction: column; gap: 20px; }
+  .porta__titolo { font-size: 42px; line-height: 1.03; margin: 0; }
+  .porta__paragrafo { font-size: 16.5px; line-height: 1.6; max-width: 46ch; opacity: 0.92; margin: 0; }
+  .porta__passi { display: flex; flex-direction: column; gap: 18px; }
+
+  @media (max-width: 900px) {
+    .apertura, .porta { grid-template-columns: 1fr; gap: 34px; }
+    .porta__titolo { font-size: 32px; }
+  }
+</style>

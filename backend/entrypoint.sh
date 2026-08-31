@@ -2,6 +2,18 @@
 # Avvio del CMS: attende il database, allinea lo schema, prepara la redazione.
 set -euo pipefail
 
+# Il volume dei media e' condiviso con il container che genera il sito, e chi
+# lo crea per primo ne fissa il proprietario: se e' nato altrove appartiene a
+# root e Django, che gira come appuser, non riesce a scriverci — l'upload di
+# una foto dall'admin fallisce con «Permission denied: /app/media/foto».
+# Finche' siamo root sistemiamo i permessi, poi lasciamo i privilegi: il
+# server vero e proprio non gira mai come root.
+if [ "$(id -u)" = "0" ]; then
+    mkdir -p /app/media /app/staticfiles
+    chown -R appuser:appuser /app/media /app/staticfiles
+    exec gosu appuser "$0" "$@"
+fi
+
 echo "→ attendo PostgreSQL su ${POSTGRES_HOST:-db}:${POSTGRES_PORT:-5432}…"
 python - <<'PY'
 import os, sys, time

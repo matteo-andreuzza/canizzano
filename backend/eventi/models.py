@@ -10,7 +10,11 @@ Tutto cio' che il quartiere deve poter cambiare senza toccare il codice:
 * ``Edizione``  — l'annata di un'attivita' (es. «Pro Loco 2026»).
 * ``Evento``    — il singolo appuntamento: alimenta i «prossimi
   appuntamenti» della home, il programma della sagra e l'anno Pro Loco.
-* ``Foto``      — le raccolte fotografiche delle pagine.
+* ``Articolo``  — la pagina di approfondimento di un evento, facoltativa:
+  l'«articolo di giornale» con corpo, dettagli pratici e foto.
+* ``Album``     — una raccolta dell'archivio storico del quartiere.
+* ``Foto``      — le raccolte fotografiche delle pagine, degli articoli e
+  dell'archivio; l'immagine può stare qui o su un servizio esterno.
 """
 
 from django.core.exceptions import ValidationError
@@ -44,6 +48,10 @@ class Tono(models.TextChoices):
     ACCENT_2_500 = "accent-2-500", "Salvia media"
     ACCENT_2_600 = "accent-2-600", "Salvia"
     ACCENT_2_700 = "accent-2-700", "Salvia scura"
+    BLU_200 = "blu-200", "Azzurrino chiarissimo"
+    BLU_300 = "blu-300", "Azzurrino chiaro"
+    BLU_600 = "blu-600", "Azzurro-blu"
+    BLU_700 = "blu-700", "Blu scuro"
     NEUTRAL_100 = "neutral-100", "Neutro chiaro"
     NEUTRAL_700 = "neutral-700", "Neutro scuro"
 
@@ -80,6 +88,13 @@ class Icona(models.TextChoices):
     PENNELLO = "pennello", "Pennello / laboratori"
     GIOCO = "gioco", "Gioco"
     BICI = "bici", "Bici / gite"
+    POSATE = "posate", "Posate / stand gastronomico"
+    VIDEO = "video", "Video / cinema / proiezione"
+    PIMPA = "pimpa", "Pimpa / il cagnolino a pois"
+    CROCE = "croce", "Croce cristiana / messa"
+    CANNETO = "canneto", "Canneto / Principato di Canizzano"
+    MONTAGNA = "montagna", "Montagna / gita fuori porta"
+    FOTOGRAFIA = "fotografia", "Fotografia / archivio"
 
 
 class Pubblicati(models.Manager):
@@ -135,14 +150,48 @@ class ImpostazioniSito(models.Model):
     """
 
     # --- Home ---------------------------------------------------------------
+    # La fascia terracotta in cima alla home: non e' legata alla sagra, e' lo
+    # spazio dell'appuntamento piu' imminente (sagra, iscrizioni al Grest, al
+    # catechismo...). La redazione ne scrive testo e destinazione.
     mostra_banner_sagra = models.BooleanField(
-        default=True, verbose_name="mostra il banner della sagra in home"
+        default=True, verbose_name="mostra il banner in home"
     )
-    banner_occhiello = models.CharField(max_length=60, default="Sta arrivando", blank=True)
+    banner_occhiello = models.CharField(
+        max_length=60,
+        default="Sta arrivando",
+        blank=True,
+        verbose_name="occhiello",
+        help_text="La riga piccola sopra il titolo: «Sta arrivando», «Iscrizioni aperte»…",
+    )
     banner_titolo = models.CharField(
-        max_length=160, default="Canizzano in Festa · 2 → 11 ottobre", blank=True
+        max_length=160,
+        default="Canizzano in Festa · 2 → 11 ottobre",
+        blank=True,
+        verbose_name="titolo",
+        help_text="Se resta vuoto il banner non compare, anche se acceso.",
     )
-    banner_testo = models.CharField(max_length=280, blank=True)
+    banner_testo = models.CharField(
+        max_length=280,
+        blank=True,
+        verbose_name="testo",
+        help_text="Una riga di dettaglio sotto il titolo. Facoltativa.",
+    )
+    banner_collegamento = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="collegamento del bottone",
+        help_text=(
+            "Dove porta il bottone: un indirizzo del sito (/grest, /calendario, "
+            "/eventi/<slug>) oppure un link esterno completo di https://. "
+            "Se resta vuoto porta alla pagina della sagra."
+        ),
+    )
+    banner_etichetta_bottone = models.CharField(
+        max_length=40,
+        blank=True,
+        verbose_name="testo del bottone",
+        help_text="Se resta vuoto il bottone dice «Vai al programma».",
+    )
 
     # --- Sagra --------------------------------------------------------------
     modalita_sagra = models.BooleanField(
@@ -483,17 +532,222 @@ class Giornata(models.Model):
         return f"{giorni[self.data.weekday()]} {self.data.day} {mesi[self.data.month - 1]}"
 
 
+class Articolo(ModelloConSlug):
+    """
+    La pagina di approfondimento di un evento — facoltativa.
+
+    Non tutti gli appuntamenti ne hanno bisogno: «Apertura degli stand» si
+    esaurisce in una riga di programma, mentre «Gita sul Cansiglio» o «Ama
+    il tuo quartiere» hanno un luogo, un ritrovo, una quota e una storia da
+    raccontare. Quando un evento ha un articolo, tutte le sue card sul sito
+    diventano un link a `/eventi/<slug>`.
+
+    Il corpo si scrive con una marcatura minima, pensata per l'admin:
+
+        ## Un sottotitolo
+        Un paragrafo qualsiasi. Una riga vuota separa i paragrafi.
+        - una voce di elenco
+        > una citazione o una nota in evidenza
+    """
+
+    evento = models.OneToOneField(
+        Evento,
+        on_delete=models.CASCADE,
+        related_name="articolo",
+        help_text="L'appuntamento raccontato da questa pagina.",
+    )
+    occhiello = models.CharField(
+        max_length=80,
+        blank=True,
+        help_text="La riga sopra il titolo: «La proposta d'autunno».",
+    )
+    titolo = models.CharField(
+        max_length=160, blank=True, help_text="Se vuoto viene usato il titolo dell'evento."
+    )
+    sottotitolo = models.CharField(
+        max_length=280, blank=True, help_text="Il sommario in apertura, una o due righe."
+    )
+    corpo = models.TextField(
+        blank=True,
+        help_text=(
+            "Il testo dell'articolo. Riga vuota = nuovo paragrafo; «## » = "
+            "sottotitolo; «- » = voce di elenco; «> » = nota in evidenza."
+        ),
+    )
+    copertina = models.ImageField(upload_to="articoli/", blank=True)
+    copertina_url = models.URLField(
+        blank=True,
+        help_text=(
+            "In alternativa al file: indirizzo dell'immagine su un servizio "
+            "esterno. Lo spazio sull'hosting e' poco, meglio i link."
+        ),
+    )
+    copertina_alt = models.CharField(max_length=200, blank=True)
+    identita = models.CharField(
+        max_length=12,
+        choices=Identita.choices,
+        default=Identita.SALVIA,
+        help_text="Colore dell'apertura e dei richiami della pagina.",
+    )
+    tono = models.CharField(
+        max_length=14,
+        choices=Tono.choices,
+        blank=True,
+        help_text="Tinta della fascia d'apertura. Vuoto = tinta dell'identita'.",
+    )
+    firma = models.CharField(
+        max_length=120, blank=True, help_text="Chi l'ha scritto: «la Pro Loco», un nome."
+    )
+    data_pubblicazione = models.DateField(
+        null=True, blank=True, help_text="La data in testa all'articolo. Vuoto = non si mostra."
+    )
+
+    class Meta:
+        verbose_name = "articolo"
+        verbose_name_plural = "articoli"
+        ordering = ("-data_pubblicazione", "-creato_il")
+
+    def __str__(self) -> str:
+        return self.intestazione
+
+    def campo_sorgente_slug(self) -> str:
+        return self.titolo or self.evento.titolo
+
+    @property
+    def intestazione(self) -> str:
+        return self.titolo or self.evento.titolo
+
+    @property
+    def copertina_sorgente(self) -> str:
+        """L'immagine da mostrare: il file caricato, o il link esterno."""
+        if self.copertina:
+            return self.copertina.url
+        return self.copertina_url
+
+
+class DettaglioArticolo(models.Model):
+    """
+    Una riga della scheda pratica di un articolo: «Ritrovo · ore 7.00 in
+    piazza». Sono le informazioni che la gente cerca prima del testo.
+    """
+
+    articolo = models.ForeignKey(Articolo, on_delete=models.CASCADE, related_name="dettagli")
+    etichetta = models.CharField(max_length=60, help_text="«Quando», «Dove», «Quota», «Ritrovo»…")
+    valore = models.CharField(max_length=200)
+    ordine = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "dettaglio dell'articolo"
+        verbose_name_plural = "dettagli dell'articolo"
+        ordering = ("ordine", "id")
+
+    def __str__(self) -> str:
+        return f"{self.etichetta}: {self.valore}"
+
+
+class Album(ModelloConSlug):
+    """
+    Una raccolta dell'archivio storico: «Le sagre degli anni Settanta».
+
+    Le foto d'archivio sono tante e pesanti, e lo spazio sull'hosting e'
+    poco: stanno su un servizio esterno (Google Foto, Flickr, Immich…) e
+    qui se ne tiene solo il link. Vedi ``Foto.url_esterna``.
+    """
+
+    titolo = models.CharField(max_length=160)
+    anno = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="L'anno degli scatti, se si conosce."
+    )
+    periodo = models.CharField(
+        max_length=60,
+        blank=True,
+        help_text="Come si scrive l'epoca quando l'anno non e' certo: «anni '70».",
+    )
+    descrizione = models.TextField(blank=True)
+    copertina_url = models.URLField(
+        blank=True, help_text="Immagine di copertina ospitata su un servizio esterno."
+    )
+    copertina = models.ImageField(upload_to="album/", blank=True)
+    copertina_alt = models.CharField(max_length=200, blank=True)
+    attivita = models.ForeignKey(
+        Attivita, on_delete=models.SET_NULL, related_name="album", null=True, blank=True
+    )
+    album_url = models.URLField(
+        blank=True, help_text="L'album completo sul servizio esterno, se c'e'."
+    )
+    ordine = models.SmallIntegerField(
+        default=0, help_text="A parita' di anno decide chi viene prima."
+    )
+
+    class Meta:
+        verbose_name = "album d'archivio"
+        verbose_name_plural = "album d'archivio"
+        ordering = ("-anno", "ordine", "titolo")
+
+    def __str__(self) -> str:
+        return self.etichetta
+
+    def campo_sorgente_slug(self) -> str:
+        return f"{self.titolo}-{self.anno}" if self.anno else self.titolo
+
+    @property
+    def etichetta(self) -> str:
+        epoca = self.periodo or (str(self.anno) if self.anno else "")
+        return f"{self.titolo} ({epoca})" if epoca else self.titolo
+
+    @property
+    def copertina_sorgente(self) -> str:
+        if self.copertina:
+            return self.copertina.url
+        return self.copertina_url
+
+
 class Foto(models.Model):
-    """Una foto delle raccolte di pagina (Pro Loco, Grest, archivio storico)."""
+    """
+    Una foto del sito: raccolte di pagina, gallerie degli articoli, archivio.
+
+    L'immagine puo' stare **qui** (file caricato in admin, finisce sul
+    volume dei media e poi sull'hosting) oppure **fuori** (``url_esterna``:
+    un link a un servizio cloud). Lo spazio sull'hosting condiviso e' poco:
+    per l'archivio storico si usa sempre il link esterno.
+    """
 
     attivita = models.ForeignKey(
         Attivita, on_delete=models.CASCADE, related_name="foto", null=True, blank=True
     )
+    articolo = models.ForeignKey(
+        Articolo,
+        on_delete=models.CASCADE,
+        related_name="foto",
+        null=True,
+        blank=True,
+        help_text="Se valorizzato la foto compare nella galleria dell'articolo.",
+    )
+    album = models.ForeignKey(
+        Album,
+        on_delete=models.CASCADE,
+        related_name="foto",
+        null=True,
+        blank=True,
+        help_text="Se valorizzato la foto compare nell'album d'archivio.",
+    )
     raccolta = models.SlugField(
         max_length=60,
+        blank=True,
         help_text="Nome della galleria usata dalla pagina: «proloco», «grest», «storia».",
     )
-    immagine = models.ImageField(upload_to="foto/")
+    immagine = models.ImageField(upload_to="foto/", blank=True)
+    url_esterna = models.URLField(
+        blank=True,
+        help_text=(
+            "In alternativa al file: indirizzo diretto dell'immagine su un "
+            "servizio esterno. Obbligatorio per l'archivio, dove lo spazio "
+            "sull'hosting non basterebbe."
+        ),
+    )
+    anno = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="Anno dello scatto, per le foto d'archivio."
+    )
     didascalia = models.CharField(max_length=200, blank=True)
     testo_alternativo = models.CharField(
         max_length=200, blank=True, help_text="Descrizione per screen reader."
@@ -510,4 +764,17 @@ class Foto(models.Model):
         ordering = ("raccolta", "ordine", "id")
 
     def __str__(self) -> str:
-        return self.didascalia or f"{self.raccolta} #{self.pk}"
+        return self.didascalia or f"{self.raccolta or 'foto'} #{self.pk}"
+
+    def clean(self):
+        if not self.immagine and not self.url_esterna:
+            raise ValidationError(
+                "Serve un'immagine: carica il file oppure incolla l'indirizzo esterno."
+            )
+
+    @property
+    def sorgente(self) -> str:
+        """L'indirizzo da mettere nel `src`: il file caricato, o il link."""
+        if self.immagine:
+            return self.immagine.url
+        return self.url_esterna

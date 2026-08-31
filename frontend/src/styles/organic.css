@@ -48,6 +48,20 @@
   --color-accent-2-800: #3d472b;
   --color-accent-2-900: #272e1b;
 
+  /* Terza rampa, aggiunta al sistema: l'azzurro-blu. Serve ai contenuti che
+     non stanno ne' con la terracotta della sagra ne' col salvia del
+     quartiere — la serata dei video del Grest, per esempio. Stessi gradini
+     di luminosita' delle altre due, cosi' i toni restano intercambiabili. */
+  --color-blu-100: #eef4fb;
+  --color-blu-200: #d8e7f5;
+  --color-blu-300: #bad2e9;
+  --color-blu-400: #92b6d8;
+  --color-blu-500: #6d99c4;
+  --color-blu-600: #4f7cab;
+  --color-blu-700: #3b6089;
+  --color-blu-800: #2a4463;
+  --color-blu-900: #1b2c41;
+
   --font-heading: "Caprasimo", system-ui, sans-serif;
   --font-heading-weight: 400;
   --font-body: "Figtree", system-ui, sans-serif;
@@ -173,6 +187,10 @@ textarea.input { min-height: 90px; resize: vertical; }
   display: inline-flex; align-items: center; font-size: 11px;
   letter-spacing: 0.02em; padding: 3px 10px;
   border-radius: calc(var(--radius-md) * 0.75);
+  /* Dentro a una colonna flex un tag verrebbe stirato per tutta la
+     larghezza e smetterebbe di leggersi come pastiglia: una larghezza
+     definita lo esclude dallo `stretch`. Nelle righe non cambia nulla. */
+  width: fit-content;
 }
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
 .tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }

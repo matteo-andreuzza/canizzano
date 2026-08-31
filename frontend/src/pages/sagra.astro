@@ -30,6 +30,20 @@ const foto = await fotoDi('sagra');
 const meta = Math.ceil(giornate.length / 2);
 const colonne = [giornate.slice(0, meta), giornate.slice(meta)];
 
+// Quando finisce la sagra non e' un'impostazione: e' l'ultima giornata del
+// programma. Serve al conto alla rovescia, che nei dieci giorni di festa
+// smette di contare e dice «il tendone e' aperto».
+const ultimaGiornata = giornate.at(-1)?.giornata.data;
+const fineSagra = ultimaGiornata ? `${ultimaGiornata}T23:59:00` : null;
+
+// L'inizio e' quello scritto in redazione; se il campo e' vuoto lo ricaviamo
+// dalla prima giornata del programma (le 19.00, quando aprono gli stand).
+// Senza questo ripiego il conto alla rovescia semplicemente non compariva
+// finche' qualcuno non compilava «data inizio sagra» nell'admin.
+const primaGiornata = giornate.at(0)?.giornata.data;
+const inizioSagra =
+  config.data_inizio_sagra || (primaGiornata ? `${primaGiornata}T19:00:00` : null);
+
 const INFO = [
   { etichetta: 'Dove', valore: 'Via Canizzano 110' },
   { etichetta: 'Cucina', valore: 'dalle 19.00' },
@@ -113,7 +127,7 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
         </div>
         <div class="riga riga--bottoni">
           <Bottone href="#prenota" variante="chiaro">Prenota la cena</Bottone>
-          <Bottone href="#programma" variante="ghost" class="apertura__ghost">
+          <Bottone href="#programma" variante="contorno-chiaro">
             Programma completo
           </Bottone>
         </div>
@@ -121,8 +135,8 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
 
       <div class="apertura__lato">
         {
-          config.mostra_conto_rovescia && config.data_inizio_sagra && (
-            <ContoRovescia dataInizio={config.data_inizio_sagra} />
+          config.mostra_conto_rovescia && inizioSagra && (
+            <ContoRovescia dataInizio={inizioSagra} dataFine={fineSagra} />
           )
         }
         <Foto
@@ -284,7 +298,7 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
         <Etichetta tono="accent-2" class="arrivare__tag">Come arrivare</Etichetta>
         <h2 class="arrivare__titolo">Via Canizzano 110, Treviso</h2>
         <p class="arrivare__testo">
-          Il tendone è sul piazzale accanto alla chiesa. Parcheggio nel campo dietro il patronato,
+          Il tendone è sul piazzale accanto alla chiesa. Parcheggio nel campo dietro il oratorio,
           con i volontari a indirizzare le auto. Dal centro di Treviso dieci minuti passando per
           Ponte Ottavi; in bici lungo l’argine del Sile.
         </p>
@@ -388,8 +402,6 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
   .apertura__date { display: flex; align-items: baseline; gap: 14px; }
   .apertura__periodo { font-family: var(--font-heading); font-size: 46px; line-height: 1; }
   .apertura__anno { font-size: 20px; font-weight: 700; color: var(--color-accent-200); }
-  .apertura__ghost { color: #fff2eb; border: 1px solid rgba(255, 242, 235, 0.5); }
-  .apertura__ghost:hover { background: rgba(255, 242, 235, 0.14); color: #fff2eb; }
   .apertura__lato { display: flex; flex-direction: column; gap: 18px; }
 
   /* — programma — */
