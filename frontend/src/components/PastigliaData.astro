@@ -1,0 +1,51 @@
+---
+/**
+ * Il «francobollo» circolare della data: numero del giorno sopra, mese
+ * abbreviato sotto. Ricorre nelle card evento della home e nelle
+ * intestazioni delle giornate del programma della sagra.
+ */
+import { francobollo } from '../lib/date.ts';
+
+interface Props {
+  inizio: string;
+  tono?: 'accent' | 'accent-2' | 'accent-pieno' | 'accent-2-pieno';
+  dimensione?: number;
+}
+
+const { inizio, tono = 'accent', dimensione = 62 } = Astro.props;
+const { giorno, mese } = francobollo(inizio);
+
+const TONI: Record<string, [string, string]> = {
+  accent: ['var(--color-accent-200)', 'var(--color-accent-800)'],
+  'accent-2': ['var(--color-accent-2-200)', 'var(--color-accent-2-800)'],
+  'accent-pieno': ['var(--color-accent)', '#fff2eb'],
+  'accent-2-pieno': ['var(--color-accent-2-600)', '#f0fae1'],
+};
+const [sfondo, inchiostro] = TONI[tono] ?? TONI.accent;
+---
+
+<div
+  class="pastiglia"
+  style={`width:${dimensione}px;height:${dimensione}px;background:${sfondo};color:${inchiostro}`}
+>
+  <strong>{giorno}</strong>
+  <span>{mese}</span>
+</div>
+
+<style>
+  .pastiglia {
+    flex: none;
+    border-radius: 999px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .pastiglia strong { font-family: var(--font-heading); font-size: 22px; line-height: 1; font-weight: 400; }
+  .pastiglia span {
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+</style>

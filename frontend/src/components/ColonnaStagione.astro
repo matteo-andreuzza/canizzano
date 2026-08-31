@@ -1,0 +1,51 @@
+---
+/**
+ * Una delle quattro colonne del calendario annuale: intestazione con
+ * l'icona della stagione e sotto le card degli appuntamenti dal CMS.
+ */
+import DiscoIcona from './DiscoIcona.astro';
+import SchedaCalendario from './SchedaCalendario.astro';
+import type { NomeIcona } from './Icona.astro';
+import type { Evento } from '../lib/contenuti.ts';
+
+interface Props {
+  nome: string;
+  icona: NomeIcona;
+  tono: string;
+  eventi: Evento[];
+  /** Rotte interne per gli eventi che rimandano a un'altra pagina. */
+  rotte?: Record<string, { href: string; etichetta: string }>;
+}
+const { nome, icona, tono, eventi, rotte = {} } = Astro.props;
+---
+
+<div class="stagione">
+  <div class="stagione__testa">
+    <DiscoIcona icona={icona} tono={tono} dimensione={44} />
+    <h3>{nome}</h3>
+  </div>
+  {
+    eventi.map((evento) => (
+      <SchedaCalendario
+        evento={evento}
+        href={rotte[evento.slug]?.href}
+        etichettaLink={rotte[evento.slug]?.etichetta}
+      />
+    ))
+  }
+  {eventi.length === 0 && <p class="stagione__vuota">Ancora niente in calendario.</p>}
+</div>
+
+<style>
+  .stagione { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
+  .stagione__testa { display: flex; align-items: center; gap: 12px; }
+  .stagione__testa h3 { font-size: 25px; margin: 0; }
+  .stagione__vuota {
+    font-size: 14px;
+    color: var(--color-neutral-600);
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 18px 22px;
+    margin: 0;
+  }
+</style>

@@ -1,0 +1,63 @@
+---
+/**
+ * La card piccola con disco, titolo e testo: «E poi tutto il resto
+ * dell'anno», «Sotto il tendone», «Acqua, macine, campi».
+ */
+import DiscoIcona from './DiscoIcona.astro';
+import type { NomeIcona } from './Icona.astro';
+
+interface Props {
+  titolo: string;
+  testo: string;
+  icona: NomeIcona;
+  tono?: string;
+  sfondo?: string;
+  inchiostro?: string;
+  dimensioneDisco?: number;
+  dimensioneTitolo?: number;
+  /** Il registro giocoso del Grest inclina le card di un paio di gradi. */
+  rotazione?: number;
+  ombra?: 'sm' | 'md' | 'lg';
+}
+const {
+  titolo,
+  testo,
+  icona,
+  tono = 'accent-2-200',
+  sfondo = 'var(--color-neutral-100)',
+  inchiostro,
+  dimensioneDisco = 46,
+  dimensioneTitolo = 22,
+  rotazione,
+  ombra,
+} = Astro.props;
+
+const stile = [
+  `background:${sfondo}`,
+  inchiostro ? `color:${inchiostro}` : '',
+  rotazione ? `transform:rotate(${rotazione}deg)` : '',
+  ombra ? `box-shadow:var(--shadow-${ombra})` : '',
+]
+  .filter(Boolean)
+  .join(';');
+---
+
+<div class={`nota ${inchiostro ? 'nota--tinta' : ''}`.trim()} style={stile}>
+  <DiscoIcona icona={icona} tono={tono} dimensione={dimensioneDisco} />
+  <span class="nota__titolo" style={`font-size:${dimensioneTitolo}px`}>{titolo}</span>
+  <p class="nota__testo">{testo}</p>
+</div>
+
+<style>
+  .nota {
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .nota__titolo { font-family: var(--font-heading); line-height: 1.05; }
+  .nota__testo { font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-800); margin: 0; }
+  /* Sulle card colorate il testo segue l'inchiostro della card. */
+  .nota--tinta .nota__testo { color: inherit; opacity: 0.92; }
+</style>

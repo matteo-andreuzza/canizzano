@@ -1,0 +1,10 @@
+---
+/** La pastiglia `.tag` del sistema, nelle sue quattro tinte. */
+interface Props {
+  tono?: 'accent' | 'accent-2' | 'neutral' | 'outline';
+  class?: string;
+}
+const { tono = 'accent', class: classe = '' } = Astro.props;
+---
+
+<span class={`tag tag-${tono} ${classe}`.trim()}><slot /></span>

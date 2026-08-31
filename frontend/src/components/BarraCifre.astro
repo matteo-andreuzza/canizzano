@@ -1,0 +1,65 @@
+---
+/**
+ * La card di numeri che «sale» sopra la fascia dell'hero (`translateY`),
+ * usata dalla Pro Loco e dalla sagra.
+ */
+import Cifra from './Cifra.astro';
+
+interface Props {
+  voci: { valore: string; etichetta: string }[];
+  colore?: string;
+  scostamento?: number;
+  /**
+   * `cifra` — numero grande in Caprasimo sopra l'etichetta (Pro Loco).
+   * `dato`  — etichetta maiuscola sopra il valore in grassetto (sagra).
+   */
+  variante?: 'cifra' | 'dato';
+}
+const {
+  voci,
+  colore = 'var(--color-accent-2-700)',
+  scostamento = 34,
+  variante = 'cifra',
+} = Astro.props;
+---
+
+<div class="contenitore">
+  <div class="barra" style={`transform:translateY(-${scostamento}px)`}>
+    {
+      voci.map((voce) =>
+        variante === 'cifra' ? (
+          <Cifra valore={voce.valore} etichetta={voce.etichetta} colore={colore} />
+        ) : (
+          <div class="dato">
+            <span class="dato__etichetta">{voce.etichetta}</span>
+            <strong class="dato__valore">{voce.valore}</strong>
+          </div>
+        ),
+      )
+    }
+  </div>
+</div>
+
+<style>
+  .barra {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 28px 40px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 26px;
+  }
+  .dato { display: flex; flex-direction: column; gap: 4px; }
+  .dato__etichetta {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+  .dato__valore { font-size: 16px; }
+
+  @media (max-width: 900px) { .barra { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .barra { grid-template-columns: 1fr; padding: 24px; } }
+</style>

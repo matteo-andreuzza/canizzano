@@ -1,0 +1,58 @@
+---
+/**
+ * L'icona dentro il disco colorato: ricorre in home, nelle card della Pro
+ * Loco, nel programma della sagra e nelle card del Grest.
+ *
+ * Il tono arriva dal CMS come nome di token; qui viene tradotto in coppia
+ * sfondo/inchiostro, scegliendo un inchiostro leggibile su quel fondo.
+ */
+import Icona from './Icona.astro';
+import type { NomeIcona } from './Icona.astro';
+
+interface Props {
+  icona: NomeIcona;
+  tono?: string;
+  dimensione?: number;
+  class?: string;
+}
+
+const { icona, tono = 'accent-2-700', dimensione = 56, class: classe = '' } = Astro.props;
+
+/** sfondo + inchiostro per ogni token usato dal design. */
+const TONI: Record<string, [string, string]> = {
+  accent: ['var(--color-accent)', '#fff2eb'],
+  'accent-100': ['var(--color-accent-100)', 'var(--color-accent-800)'],
+  'accent-200': ['var(--color-accent-200)', '#8c491a'],
+  'accent-300': ['var(--color-accent-300)', '#643312'],
+  'accent-400': ['var(--color-accent-400)', '#402310'],
+  'accent-600': ['var(--color-accent-600)', '#fff2eb'],
+  'accent-700': ['var(--color-accent-700)', '#fff2eb'],
+  'accent-2-100': ['var(--color-accent-2-100)', 'var(--color-accent-2-800)'],
+  'accent-2-200': ['var(--color-accent-2-200)', 'var(--color-accent-2-800)'],
+  'accent-2-500': ['var(--color-accent-2-500)', '#272e1b'],
+  'accent-2-600': ['var(--color-accent-2-600)', '#f0fae1'],
+  'accent-2-700': ['var(--color-accent-2-700)', '#f0fae1'],
+  'neutral-100': ['var(--color-neutral-100)', 'var(--color-neutral-800)'],
+  'neutral-700': ['var(--color-neutral-700)', '#f9f4ed'],
+  crema: ['#f5ead8', 'var(--color-accent-700)'],
+};
+
+const [sfondo, inchiostro] = TONI[tono] ?? TONI['accent-2-700'];
+---
+
+<span
+  class={`disco ${classe}`.trim()}
+  style={`width:${dimensione}px;height:${dimensione}px;background:${sfondo}`}
+>
+  <Icona nome={icona} dimensione={Math.round(dimensione * 0.54)} colore={inchiostro} />
+</span>
+
+<style>
+  .disco {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+  }
+</style>

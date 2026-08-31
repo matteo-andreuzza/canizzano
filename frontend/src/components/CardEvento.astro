@@ -1,0 +1,61 @@
+---
+/**
+ * La card di un appuntamento, come nella sezione «Prossimi appuntamenti».
+ *
+ * I dati arrivano dal CMS: il francobollo della data e il tag della realta'
+ * prendono la tinta dall'identita' cromatica dell'attivita'.
+ */
+import PastigliaData from './PastigliaData.astro';
+import Etichetta from './Etichetta.astro';
+import { quandoBreve } from '../lib/date.ts';
+import type { Attivita, Evento } from '../lib/contenuti.ts';
+
+interface Props {
+  evento: Evento;
+  attivita?: Attivita;
+}
+const { evento, attivita } = Astro.props;
+
+const salvia = attivita?.identita === 'salvia';
+const tonoTag = attivita ? (salvia ? 'accent-2' : attivita.identita === 'neutro' ? 'neutral' : 'accent') : 'accent';
+const tonoData = salvia ? 'accent-2' : 'accent';
+
+const luogoEora = [quandoBreve(evento), evento.dove].filter(Boolean).join(' · ');
+---
+
+<article class="evento">
+  <div class="evento__testa">
+    <PastigliaData inizio={evento.inizio} tono={tonoData} />
+    <Etichetta tono={tonoTag}>{attivita?.nome ?? evento.categoria}</Etichetta>
+  </div>
+  <div class="evento__corpo">
+    <h3>{evento.titolo}</h3>
+    {evento.sommario && <p>{evento.sommario}</p>}
+    <span class="evento__dove">{luogoEora}</span>
+    {
+      evento.link && (
+        <a class="evento__link" href={evento.link} target="_blank" rel="noopener noreferrer">
+          {evento.link_etichetta || 'Scopri di più'} →
+        </a>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .evento {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+  .evento__testa { display: flex; align-items: center; gap: 16px; }
+  .evento__corpo { display: flex; flex-direction: column; gap: 7px; }
+  .evento__corpo h3 { font-size: 21px; line-height: 1.15; margin: 0; }
+  .evento__corpo p { font-size: 14.5px; line-height: 1.55; color: var(--color-neutral-800); margin: 0; }
+  .evento__dove { font-size: 13.5px; font-weight: 600; color: var(--color-neutral-700); }
+  .evento__link { font-size: 14px; font-weight: 700; margin-top: 4px; }
+</style>

@@ -1,0 +1,32 @@
+---
+/**
+ * Una riga «voce · spiegazione» con il divisore chiaro: gli orari delle
+ * messe in home e le cose da guardare in chiesa nella pagina Storia.
+ */
+interface Props {
+  voce: string;
+  testo: string;
+  larghezzaVoce?: number;
+  divisore?: boolean;
+}
+const { voce, testo, larghezzaVoce = 160, divisore = true } = Astro.props;
+---
+
+<div class={`riga-elenco ${divisore ? 'riga-elenco--divisa' : ''}`.trim()}>
+  <strong style={`width:${larghezzaVoce}px`}>{voce}</strong>
+  <span>{testo}</span>
+</div>
+
+<style>
+  .riga-elenco { display: flex; gap: 16px; align-items: baseline; font-size: 16px; line-height: 1.6; }
+  .riga-elenco--divisa {
+    border-bottom: 1px solid rgba(240, 250, 225, 0.22);
+    padding-bottom: 12px;
+  }
+  .riga-elenco strong { flex: none; }
+  .riga-elenco span { opacity: 0.92; }
+  @media (max-width: 560px) {
+    .riga-elenco { flex-direction: column; gap: 4px; }
+    .riga-elenco strong { width: auto !important; }
+  }
+</style>

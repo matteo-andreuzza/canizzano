@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ─── canizzano.it ────────────────────────────────────────────────────────────
+# Segreti: FTP, chiave Django, password del database.
+.env
+.env.*
+!.env.example
+
+# Sito generato e artefatti di build
+/dist/
+/backup/
+frontend/node_modules/
+frontend/dist/
+frontend/.astro/
+frontend/public/media/
+
+# Media caricati dal CMS (vivono nel volume Docker)
+backend/media/
+backend/staticfiles/

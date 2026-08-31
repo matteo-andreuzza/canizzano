@@ -1,0 +1,96 @@
+---
+/**
+ * Lo scheletro di ogni pagina: testa, testata appiccicata, contenuto,
+ * footer comune. Le pagine passano solo il proprio lockup e i metadati.
+ */
+import Intestazione from '../components/Intestazione.astro';
+import PiePagina from '../components/PiePagina.astro';
+import { SITO, type ChiavePagina } from '../lib/sito.ts';
+import '../styles/organic.css';
+import '../styles/sito.css';
+
+interface Props {
+  pagina: ChiavePagina;
+  titolo: string;
+  descrizione?: string;
+  marchio?: 'base' | 'proloco' | 'sagra' | 'grest' | 'storia';
+  nomeLockup: string;
+  sottotitoloLockup: string;
+  coloreAttivo?: string;
+  /** Tinta dei link della pagina: terracotta di serie, verde sulle pagine Pro Loco. */
+  tema?: 'terracotta' | 'verde';
+}
+
+const {
+  pagina,
+  titolo,
+  descrizione = SITO.descrizione,
+  marchio = 'base',
+  nomeLockup,
+  sottotitoloLockup,
+  coloreAttivo,
+  tema = 'terracotta',
+} = Astro.props;
+
+const titoloCompleto = pagina === 'home' ? `${titolo} — ${SITO.nome}` : `${titolo} — ${SITO.titolo}`;
+const canonico = new URL(Astro.url.pathname, Astro.site ?? 'https://canizzano.it').href;
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titoloCompleto}</title>
+    <meta name="description" content={descrizione} />
+    <link rel="canonical" href={canonico} />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITO.nome} />
+    <meta property="og:title" content={titoloCompleto} />
+    <meta property="og:description" content={descrizione} />
+    <meta property="og:url" content={canonico} />
+    <meta property="og:locale" content="it_IT" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <meta name="theme-color" content="#f5ead8" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+  <body class={`tema--${tema}`}>
+    <a class="salta" href="#contenuto">Vai al contenuto</a>
+
+    <Intestazione
+      pagina={pagina}
+      marchio={marchio}
+      nome={nomeLockup}
+      sottotitolo={sottotitoloLockup}
+      coloreAttivo={coloreAttivo}
+    />
+
+    <main id="contenuto">
+      <slot />
+    </main>
+
+    <PiePagina />
+
+    <style>
+      /* Scorciatoia da tastiera: visibile solo quando riceve il fuoco. */
+      .salta {
+        position: absolute;
+        left: -9999px;
+        top: 8px;
+        z-index: 40;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: var(--color-accent);
+        color: var(--color-bg);
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .salta:focus-visible { left: 16px; }
+    </style>
+  </body>
+</html>

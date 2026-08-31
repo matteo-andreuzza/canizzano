@@ -1,0 +1,58 @@
+---
+/**
+ * Il richiamo alla sagra: fascia terracotta con occhiello, titolo e bottone.
+ *
+ * Compare in home quando la redazione accende «mostra banner sagra», e in
+ * cima alla pagina Pro Loco quando accende la «modalita' sagra» — cioe' nel
+ * periodo in cui la sagra prende il posto della landing annuale.
+ */
+import Bottone from './Bottone.astro';
+import { ROTTE } from '../lib/sito.ts';
+
+interface Props {
+  occhiello?: string;
+  titolo: string;
+  testo?: string;
+  etichettaBottone?: string;
+  href?: string;
+}
+const {
+  occhiello,
+  titolo,
+  testo,
+  etichettaBottone = 'Vai al programma',
+  href = ROTTE.sagra,
+} = Astro.props;
+---
+
+<div class="banner">
+  <div class="banner__testo">
+    {occhiello && <span class="occhiello banner__occhiello">{occhiello}</span>}
+    <h2>{titolo}</h2>
+    {testo && <p>{testo}</p>}
+  </div>
+  <Bottone href={href} variante="chiaro">{etichettaBottone}</Bottone>
+</div>
+
+<style>
+  .banner {
+    background: var(--color-accent);
+    border-radius: var(--radius-lg);
+    padding: 34px 40px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 26px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-md);
+  }
+  .banner__testo { display: flex; flex-direction: column; gap: 8px; color: #fff2eb; }
+  .banner__occhiello { color: var(--color-accent-200); }
+  .banner h2 { font-size: 40px; line-height: 1.02; margin: 0; }
+  .banner p { font-size: 16px; opacity: 0.92; margin: 0; }
+
+  @media (max-width: 900px) {
+    .banner { padding: 28px; }
+    .banner h2 { font-size: 30px; }
+  }
+</style>

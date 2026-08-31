@@ -1,0 +1,411 @@
+---
+/**
+ * Storia di Canizzano — la pagina di approfondimento linkata dalla home.
+ *
+ * Le date della chiesa vengono dal sito della parrocchia e dalle schede
+ * del Parco del Sile; il resto e' memoria del quartiere, ed e' scritto
+ * per essere corretto da chi ne sa di piu'.
+ */
+import Base from '../layouts/Base.astro';
+import Sezione from '../components/Sezione.astro';
+import Fascia from '../components/Fascia.astro';
+import TestataSezione from '../components/TestataSezione.astro';
+import VoceTempo from '../components/VoceTempo.astro';
+import RigaElenco from '../components/RigaElenco.astro';
+import SchedaNota from '../components/SchedaNota.astro';
+import BarraCifre from '../components/BarraCifre.astro';
+import Bottone from '../components/Bottone.astro';
+import Etichetta from '../components/Etichetta.astro';
+import Foto from '../components/Foto.astro';
+import { CONTATTI, ROTTE } from '../lib/sito.ts';
+import { fotoDi } from '../lib/contenuti.ts';
+
+const foto = await fotoDi('storia');
+
+const STORIA_PARROCCHIA =
+  'https://www.parrocchiacanizzano.it/storia-della-parrocchia-di-canizzano-treviso/';
+const SCHEDA_SILE = 'https://www.parcosile.it/pagina.php?id=57';
+
+const CIFRE = [
+  { valore: 'cannetum', etichetta: 'il canneto: da qui il nome' },
+  { valore: '1456', etichetta: 'gli affreschi ritrovati in chiesa' },
+  { valore: '1758', etichetta: 'il grande restauro neoclassico' },
+  { valore: "anni '50", etichetta: 'la palude bonificata, nasce il campo' },
+];
+
+const TEMPO = [
+  {
+    periodo: 'Prima del nome',
+    titolo: 'Acqua ferma e canne',
+    testo:
+      'La riva destra del Sile è terra bassa: risorgive, acquitrini, canneti fitti. Il nome Canizzano nasce proprio da lì — dai canneti delle paludi del fiume — e resta anche quando le canne spariscono.',
+  },
+  {
+    periodo: 'Medioevo',
+    titolo: 'Una cappella che dipende da Quinto',
+    testo:
+      'Prima di diventare parrocchia, la chiesa di Canizzano è una cappella del coraepiscopato di Quinto. Attorno si aggregano poi i colmelli del Dom, di San Vitale e parte di Mure: il quartiere di oggi è la somma di quei pezzi di campagna.',
+  },
+  {
+    periodo: 'XV secolo',
+    titolo: 'Si costruisce la parrocchiale',
+    testo:
+      'Secondo Luigi Coletti l’attuale chiesa della Visitazione è originaria del Quattrocento, allora molto più piccola di adesso. Nel Cinquecento si aggiunge la cappella del battistero.',
+  },
+  {
+    periodo: '1758',
+    titolo: 'Il restauro che cambia la faccia alla chiesa',
+    testo:
+      'Un intervento radicale dà all’edificio l’aspetto neoclassico che ha ancora oggi. Gli affreschi antichi vengono sbiancati: torneranno alla luce solo nel Novecento.',
+  },
+  {
+    periodo: 'Ottocento',
+    titolo: 'Il «Principato di Canizzano»',
+    testo:
+      'Il soprannome ironico con cui in città si prende in giro l’orgoglio del paese — e con cui qui ci si prende in giro volentieri da soli. La storia amministrativa dietro il modo di dire è ancora da ricostruire per bene: se hai documenti, ci servono.',
+    salvia: true,
+    nota: 'da verificare in archivio',
+  },
+  {
+    periodo: '1927',
+    titolo: 'Arriva l’organo',
+    testo:
+      'Sulla cantoria viene montato un organo Mascioni, chiuso in una cassa di legno scuro intagliato disegnata da Antonio Beni: la mostra è fatta di tre cuspidi di canne. Le canne, ancora una volta.',
+  },
+  {
+    periodo: "Anni '50",
+    titolo: 'La palude diventa campo da calcio',
+    testo:
+      'La palude accanto alla chiesa viene bonificata a più riprese per ricavare lo spazio del campo di calcio della parrocchia. Dove c’era l’acqua ferma, da settant’anni si gioca.',
+    salvia: true,
+  },
+  {
+    periodo: '1995',
+    titolo: 'Tornano alla luce gli affreschi del 1456',
+    testo:
+      'Il recupero riporta a vista parte delle pitture quattrocentesche sbiancate nel Settecento: secondo i documenti antichi sono opera di Sebastiano da Faenza e Pasqualino Franco da Venezia.',
+  },
+  {
+    periodo: 'Oggi',
+    titolo: 'Un quartiere che si sente paese',
+    testo:
+      'Canizzano è periferia ovest di Treviso, al confine con Quinto, dentro il Parco del Sile. Ma ha la sua chiesa, il suo campo, la sua sagra e la sua Pro Loco: le cose che rendono un posto un paese.',
+    salvia: true,
+    ultima: true,
+  },
+];
+
+const IN_CHIESA = [
+  ['Gli affreschi', 'Quattrocenteschi, datati 1456, recuperati nel 1995.'],
+  ['La Visitazione', 'Tela settecentesca di autore ignoto, sopra l’altare.'],
+  [
+    'La Vergine della Maternità',
+    'Volto e mani in legno laccato: una devozione di antica origine, ancora molto sentita.',
+  ],
+  ['L’organo Mascioni', 'Del 1927, in cantoria, con la mostra a tre cuspidi di canne.'],
+];
+
+const ACQUA = [
+  {
+    titolo: 'Il villaggio dei mulini',
+    icona: 'mulino' as const,
+    tono: 'accent-200',
+    testo:
+      'Acqua costante e corrente veloce: le condizioni giuste per macinare. Per secoli il lavoro del posto è girato attorno alle ruote sul fiume.',
+  },
+  {
+    titolo: 'Il Parco del Sile',
+    icona: 'fiume' as const,
+    tono: 'accent-2-200',
+    testo:
+      'Oggi la stessa acqua è parco: argini, piste ciclabili, la campagna verso Quinto e i capanni dei pescatori. Ci passa la camminata della Pro Loco.',
+  },
+  {
+    titolo: 'Il campo dietro l’abside',
+    icona: 'pallone' as const,
+    tono: 'accent-300',
+    testo:
+      'Bonificato a partire dagli anni Cinquanta per darlo alla parrocchia. È lo stesso prato dove oggi si monta il tendone della sagra.',
+  },
+];
+---
+
+<Base
+  pagina="storia"
+  titolo="Storia di Canizzano"
+  descrizione="Dalle paludi del Sile a oggi: il nome, la chiesa della Visitazione, i mulini e il campo dietro l'abside. La storia del quartiere di Canizzano, Treviso."
+  marchio="storia"
+  nomeLockup="Storia di Canizzano"
+  sottotitoloLockup="dalle paludi a oggi"
+>
+  <!-- Hero -->
+  <Sezione stacco="primo">
+    <div class="apertura">
+      <div class="apertura__testo">
+        <Etichetta tono="accent-2" class="apertura__tag">
+          Il quartiere, da prima delle case
+        </Etichetta>
+        <h1 class="apertura__titolo">Storia di<br />Canizzano</h1>
+        <p class="apertura__occhiello">
+          Il nome viene dai canneti che crescevano nelle paludi del Sile. Prima dell’asfalto
+          c’erano l’acqua, le macine e una cappella che dipendeva da Quinto: quasi tutto quello che
+          siamo oggi passa da lì.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone href="#tempo">Vai alla linea del tempo</Bottone>
+          <Bottone href="#archivio" variante="secondario">Cerchiamo foto d’archivio</Bottone>
+        </div>
+      </div>
+      <div class="apertura__foto">
+        <Foto
+          src={foto[0]?.immagine}
+          alt={foto[0]?.testo_alternativo ?? 'Foto d’archivio di Canizzano'}
+          attesa="Foto d’archivio: il Sile, un mulino, la chiesa"
+          altezza={420}
+          ombra="md"
+        />
+        <span class="apertura__bollo" aria-hidden="true"></span>
+      </div>
+    </div>
+  </Sezione>
+
+  <div class="barra-storia">
+    <BarraCifre voci={CIFRE} colore="var(--color-accent-700)" scostamento={0} />
+  </div>
+
+  <!-- Linea del tempo -->
+  <Sezione id="tempo" stacco="corto">
+    <div class="pila" style="gap:32px">
+      <div class="pila" style="gap:12px">
+        <Etichetta tono="accent" class="apertura__tag">Linea del tempo</Etichetta>
+        <h2 class="titolo-sezione">Dalle paludi al quartiere</h2>
+      </div>
+      <div class="tempo">
+        {
+          TEMPO.map((voce) => (
+            <VoceTempo
+              periodo={voce.periodo}
+              titolo={voce.titolo}
+              testo={voce.testo}
+              salvia={voce.salvia}
+              nota={voce.nota}
+              ultima={voce.ultima}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- La chiesa -->
+  <Fascia id="chiesa">
+    <div class="chiesa">
+      <div class="pila" style="gap:22px">
+        <span class="occhiello" style="color:var(--color-accent-300)">
+          La chiesa della Visitazione
+        </span>
+        <h2 class="chiesa__titolo">Quattro cose da guardare, quando entri</h2>
+        <div class="pila" style="gap:14px">
+          {
+            IN_CHIESA.map(([voce, testo], indice) => (
+              <RigaElenco voce={voce} testo={testo} divisore={indice < IN_CHIESA.length - 1} />
+            ))
+          }
+        </div>
+        <Bottone
+          href={STORIA_PARROCCHIA}
+          variante="chiaro"
+          esterno
+          sfondo="var(--color-accent-2-100)"
+          inchiostro="var(--color-accent-2-800)"
+          class="chiesa__bottone"
+        >
+          La storia sul sito della parrocchia
+        </Bottone>
+      </div>
+      <div class="pila" style="gap:16px">
+        <Foto
+          src={foto[1]?.immagine}
+          alt={foto[1]?.testo_alternativo ?? ''}
+          attesa="Interno della chiesa o gli affreschi"
+          altezza={260}
+        />
+        <Foto
+          src={foto[2]?.immagine}
+          alt={foto[2]?.testo_alternativo ?? ''}
+          attesa="L’organo Mascioni in cantoria"
+          altezza={180}
+        />
+      </div>
+    </div>
+  </Fascia>
+
+  <!-- Acqua, macine, campi -->
+  <Sezione id="mulini">
+    <div class="pila" style="gap:30px">
+      <TestataSezione
+        titolo="Quello che il Sile ha fatto qui"
+        tag="Acqua, macine, campi"
+        tonoTag="accent-2"
+        testo="Il fiume è il motivo per cui Canizzano esiste dov’è: dà la forza alle macine, l’acqua ai campi e — per secoli — anche i guai delle piene."
+      />
+      <div class="griglia griglia--3">
+        {
+          ACQUA.map((voce) => (
+            <SchedaNota
+              titolo={voce.titolo}
+              testo={voce.testo}
+              icona={voce.icona}
+              tono={voce.tono}
+              sfondo="var(--color-surface)"
+              dimensioneDisco={52}
+              dimensioneTitolo={26}
+            />
+          ))
+        }
+      </div>
+      <div class="mulini__foto">
+        <Foto
+          src={foto[3]?.immagine}
+          alt={foto[3]?.testo_alternativo ?? ''}
+          attesa="Il Sile e i canneti"
+          altezza={320}
+        />
+        <Foto
+          src={foto[4]?.immagine}
+          alt={foto[4]?.testo_alternativo ?? ''}
+          attesa="Un vecchio mulino / foto d’archivio"
+          altezza={320}
+        />
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Archivio -->
+  <Sezione id="archivio">
+    <div class="archivio">
+      <span class="archivio__bolla" aria-hidden="true"></span>
+      <div class="archivio__testo">
+        <span class="occhiello" style="color:var(--color-accent-200)">Archivio del quartiere</span>
+        <h2 class="archivio__titolo">Le foto vecchie sono nei vostri cassetti</h2>
+        <p class="archivio__paragrafo">
+          Mulini, campi, processioni, sagre degli anni Settanta, squadre di calcio in posa. Portale
+          in sala NOI durante l’assemblea: le scansioniamo in mezz’ora e te le riporti a casa lo
+          stesso giorno.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone href={`mailto:${CONTATTI.proLocoEmail}`} variante="chiaro" sfondo="#fff2eb">
+            Scrivi alla Pro Loco
+          </Bottone>
+          <Bottone href={ROTTE.proloco} variante="ghost" class="archivio__ghost">
+            Quando ci troviamo
+          </Bottone>
+        </div>
+      </div>
+      <Foto
+        class="archivio__foto"
+        src={foto[5]?.immagine}
+        alt={foto[5]?.testo_alternativo ?? ''}
+        attesa="Una foto d’epoca del quartiere"
+        altezza={240}
+      />
+    </div>
+  </Sezione>
+
+  <!-- Fonti -->
+  <Sezione stacco="corto">
+    <div class="pila" style="gap:16px">
+      <span class="fonti__occhiello">Da dove vengono queste notizie</span>
+      <p class="fonti__testo">
+        Le date della chiesa e degli affreschi vengono dal
+        <a href={STORIA_PARROCCHIA} target="_blank" rel="noopener noreferrer">
+          sito della parrocchia
+        </a>
+        e dalle schede del
+        <a href={SCHEDA_SILE} target="_blank" rel="noopener noreferrer">
+          Parco Naturale del Fiume Sile
+        </a>. Il resto è memoria del quartiere: se qualcosa è impreciso,
+        <a href={`mailto:${CONTATTI.email}`}>diccelo</a> e lo correggiamo — questa pagina è fatta
+        per crescere.
+      </p>
+    </div>
+  </Sezione>
+</Base>
+
+<style>
+  /* — hero — */
+  .apertura { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 52px; align-items: center; }
+  .apertura__testo { display: flex; flex-direction: column; gap: 24px; }
+  .apertura__tag { align-self: flex-start; }
+  .apertura__titolo { font-size: 72px; line-height: 0.97; margin: 0; }
+  .apertura__occhiello {
+    font-size: 19px; line-height: 1.6; max-width: 46ch;
+    color: var(--color-neutral-800); margin: 0;
+  }
+  .apertura__foto { position: relative; }
+  .apertura__bollo {
+    position: absolute;
+    left: -26px; bottom: -26px; width: 140px; height: 140px;
+    border-radius: 999px;
+    background: var(--color-accent-2-300);
+    z-index: -1;
+  }
+
+  /* La barra dati qui non «sale»: sta nel flusso, sotto l'hero. */
+  .barra-storia { margin-top: 60px; }
+
+  /* — linea del tempo — */
+  .tempo { display: flex; flex-direction: column; }
+
+  /* — fascia chiesa — */
+  .chiesa { display: grid; grid-template-columns: 1fr 0.9fr; gap: 52px; align-items: center; }
+  .chiesa__titolo { font-size: 44px; line-height: 1.02; margin: 0; }
+  .chiesa__bottone { align-self: flex-start; }
+
+  /* — mulini — */
+  .mulini__foto { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+
+  /* — archivio — */
+  .archivio {
+    background: var(--color-accent);
+    color: #fff2eb;
+    border-radius: var(--radius-lg);
+    padding: 46px 48px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 46px;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+  }
+  .archivio__bolla {
+    position: absolute;
+    right: -140px; top: -160px; width: 400px; height: 400px;
+    border-radius: 999px;
+    background: var(--color-accent-400);
+    opacity: 0.45;
+  }
+  .archivio__testo { display: flex; flex-direction: column; gap: 18px; position: relative; }
+  .archivio__titolo { font-size: 42px; line-height: 1.02; margin: 0; }
+  .archivio__paragrafo { font-size: 16.5px; line-height: 1.6; max-width: 52ch; opacity: 0.94; margin: 0; }
+  .archivio__ghost { color: #fff2eb; border: 1px solid rgba(255, 242, 235, 0.5); }
+  .archivio__ghost:hover { background: rgba(255, 242, 235, 0.16); color: #fff2eb; }
+  .archivio__foto { position: relative; }
+
+  /* — fonti — */
+  .fonti__occhiello {
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--color-neutral-700);
+  }
+  .fonti__testo { font-size: 15px; line-height: 1.7; max-width: 78ch; color: var(--color-neutral-800); margin: 0; }
+
+  @media (max-width: 900px) {
+    .apertura, .chiesa, .archivio, .mulini__foto { grid-template-columns: 1fr; gap: 34px; }
+    .apertura__titolo { font-size: 48px; }
+    .apertura__bollo { display: none; }
+    .chiesa__titolo, .archivio__titolo { font-size: 32px; }
+    .archivio { padding: 34px 30px; }
+    .mulini__foto { gap: 20px; }
+  }
+</style>

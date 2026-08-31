@@ -1,0 +1,53 @@
+---
+/**
+ * Il blocco di chiusura con titolo, testo e bottoni: ricorre in fondo a
+ * quasi tutte le pagine («Organizzi qualcosa?», «Vuoi fare l'animatore?»).
+ */
+interface Props {
+  titolo: string;
+  testo?: string;
+  sfondo?: string;
+  inchiostro?: string;
+  occhiello?: string;
+  coloreOcchiello?: string;
+}
+const {
+  titolo,
+  testo,
+  sfondo = 'var(--color-neutral-100)',
+  inchiostro,
+  occhiello,
+  coloreOcchiello = 'var(--color-accent-200)',
+} = Astro.props;
+---
+
+<div
+  class="azione"
+  style={`background:${sfondo}${inchiostro ? `;color:${inchiostro}` : ''}`}
+>
+  <div class="azione__testo">
+    {occhiello && <span class="occhiello" style={`color:${coloreOcchiello}`}>{occhiello}</span>}
+    <h2>{titolo}</h2>
+    {testo && <p>{testo}</p>}
+  </div>
+  <div class="riga riga--bottoni azione__bottoni">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .azione {
+    border-radius: var(--radius-lg);
+    padding: 44px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-sm);
+  }
+  .azione__testo { display: flex; flex-direction: column; gap: 10px; max-width: 52ch; }
+  .azione__testo h2 { font-size: 32px; line-height: 1.06; margin: 0; }
+  .azione__testo p { font-size: 16px; line-height: 1.6; margin: 0; opacity: 0.92; }
+  @media (max-width: 700px) { .azione { padding: 30px; } }
+</style>

@@ -1,0 +1,481 @@
+---
+/**
+ * Pro Loco tutto l'anno — la landing dell'associazione fuori dal periodo
+ * della sagra. Identita' verde: la terracotta compare solo per rimandare
+ * a «Canizzano in Festa».
+ *
+ * Il calendario stagionale e la raccolta foto sono sezioni dinamiche:
+ * arrivano dal CMS e si aggiornano al build successivo.
+ */
+import Base from '../layouts/Base.astro';
+import Sezione from '../components/Sezione.astro';
+import Fascia from '../components/Fascia.astro';
+import TestataSezione from '../components/TestataSezione.astro';
+import SchedaRitratto from '../components/SchedaRitratto.astro';
+import ColonnaStagione from '../components/ColonnaStagione.astro';
+import SchedaNota from '../components/SchedaNota.astro';
+import MosaicoFoto from '../components/MosaicoFoto.astro';
+import BarraCifre from '../components/BarraCifre.astro';
+import BannerSagra from '../components/BannerSagra.astro';
+import Bottone from '../components/Bottone.astro';
+import Etichetta from '../components/Etichetta.astro';
+import Foto from '../components/Foto.astro';
+import { CONTATTI, ROTTE } from '../lib/sito.ts';
+import { eventiDi, fotoDi, impostazioni, perStagione } from '../lib/contenuti.ts';
+
+const config = await impostazioni();
+const eventi = await eventiDi('pro-loco-cannetum');
+const stagioni = perStagione(eventi);
+const eventiSagra = await eventiDi('sagra');
+const foto = await fotoDi('proloco');
+
+// Le voci del calendario che rimandano a un'altra pagina del sito.
+const ROTTE_EVENTI: Record<string, { href: string; etichetta: string }> = {};
+const apertura = eventiSagra.find((evento) => evento.risalto === false);
+if (apertura) ROTTE_EVENTI[apertura.slug] = { href: ROTTE.sagra, etichetta: 'vai al programma' };
+
+const CIFRE = [
+  { valore: '12', etichetta: 'appuntamenti in un anno' },
+  { valore: '80+', etichetta: 'volontari sotto il tendone' },
+  { valore: '10 €', etichetta: 'la tessera di socio, un anno' },
+  { valore: '1° mar', etichetta: 'assemblea aperta, in sala NOI' },
+];
+
+const STAGIONI = [
+  { chiave: 'inverno', nome: 'Inverno', icona: 'stella', tono: 'neutral-100' },
+  { chiave: 'primavera', nome: 'Primavera', icona: 'foglia', tono: 'accent-2-300' },
+  { chiave: 'estate', nome: 'Estate', icona: 'fiume', tono: 'accent-300' },
+  { chiave: 'autunno', nome: 'Autunno', icona: 'fuoco', tono: 'accent-200' },
+] as const;
+
+const TRE_GRANDI = [
+  {
+    titolo: 'Sportizzando',
+    etichetta: 'primavera',
+    tonoEtichetta: 'accent-2' as const,
+    icona: 'pallone' as const,
+    tonoIcona: 'accent-2-600',
+    attesaFoto: 'Foto di Sportizzando',
+    testo:
+      'Un pomeriggio in cui il campo e il piazzale diventano un unico grande gioco: prove libere di calcio, pallavolo, corsa e giochi di una volta, con le società sportive del quartiere a far provare tutti. Merenda per i bambini, banco della Pro Loco per i grandi.',
+    righe: [
+      ['Quando', 'un sabato di maggio, dalle 15.00'],
+      ['Dove', 'campo e piazzale della chiesa'],
+      ['Per chi', 'dai 4 anni in su, ingresso libero'],
+    ] as [string, string][],
+  },
+  {
+    titolo: 'Ama il tuo quartiere',
+    etichetta: 'da aprile a settembre',
+    tonoEtichetta: 'outline' as const,
+    icona: 'foglia' as const,
+    tonoIcona: 'accent-2-300',
+    attesaFoto: 'Un giardino o balcone fiorito',
+    testo:
+      'Il concorso per chi tiene bello Canizzano: giardini, balconi, davanzali e angoli di strada curati. Si partecipa con una foto, la giuria gira il quartiere in bicicletta a fine estate e la premiazione si fa sotto il tendone della sagra.',
+    righe: [
+      ['Iscrizioni', 'entro fine aprile, gratuite'],
+      ['Categorie', 'balconi, giardini, angoli comuni'],
+      ['Premi', 'targa e piante offerte dai vivai'],
+    ] as [string, string][],
+  },
+  {
+    titolo: 'Processo alla Vecchia',
+    etichetta: 'metà quaresima',
+    tonoEtichetta: 'accent' as const,
+    icona: 'fuoco' as const,
+    tonoIcona: 'accent',
+    attesaFoto: 'Il falò del Processo alla Vecchia',
+    testo:
+      'La tradizione trevigiana come si fa qui: il fantoccio della Vecchia in mezzo al prato, il processo recitato in dialetto con accuse, testimoni e sentenza, e alla fine il falò. Vin brulè, frittelle e tutto il quartiere intorno al fuoco.',
+    righe: [
+      ['Quando', 'sabato di metà quaresima, ore 20.30'],
+      ['Dove', 'prato dietro il patronato'],
+      ['Da portare', 'sciarpa e voce per le accuse'],
+    ] as [string, string][],
+  },
+];
+
+const RESTO = [
+  {
+    titolo: 'La sala per le feste',
+    icona: 'casa' as const,
+    testo:
+      'Compleanni, battesimi, riunioni di condominio: la sala NOI si chiede alla Pro Loco.',
+  },
+  {
+    titolo: 'La memoria del quartiere',
+    icona: 'libro' as const,
+    testo:
+      'Raccogliamo foto e racconti dei mulini e delle vecchie sagre. Le scansioniamo e te le restituiamo.',
+  },
+  {
+    titolo: 'Gite e trasferte',
+    icona: 'bici' as const,
+    testo:
+      "Un pullman all'anno: mercatini, santuari, una città. Iscrizioni al bar del patronato.",
+  },
+  {
+    titolo: 'Assemblea aperta',
+    icona: 'persone' as const,
+    testo: 'Primo martedì del mese alle 21.00 in sala NOI. Si può venire solo ad ascoltare.',
+  },
+];
+---
+
+<Base
+  pagina="proloco"
+  tema="verde"
+  titolo="Pro Loco Cannetum, tutto l'anno"
+  descrizione="La Pro Loco di Canizzano: Sportizzando, il Processo alla Vecchia, «Ama il tuo quartiere», le camminate lungo il Sile e la sagra d'ottobre."
+  marchio="proloco"
+  nomeLockup="Pro Loco Cannetum"
+  sottotitoloLockup="tutto l’anno · canizzano.it"
+  coloreAttivo="var(--color-accent-2-800)"
+>
+  <!-- Hero verde con il mosaico di tre foto -->
+  <section class="apertura">
+    <span class="apertura__bolla apertura__bolla--alta" aria-hidden="true"></span>
+    <span class="apertura__bolla apertura__bolla--bassa" aria-hidden="true"></span>
+    <div class="contenitore apertura__griglia">
+      <div class="apertura__testo">
+        <span class="apertura__pillola">A.R.C. Cannetum · Pro Loco di Canizzano</span>
+        <h1>Tutto l’anno,<br />in mezzo al<br />quartiere</h1>
+        <p class="apertura__occhiello">
+          Non solo la sagra: lo sport in primavera, il Processo alla Vecchia, il concorso dei
+          giardini, le camminate lungo il Sile e le serate in cui il piazzale si riempie senza un
+          motivo particolare.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone
+            href="#eventi"
+            variante="chiaro"
+            sfondo="var(--color-accent-2-100)"
+            inchiostro="var(--color-accent-2-800)"
+          >
+            Guarda gli eventi
+          </Bottone>
+          <Bottone href="#foto" variante="contorno-chiaro">Raccolta foto</Bottone>
+        </div>
+      </div>
+
+      <div class="apertura__mosaico">
+        <Foto
+          class="apertura__larga"
+          src={foto[0]?.immagine}
+          alt={foto[0]?.testo_alternativo ?? ''}
+          attesa="Il piazzale pieno di gente"
+          altezza={190}
+        />
+        <Foto
+          src={foto[1]?.immagine}
+          alt={foto[1]?.testo_alternativo ?? ''}
+          attesa="Bambini che giocano"
+          altezza={200}
+          forma="cerchio"
+        />
+        <Foto
+          src={foto[2]?.immagine}
+          alt={foto[2]?.testo_alternativo ?? ''}
+          attesa="Volontari all’opera"
+          altezza={200}
+        />
+      </div>
+    </div>
+  </section>
+
+  <BarraCifre voci={CIFRE} />
+
+  {
+    config.modalita_sagra && config.banner_titolo && (
+      <Sezione stacco="nessuno" class="sezione-banner">
+        <BannerSagra
+          occhiello={config.banner_occhiello}
+          titolo={config.banner_titolo}
+          testo={config.banner_testo}
+          etichettaBottone="Vai al programma della sagra"
+        />
+      </Sezione>
+    )
+  }
+
+  <!-- I tre grandi -->
+  <Sezione id="eventi" stacco="nessuno" class="sezione-tre-grandi">
+    <div class="pila" style="gap:30px">
+      <TestataSezione
+        titolo="Gli appuntamenti che nessuno si perde"
+        tag="I tre grandi"
+        tonoTag="accent-2"
+        testo="Tre feste diverse fra loro, ognuna con la sua stagione e le sue facce. Date e dettagli si confermano in assemblea."
+      />
+      <div class="griglia griglia--3">
+        {
+          TRE_GRANDI.map((scheda, indice) => (
+            <SchedaRitratto
+              titolo={scheda.titolo}
+              testo={scheda.testo}
+              icona={scheda.icona}
+              tonoIcona={scheda.tonoIcona}
+              etichetta={scheda.etichetta}
+              tonoEtichetta={scheda.tonoEtichetta}
+              righe={scheda.righe}
+              foto={foto[3 + indice]?.immagine}
+              fotoAlt={foto[3 + indice]?.testo_alternativo ?? ''}
+              attesaFoto={scheda.attesaFoto}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Calendario stagionale: sezione dinamica dal CMS -->
+  <Sezione id="anno">
+    <div class="pila" style="gap:30px">
+      <div class="anno__testata">
+        <div class="pila" style="gap:12px">
+          <Etichetta tono="accent-2" class="anno__tag">Il calendario</Etichetta>
+          <h2 class="titolo-sezione">Il nostro anno, stagione per stagione</h2>
+        </div>
+        <p class="anno__nota">
+          Bozza di lavoro: mancano ancora alcune date, le confermiamo mano a mano.
+        </p>
+      </div>
+      <div class="griglia griglia--4 anno__colonne">
+        {
+          STAGIONI.map((stagione) => (
+            <ColonnaStagione
+              nome={stagione.nome}
+              icona={stagione.icona}
+              tono={stagione.tono}
+              eventi={stagioni.find((voce) => voce.stagione === stagione.chiave)?.eventi ?? []}
+              rotte={ROTTE_EVENTI}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Raccolta foto: si accende dall'admin -->
+  {
+    config.mostra_galleria_proloco && (
+      <Sezione id="foto">
+        <div class="pila" style="gap:28px">
+          <div class="anno__testata">
+            <div class="pila" style="gap:12px">
+              <Etichetta tono="accent-2" class="anno__tag">Raccolta foto</Etichetta>
+              <h2 class="titolo-sezione">Come siamo, quando ci si trova</h2>
+              <p class="testo-guida" style="max-width:56ch">
+                Le foto le fanno i volontari con il telefono, e va benissimo così. Se hai scatti
+                belli, mandaceli: entrano qui dentro.
+              </p>
+            </div>
+            <Bottone href={`mailto:${CONTATTI.proLocoEmail}`} variante="secondario">
+              Manda le tue foto
+            </Bottone>
+          </div>
+          <MosaicoFoto foto={foto.slice(6)} minimo={8} />
+        </div>
+      </Sezione>
+    )
+  }
+
+  <!-- Il resto dell'anno -->
+  <Sezione>
+    <div class="pila" style="gap:28px">
+      <h2 class="titolo-sezione">E poi, tutto il resto dell’anno</h2>
+      <div class="griglia griglia--4">
+        {
+          RESTO.map((voce) => (
+            <SchedaNota titolo={voce.titolo} testo={voce.testo} icona={voce.icona} />
+          ))
+        }
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Diventa socio -->
+  <Fascia id="socio" sfondo="var(--color-accent-2-800)">
+    <div class="socio">
+      <div class="socio__testo">
+        <span class="occhiello" style="color:var(--color-accent-300)">Diventa socio</span>
+        <h2 class="socio__titolo">Dieci euro e una serata quando puoi</h2>
+        <p class="socio__paragrafo">
+          Non serve saper cucinare per ottanta persone. Serve dire quando hai due ore libere: c’è
+          chi monta i tavoli, chi sta in cassa, chi porta i piatti, chi scatta le foto. La tessera
+          vale un anno e si fa al bar del patronato.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone
+            href={`mailto:${CONTATTI.proLocoEmail}`}
+            variante="chiaro"
+            sfondo="var(--color-accent-2-100)"
+            inchiostro="var(--color-accent-2-800)"
+          >
+            Fai la tessera
+          </Bottone>
+          <Bottone href={CONTATTI.proLocoTel} variante="contorno-chiaro">
+            Chiama {CONTATTI.proLocoTelefono}
+          </Bottone>
+        </div>
+      </div>
+      <div class="socio__foto">
+        <Foto
+          src={foto[8]?.immagine}
+          alt={foto[8]?.testo_alternativo ?? ''}
+          attesa="Volontari in cucina"
+          altezza={180}
+          forma="cerchio"
+        />
+        <Foto
+          class="socio__foto-bassa"
+          src={foto[9]?.immagine}
+          alt={foto[9]?.testo_alternativo ?? ''}
+          attesa="Volontari che montano il tendone"
+          altezza={180}
+          forma="cerchio"
+        />
+      </div>
+    </div>
+  </Fascia>
+
+  <!-- Chi siamo -->
+  <Sezione stacco="corto">
+    <div class="chi-siamo">
+      <div class="pila" style="gap:14px">
+        <h2 class="chi-siamo__titolo">Chi siamo</h2>
+        <p class="chi-siamo__testo">
+          L’Associazione Ricreativo Culturale <strong>Cannetum</strong> è la Pro Loco di Canizzano:
+          un gruppo di volontari che tiene in piedi le feste del quartiere insieme alla parrocchia
+          della Visitazione. Il nome viene dal latino <em>cannetum</em>, il canneto: quello che
+          c’era qui prima delle case.
+        </p>
+        <p class="chi-siamo__testo">
+          Il verde è il nostro colore da sempre — quello dei campi dietro la chiesa e delle canne
+          lungo il Sile.
+        </p>
+      </div>
+      <div class="pila" style="gap:12px">
+        <span class="chi-siamo__occhiello">Contatti</span>
+        <div class="chi-siamo__contatti">
+          <span><strong>Telefono</strong> · {CONTATTI.proLocoTelefono}</span>
+          <span><strong>Email</strong> · {CONTATTI.proLocoEmail}</span>
+          <span><strong>Dove</strong> · piazzale della chiesa, via Canizzano</span>
+        </div>
+        <Bottone href={ROTTE.sagra} sfondo="var(--color-accent-2-700)" class="chi-siamo__bottone">
+          Il programma della sagra
+        </Bottone>
+      </div>
+    </div>
+  </Sezione>
+</Base>
+
+<style>
+  /* — hero — */
+  .apertura {
+    background: var(--color-accent-2-700);
+    color: var(--color-accent-2-100);
+    position: relative;
+    overflow: hidden;
+  }
+  .apertura__griglia {
+    position: relative;
+    padding-top: 74px;
+    padding-bottom: 86px;
+    display: grid;
+    grid-template-columns: 1.08fr 0.92fr;
+    gap: 52px;
+    align-items: center;
+  }
+  /* I due dischi che danno profondita' alla fascia. */
+  .apertura__bolla { position: absolute; border-radius: 999px; }
+  .apertura__bolla--alta {
+    right: -140px; top: -200px; width: 560px; height: 560px;
+    background: var(--color-accent-2-600); opacity: 0.55;
+  }
+  .apertura__bolla--bassa {
+    left: 42%; bottom: -220px; width: 380px; height: 380px;
+    background: var(--color-accent-2-800); opacity: 0.5;
+  }
+
+  .apertura__testo { display: flex; flex-direction: column; gap: 26px; }
+  .apertura__pillola {
+    align-self: flex-start;
+    background: rgba(240, 250, 225, 0.18);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .apertura h1 { font-size: 78px; line-height: 0.95; margin: 0; }
+  .apertura__occhiello {
+    font-size: 20px;
+    line-height: 1.55;
+    max-width: 44ch;
+    color: var(--color-accent-2-200);
+    margin: 0;
+  }
+
+  .apertura__mosaico { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .apertura__larga { grid-column: span 2; }
+
+  /* — sezioni — */
+  /* La barra numeri sale di 34px: quello che segue recupera lo spazio. */
+  .sezione-banner { margin-top: 22px; }
+  .sezione-tre-grandi { margin-top: 22px; }
+
+  .anno__testata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .anno__tag { align-self: flex-start; }
+  .anno__nota { font-size: 15px; line-height: 1.6; max-width: 40ch; color: var(--color-neutral-700); margin: 0; }
+  .anno__colonne { align-items: start; gap: 18px; }
+
+  /* — fascia soci — */
+  .socio { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 52px; align-items: center; }
+  .socio__testo { display: flex; flex-direction: column; gap: 22px; }
+  .socio__titolo { font-size: 46px; line-height: 1.02; margin: 0; }
+  .socio__paragrafo { font-size: 17px; line-height: 1.6; max-width: 50ch; opacity: 0.92; margin: 0; }
+  .socio__foto { display: flex; gap: 16px; justify-content: flex-end; }
+  .socio__foto-bassa { margin-top: 46px; }
+
+  /* — chi siamo — */
+  .chi-siamo {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 40px;
+    box-shadow: var(--shadow-sm);
+  }
+  .chi-siamo__titolo { font-size: 30px; line-height: 1.06; margin: 0; }
+  .chi-siamo__testo { font-size: 15.5px; line-height: 1.65; color: var(--color-neutral-800); margin: 0; }
+  .chi-siamo__occhiello {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+  .chi-siamo__contatti { display: flex; flex-direction: column; gap: 8px; font-size: 15.5px; }
+  .chi-siamo__bottone { align-self: flex-start; margin-top: 6px; }
+
+  @media (max-width: 900px) {
+    .apertura__griglia, .socio, .chi-siamo { grid-template-columns: 1fr; gap: 34px; }
+    .apertura h1 { font-size: 52px; }
+    .apertura__bolla--bassa { display: none; }
+    .socio__titolo { font-size: 34px; }
+    .socio__foto { justify-content: flex-start; }
+    .socio__foto-bassa { margin-top: 0; }
+    .chi-siamo { padding: 30px; }
+  }
+  @media (max-width: 640px) { .apertura h1 { font-size: 42px; } }
+</style>

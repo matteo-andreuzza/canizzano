@@ -1,0 +1,32 @@
+---
+/**
+ * La fascia colorata a tutta larghezza (parrocchia, volontari, animatori…).
+ * Il colore arriva come token del sistema; il testo lo riceve in coppia.
+ */
+interface Props {
+  id?: string;
+  sfondo?: string;
+  inchiostro?: string;
+  stacco?: number;
+  imbottitura?: string;
+  class?: string;
+}
+const {
+  id,
+  sfondo = 'var(--color-accent-2-700)',
+  inchiostro = 'var(--color-accent-2-100)',
+  stacco = 104,
+  imbottitura = '76px 0',
+  class: classe = '',
+} = Astro.props;
+---
+
+<section
+  id={id}
+  class={`fascia su-scuro ${classe}`.trim()}
+  style={`background:${sfondo};color:${inchiostro};margin-top:${stacco}px;padding:${imbottitura}`}
+>
+  <div class="contenitore">
+    <slot />
+  </div>
+</section>

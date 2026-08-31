@@ -1,0 +1,312 @@
+---
+/**
+ * Home — «capire in trenta secondi cosa si muove a Canizzano».
+ *
+ * Le sezioni dinamiche (banner della sagra, prossimi appuntamenti, le
+ * realta' del quartiere) arrivano dal CMS; il resto e' testo di quartiere
+ * che cambia di rado.
+ */
+import Base from '../layouts/Base.astro';
+import Sezione from '../components/Sezione.astro';
+import Fascia from '../components/Fascia.astro';
+import TestataSezione from '../components/TestataSezione.astro';
+import SezioneEventi from '../components/SezioneEventi.astro';
+import CardCollegamento from '../components/CardCollegamento.astro';
+import BloccoAzione from '../components/BloccoAzione.astro';
+import BannerSagra from '../components/BannerSagra.astro';
+import Bottone from '../components/Bottone.astro';
+import Etichetta from '../components/Etichetta.astro';
+import Foto from '../components/Foto.astro';
+import Scheda from '../components/Scheda.astro';
+import type { NomeIcona } from '../components/Icona.astro';
+import { CONTATTI, ROTTE } from '../lib/sito.ts';
+import {
+  attivitaInHome,
+  eventiInEvidenza,
+  fotoDi,
+  impostazioni,
+  prossimiEventi,
+  snapshot,
+} from '../lib/contenuti.ts';
+
+const { attivita } = await snapshot();
+const config = await impostazioni();
+const realta = await attivitaInHome();
+const foto = await fotoDi('home');
+
+// In evidenza se la redazione ne ha segnati; altrimenti i primi in calendario.
+const inEvidenza = await eventiInEvidenza(3);
+const appuntamenti = inEvidenza.length >= 3 ? inEvidenza : (await prossimiEventi(3));
+
+const ORARI_MESSE = [
+  ['Domenica', '8.00 · 10.00 · 18.30'],
+  ['Feriali', '18.30, in cappella'],
+  ['Confessioni', 'sabato 17.00 → 18.00'],
+];
+
+const FATTI = [
+  ['Canne', 'Il nome nasce dai canneti che crescevano nelle paludi lungo il Sile.'],
+  ['Mulini', 'Il «villaggio dei mulini»: acqua veloce e macine dal Medioevo. L’ultimo, il Granello, si è fermato nel 1985.'],
+  ['1815', 'Per cinquant’anni comune autonomo: da qui l’ironia del «Principato di Canizzano».'],
+  ['Sile', 'Riva destra del fiume, di fronte all’aeroporto: parco, piste ciclabili e campagna verso Quinto.'],
+];
+---
+
+<Base
+  pagina="home"
+  titolo="Canizzano, il paese dei canneti"
+  nomeLockup="Canizzano"
+  sottotitoloLockup="il sito del quartiere"
+>
+  <!-- Hero -->
+  <Sezione stacco="primo">
+    <div class="apertura">
+      <div class="apertura__testo">
+        <Etichetta tono="accent-2" class="apertura__tag">Treviso · sulla riva destra del Sile</Etichetta>
+        <h1 class="titolo-pagina">Canizzano,<br />il paese dei<br />canneti</h1>
+        <p class="apertura__occhiello">
+          Un quartiere che si sente paese: la chiesa, il campo, il tendone della sagra, il fiume
+          dietro le case. Qui trovi tutto quello che si muove a Canizzano, raccontato da chi lo
+          organizza.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone href={ROTTE.sagra}>La sagra 2026</Bottone>
+          <Bottone href="#calendario" variante="secondario">Cosa succede questa settimana</Bottone>
+        </div>
+      </div>
+      <div class="apertura__foto">
+        <Foto
+          src={foto[0]?.immagine}
+          alt={foto[0]?.testo_alternativo ?? 'Il quartiere di Canizzano'}
+          attesa="Foto del quartiere: il Sile, la chiesa o il tendone"
+          altezza={420}
+          ombra="md"
+        />
+        <span class="apertura__bollo" aria-hidden="true"></span>
+      </div>
+    </div>
+  </Sezione>
+<br><br><br>
+  <!-- Banner della sagra: acceso e scritto dalla redazione -->
+  {
+    config.mostra_banner_sagra && config.banner_titolo && (
+      <Sezione stacco="nessuno" class="banner-sezione">
+        <BannerSagra
+          occhiello={config.banner_occhiello}
+          titolo={config.banner_titolo}
+          testo={config.banner_testo}
+        />
+      </Sezione>
+    )
+  }
+
+  <!-- Prossimi appuntamenti: sezione dinamica dal CMS -->
+  <SezioneEventi
+    id="calendario"
+    titolo="Prossimi appuntamenti"
+    eventi={appuntamenti}
+    attivita={attivita}
+    link={{ testo: 'Tutto il calendario →', href: ROTTE.proloco + '#anno' }}
+    vuoto="Nessun appuntamento in calendario al momento: torna a trovarci fra qualche giorno."
+  />
+
+  <!-- Le realta' del quartiere: card guidate dal CMS -->
+  <Sezione id="gruppi">
+    <div class="pila" style="gap:30px">
+      <TestataSezione
+        titolo="Chi tiene in piedi il quartiere"
+        testo="Ogni realtà ha la sua pagina, con contatti, calendario e le persone da cercare."
+      />
+      <div class="griglia griglia--3">
+        {
+          realta.map((voce) => (
+            <CardCollegamento
+              titolo={voce.nome}
+              testo={voce.descrizione_breve}
+              icona={(voce.icona || 'persone') as NomeIcona}
+              tono={voce.tono}
+              href={voce.collegamento || undefined}
+              etichetta={voce.etichetta_collegamento}
+              esterno={voce.esterno}
+              sfondoCaldo={voce.sfondo_caldo}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Parrocchia -->
+  <Fascia id="parrocchia">
+    <div class="parrocchia">
+      <div class="parrocchia__testo">
+        <span class="occhiello" style="color:var(--color-accent-300)">
+          Parrocchia della Visitazione
+        </span>
+        <h2 class="parrocchia__titolo">Le messe e la settimana in patronato</h2>
+
+        <div class="parrocchia__orari">
+          {
+            ORARI_MESSE.map(([quando, orario], indice) => (
+              <div class={`parrocchia__riga ${indice < ORARI_MESSE.length - 1 ? 'parrocchia__riga--divisa' : ''}`}>
+                <strong>{quando}</strong>
+                <span>{orario}</span>
+              </div>
+            ))
+          }
+        </div>
+
+        <p class="parrocchia__nota">
+          La chiesa attuale è del XV secolo e sorge a un passo dal fiume: il campo da calcio dietro
+          l’abside è nato bonificando la palude negli anni Cinquanta.
+        </p>
+
+        <div class="riga riga--bottoni">
+          <Bottone
+            href={CONTATTI.parrocchiaSito}
+            variante="chiaro"
+            esterno
+            sfondo="var(--color-accent-2-100)"
+            inchiostro="var(--color-accent-2-800)"
+          >
+            Vai al sito della parrocchia
+          </Bottone>
+          <Bottone href={CONTATTI.parrocchiaTel} variante="contorno-chiaro">
+            Chiama la canonica
+          </Bottone>
+        </div>
+
+        <div class="parrocchia__contatti">
+          <span><strong>parrocchiacanizzano.it</strong> · avvisi, foglietto della domenica, storia</span>
+          <span>{CONTATTI.parrocchiaEmail}</span>
+        </div>
+      </div>
+
+      <Foto
+        src={foto[1]?.immagine}
+        alt={foto[1]?.testo_alternativo ?? 'La chiesa della Visitazione'}
+        attesa="Foto della chiesa o del patronato"
+        altezza={400}
+      />
+    </div>
+  </Fascia>
+
+  <!-- Il quartiere -->
+  <Sezione id="quartiere">
+    <div class="pila" style="gap:32px">
+      <TestataSezione
+        titolo="Quattro cose da sapere su Canizzano"
+        tag="Il quartiere"
+        tonoTag="accent-2"
+        link={{ testo: 'Tutta la storia del quartiere, dalle paludi a oggi →', href: ROTTE.storia }}
+      />
+      <div class="griglia griglia--4">
+        {
+          FATTI.map(([parola, testo]) => (
+            <Scheda sfondo="surface" ombra="nessuna">
+              <span class="fatto__parola">{parola}</span>
+              <p class="fatto__testo">{testo}</p>
+            </Scheda>
+          ))
+        }
+      </div>
+      <div class="griglia griglia--2">
+        <Foto
+          src={foto[2]?.immagine}
+          alt={foto[2]?.testo_alternativo ?? 'Il Sile a Canizzano'}
+          attesa="Il Sile a Canizzano"
+          altezza={300}
+        />
+        <Foto
+          src={foto[3]?.immagine}
+          alt={foto[3]?.testo_alternativo ?? "Il vecchio mulino"}
+          attesa="Il vecchio mulino / una foto d’archivio"
+          altezza={300}
+        />
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Chiusura -->
+  <Sezione stacco="corto">
+    <BloccoAzione
+      titolo="Organizzi qualcosa a Canizzano?"
+      testo="Scrivici due righe con data, luogo e una foto: lo mettiamo in calendario e nei post del quartiere."
+    >
+      <Bottone href={`mailto:${CONTATTI.email}`}>Segnala un evento</Bottone>
+      <Bottone href={`https://wa.me/39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`} variante="secondario" esterno>
+        Gruppo WhatsApp
+      </Bottone>
+    </BloccoAzione>
+  </Sezione>
+</Base>
+
+<style>
+  /* — hero — */
+  .apertura {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 52px;
+    align-items: center;
+  }
+  .apertura__testo { display: flex; flex-direction: column; gap: 26px; }
+  .apertura__tag { align-self: flex-start; }
+  .apertura__testo h1 { margin: 0; }
+  .apertura__occhiello {
+    font-size: 19px;
+    line-height: 1.6;
+    max-width: 46ch;
+    color: var(--color-neutral-800);
+    margin: 0;
+  }
+  .apertura__foto { position: relative; }
+  /* Il cerchio salvia che spunta da sotto la foto. */
+  .apertura__bollo {
+    position: absolute;
+    left: -26px;
+    bottom: -26px;
+    width: 136px;
+    height: 136px;
+    border-radius: 999px;
+    background: var(--color-accent-2-300);
+    z-index: -1;
+  }
+
+  /* — banner della sagra: gli stili stanno in BannerSagra.astro — */
+  .banner-sezione { margin-top: 56px; }
+
+  /* — fascia parrocchia — */
+  .parrocchia { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; align-items: center; }
+  .parrocchia__testo { display: flex; flex-direction: column; gap: 22px; }
+  .parrocchia__titolo { font-size: 44px; line-height: 1.02; margin: 0; }
+  .parrocchia__orari { display: flex; flex-direction: column; gap: 12px; font-size: 16.5px; }
+  .parrocchia__riga { display: flex; gap: 18px; align-items: baseline; }
+  .parrocchia__riga--divisa {
+    border-bottom: 1px solid rgba(240, 250, 225, 0.22);
+    padding-bottom: 11px;
+  }
+  .parrocchia__riga strong { width: 132px; flex: none; }
+  .parrocchia__nota { font-size: 15.5px; line-height: 1.6; opacity: 0.9; max-width: 48ch; margin: 0; }
+  .parrocchia__contatti {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    font-size: 14.5px;
+    opacity: 0.88;
+  }
+
+  /* — card fatto/cifra — */
+  .fatto__parola {
+    font-family: var(--font-heading);
+    font-size: 34px;
+    color: var(--color-accent-700);
+    line-height: 1;
+  }
+  .fatto__testo { font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-800); margin: 0; }
+
+  @media (max-width: 900px) {
+    .apertura, .parrocchia { grid-template-columns: 1fr; gap: 34px; }
+    .apertura__bollo { display: none; }
+    .parrocchia__titolo { font-size: 34px; }
+  }
+</style>

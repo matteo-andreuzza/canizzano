@@ -1,0 +1,95 @@
+---
+/**
+ * Il conto alla rovescia della sagra.
+ *
+ * Il sito e' statico, quindi i numeri li calcola il browser: un piccolo
+ * script aggiorna ogni 30 secondi e nasconde il blocco quando la sagra e'
+ * cominciata. Senza JavaScript restano i valori calcolati al build, che
+ * e' comunque un'informazione utile.
+ */
+interface Props {
+  dataInizio: string;
+}
+const { dataInizio } = Astro.props;
+
+const mancano = Math.max(0, new Date(dataInizio).getTime() - Date.now());
+const giorni = Math.floor(mancano / 86_400_000);
+const ore = Math.floor((mancano % 86_400_000) / 3_600_000);
+const minuti = Math.floor((mancano % 3_600_000) / 60_000);
+
+const VOCI = [
+  ['giorni', giorni],
+  ['ore', ore],
+  ['minuti', minuti],
+] as const;
+---
+
+<div class="conto" data-inizio={dataInizio} hidden={mancano === 0}>
+  <span class="conto__occhiello">Si comincia tra</span>
+  <div class="conto__numeri">
+    {
+      VOCI.map(([nome, valore]) => (
+        <div class="conto__voce">
+          <span class="conto__valore" data-conto={nome}>{valore}</span>
+          <span class="conto__unita">{nome}</span>
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  // Un solo tick ogni 30 secondi: la precisione al minuto basta.
+  const blocco = document.querySelector<HTMLElement>('.conto');
+  const inizio = blocco?.dataset.inizio ? new Date(blocco.dataset.inizio).getTime() : 0;
+
+  function aggiorna() {
+    if (!blocco || !inizio) return;
+    const mancano = inizio - Date.now();
+    if (mancano <= 0) {
+      blocco.hidden = true;
+      return;
+    }
+    const valori = {
+      giorni: Math.floor(mancano / 86_400_000),
+      ore: Math.floor((mancano % 86_400_000) / 3_600_000),
+      minuti: Math.floor((mancano % 3_600_000) / 60_000),
+    };
+    for (const [nome, valore] of Object.entries(valori)) {
+      const cella = blocco.querySelector(`[data-conto="${nome}"]`);
+      if (cella) cella.textContent = String(valore);
+    }
+  }
+
+  aggiorna();
+  setInterval(aggiorna, 30_000);
+</script>
+
+<style>
+  .conto {
+    background: rgba(64, 35, 16, 0.28);
+    border-radius: var(--radius-lg);
+    padding: 26px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .conto[hidden] { display: none; }
+  .conto__occhiello {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent-200);
+  }
+  .conto__numeri { display: flex; gap: 22px; }
+  .conto__voce { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .conto__valore { font-family: var(--font-heading); font-size: 44px; line-height: 1; }
+  .conto__unita {
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent-200);
+  }
+</style>

@@ -1,0 +1,91 @@
+---
+/**
+ * Il modulo di prenotazione della cena.
+ *
+ * Il sito e' statico: non c'e' un server a cui inviare. Il modulo compone
+ * un messaggio WhatsApp gia' scritto verso il numero della Pro Loco, che
+ * e' esattamente come funziona oggi al telefono.
+ */
+interface Props {
+  numero: string;
+  numeroLeggibile: string;
+}
+const { numero, numeroLeggibile } = Astro.props;
+---
+
+<div id="prenota" class="prenota">
+  <h3>Prenota il tuo tavolo</h3>
+  <p class="prenota__intro">
+    Un messaggio con nome, sera, numero di persone e piatti. Ti rispondiamo con il numero del
+    tavolo.
+  </p>
+
+  <form class="prenota__modulo" data-numero={numero}>
+    <div class="field">
+      <label for="prenota-nome">Nome e cognome</label>
+      <input class="input" id="prenota-nome" name="nome" type="text" placeholder="Es. Famiglia Zugno" required />
+    </div>
+    <div class="field">
+      <label for="prenota-persone">Quante persone</label>
+      <input class="input" id="prenota-persone" name="persone" type="text" placeholder="4 adulti, 2 bambini" required />
+    </div>
+    <div class="field">
+      <label for="prenota-sera">Quale sera</label>
+      <input class="input" id="prenota-sera" name="sera" type="text" placeholder="Sabato 3 ottobre" />
+    </div>
+    <button class="btn btn-primary btn-block" type="submit">Invia su WhatsApp</button>
+    <p class="prenota__errore" hidden>Scrivi almeno il nome e quante persone siete.</p>
+  </form>
+
+  <p class="prenota__nota">
+    Oppure chiama <strong>{numeroLeggibile}</strong> dalle 18 alle 21.
+  </p>
+</div>
+
+<script>
+  const modulo = document.querySelector<HTMLFormElement>('.prenota__modulo');
+
+  modulo?.addEventListener('submit', (evento) => {
+    evento.preventDefault();
+    const dati = new FormData(modulo);
+    const nome = String(dati.get('nome') ?? '').trim();
+    const persone = String(dati.get('persone') ?? '').trim();
+    const sera = String(dati.get('sera') ?? '').trim();
+
+    const errore = modulo.querySelector<HTMLElement>('.prenota__errore');
+    if (!nome || !persone) {
+      if (errore) errore.hidden = false;
+      return;
+    }
+    if (errore) errore.hidden = true;
+
+    const righe = [
+      `Ciao! Vorrei prenotare un tavolo alla sagra.`,
+      `Nome: ${nome}`,
+      `Persone: ${persone}`,
+      sera ? `Sera: ${sera}` : '',
+    ].filter(Boolean);
+
+    const numero = modulo.dataset.numero ?? '';
+    window.open(`https://wa.me/${numero}?text=${encodeURIComponent(righe.join('\n'))}`, '_blank', 'noopener');
+  });
+</script>
+
+<style>
+  .prenota {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+    height: fit-content;
+  }
+  .prenota h3 { font-size: 26px; line-height: 1.08; margin: 0; }
+  .prenota__intro { font-size: 15px; line-height: 1.6; color: var(--color-neutral-800); margin: 0; }
+  .prenota__modulo { display: flex; flex-direction: column; gap: 14px; }
+  .prenota__errore { font-size: 13.5px; color: var(--color-accent-700); font-weight: 700; margin: 0; }
+  .prenota__errore[hidden] { display: none; }
+  .prenota__nota { font-size: 13.5px; line-height: 1.6; color: var(--color-neutral-700); margin: 0; }
+</style>

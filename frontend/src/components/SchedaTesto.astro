@@ -1,0 +1,42 @@
+---
+/**
+ * La card minima del sistema: titolo in Caprasimo e una riga di testo.
+ * «Sotto il tendone», «Acqua, macine, campi», «Serve sapere».
+ */
+interface Props {
+  titolo: string;
+  testo: string;
+  sfondo?: string;
+  dimensioneTitolo?: number;
+  coloreTitolo?: string;
+}
+const {
+  titolo,
+  testo,
+  sfondo = 'var(--color-surface)',
+  dimensioneTitolo = 26,
+  coloreTitolo,
+} = Astro.props;
+---
+
+<div class="scheda-testo" style={`background:${sfondo}`}>
+  <span
+    class="scheda-testo__titolo"
+    style={`font-size:${dimensioneTitolo}px${coloreTitolo ? `;color:${coloreTitolo}` : ''}`}
+  >
+    {titolo}
+  </span>
+  <p class="scheda-testo__corpo">{testo}</p>
+</div>
+
+<style>
+  .scheda-testo {
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .scheda-testo__titolo { font-family: var(--font-heading); line-height: 1.05; }
+  .scheda-testo__corpo { font-size: 14.5px; line-height: 1.6; color: var(--color-neutral-800); margin: 0; }
+</style>

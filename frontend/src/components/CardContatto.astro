@@ -1,0 +1,51 @@
+---
+/**
+ * La card di un referente: iniziale nel disco, nome e numero.
+ * Tutta la card e' il link per chiamare, cosi' funziona bene da telefono.
+ */
+interface Props {
+  nome: string;
+  telefono: string;
+  tono?: string;
+}
+const { nome, telefono, tono = 'var(--color-accent-300)' } = Astro.props;
+
+const numeroPulito = telefono.replace(/\s/g, '');
+const inchiostro = tono.includes('accent-2') ? 'var(--color-accent-2-900)' : 'var(--color-accent-900)';
+---
+
+<a class="contatto" href={`tel:+39${numeroPulito}`}>
+  <span class="contatto__iniziale" style={`background:${tono};color:${inchiostro}`}>
+    {nome.charAt(0)}
+  </span>
+  <strong class="contatto__nome">{nome}</strong>
+  <span class="contatto__numero">{telefono}</span>
+</a>
+
+<style>
+  .contatto {
+    background: rgba(251, 255, 242, 0.12);
+    border-radius: var(--radius-lg);
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+  }
+  .contatto:hover { background: rgba(251, 255, 242, 0.2); color: inherit; }
+  .contatto__iniziale {
+    width: 62px;
+    height: 62px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-size: 24px;
+  }
+  .contatto__nome { font-size: 18px; color: #fbfff2; }
+  .contatto__numero { font-size: 14.5px; color: var(--color-accent-2-100); opacity: 0.9; }
+</style>

@@ -1,0 +1,107 @@
+# Stack locale di canizzano.it.
+#
+#   cms      → PostgreSQL + Django: la redazione dei contenuti (sempre attivo)
+#   sito     → Astro: genera il sito statico in ./dist        (profilo "build")
+#   dev      → Astro dev server con ricarica automatica       (profilo "dev")
+#   deploy   → lftp: carica ./dist sull'hosting via FTP       (profilo "deploy")
+#
+# Tutto passa da ./canizzano.sh, che attiva i profili giusti.
+
+name: canizzano
+
+x-ambiente-cms: &ambiente-cms
+  env_file: [.env]
+  environment:
+    POSTGRES_HOST: db
+    MEDIA_ROOT: /app/media
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-canizzano}
+      POSTGRES_USER: ${POSTGRES_USER:-canizzano}
+    volumes:
+      - dati_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-canizzano} -d ${POSTGRES_DB:-canizzano}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    <<: *ambiente-cms
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${CMS_PORT:-8000}:8000"
+    volumes:
+      - media:/app/media
+      - statici_cms:/app/staticfiles
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/snapshot/', timeout=5).status == 200 else 1)\""]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 40s
+
+  sito:
+    build:
+      context: ./frontend
+    profiles: ["build"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      CMS_URL: http://backend:8000
+      SITE_BASE_URL: ${SITE_BASE_URL:-https://canizzano.it}
+      MEDIA_SORGENTE: /media
+      CARTELLA_USCITA: /output
+      UID_HOST: ${UID_HOST:-1000}
+      GID_HOST: ${GID_HOST:-1000}
+    volumes:
+      - media:/media:ro
+      - ./dist:/output
+    command: ["build"]
+
+  dev:
+    build:
+      context: ./frontend
+    profiles: ["dev"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      CMS_URL: http://backend:8000
+      SITE_BASE_URL: http://localhost:${DEV_PORT:-4321}
+      MEDIA_SORGENTE: /media
+    ports:
+      - "${DEV_PORT:-4321}:4321"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/astro.config.mjs:/app/astro.config.mjs:ro
+      - media:/media:ro
+    command: ["dev"]
+
+  deploy:
+    build:
+      context: ./deploy
+    profiles: ["deploy"]
+    env_file: [.env]
+    environment:
+      SORGENTE: /sito
+    volumes:
+      - ./dist:/sito:ro
+
+volumes:
+  dati_postgres:
+  media:
+  statici_cms:

@@ -1,0 +1,26 @@
+---
+/**
+ * Una sezione della pagina: contenitore centrato piu' lo stacco verticale
+ * del sistema (92–104px). Evita di ripetere margini e padding in ogni pagina.
+ */
+interface Props {
+  id?: string;
+  /** Stacco superiore: `normale` 104px, `corto` 96px, `nessuno` 0. */
+  stacco?: 'normale' | 'corto' | 'primo' | 'nessuno';
+  class?: string;
+}
+const { id, stacco = 'normale', class: classe = '' } = Astro.props;
+---
+
+<section id={id} class={`sezione sezione--${stacco} ${classe}`.trim()}>
+  <div class="contenitore">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .sezione--normale { margin-top: var(--stacco-sezione); }
+  .sezione--corto { margin-top: calc(var(--stacco-sezione) - 8px); }
+  .sezione--primo { margin-top: 0; padding-top: 68px; }
+  .sezione--nessuno { margin-top: 0; }
+</style>

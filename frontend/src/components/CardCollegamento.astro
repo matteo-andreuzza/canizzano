@@ -1,0 +1,75 @@
+---
+/**
+ * La card-link di «Chi tiene in piedi il quartiere»: disco con l'icona,
+ * titolo, descrizione e la freccia con l'indirizzo.
+ *
+ * Anche questa e' guidata dal CMS: nome, icona, tinta del disco e
+ * destinazione si cambiano dall'admin.
+ */
+import DiscoIcona from './DiscoIcona.astro';
+import type { NomeIcona } from './Icona.astro';
+
+interface Props {
+  titolo: string;
+  testo?: string;
+  icona: NomeIcona;
+  tono?: string;
+  href?: string;
+  etichetta?: string;
+  esterno?: boolean;
+  sfondoCaldo?: boolean;
+}
+const {
+  titolo,
+  testo,
+  icona,
+  tono = 'accent-2-700',
+  href,
+  etichetta,
+  esterno = false,
+  sfondoCaldo = false,
+} = Astro.props;
+
+const Elemento = href ? 'a' : 'div';
+const attributi = href
+  ? { href, ...(esterno ? { target: '_blank', rel: 'noopener noreferrer' } : {}) }
+  : {};
+---
+
+<Elemento
+  class={`collegamento ${sfondoCaldo ? 'collegamento--caldo' : ''}`.trim()}
+  {...attributi}
+>
+  <DiscoIcona icona={icona} tono={tono} dimensione={56} />
+  <h3>{titolo}</h3>
+  {testo && <p>{testo}</p>}
+  {etichetta && <span class="collegamento__freccia">{etichetta} →</span>}
+</Elemento>
+
+<style>
+  .collegamento {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    color: inherit;
+  }
+  .collegamento--caldo { background: var(--color-surface); }
+  /* Il sistema vuole solo il cambio di colore, nessuna trasformazione. */
+  a.collegamento:hover { background: var(--color-neutral-200); color: inherit; }
+  a.collegamento--caldo:hover { background: var(--color-accent-100); }
+
+  .collegamento h3 { font-size: 23px; line-height: 1.1; margin: 0; }
+  .collegamento p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--color-neutral-800);
+    margin: 0;
+    flex: 1;
+  }
+  .collegamento__freccia { font-size: 14px; font-weight: 700; color: var(--color-accent-700); }
+</style>

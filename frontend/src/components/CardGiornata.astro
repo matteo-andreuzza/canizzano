@@ -1,0 +1,126 @@
+---
+/**
+ * La card di una giornata del programma della sagra: intestazione con la
+ * pastiglia della data e, sotto, le righe orarie prese dal CMS.
+ *
+ * Gli eventi segnati «in risalto» diventano un blocco pieno a tutta
+ * larghezza dentro la card.
+ */
+import RigaOrario from './RigaOrario.astro';
+import type { NomeIcona } from './Icona.astro';
+import type { Evento, Giornata } from '../lib/contenuti.ts';
+
+interface Props {
+  giornata: Giornata;
+  eventi: Evento[];
+}
+const { giornata, eventi } = Astro.props;
+
+const TONI_PASTIGLIA: Record<string, [string, string]> = {
+  accent: ['var(--color-accent)', '#fff2eb'],
+  'accent-2-600': ['var(--color-accent-2-600)', '#f0fae1'],
+  'accent-2-700': ['var(--color-accent-2-700)', '#f0fae1'],
+  'accent-400': ['var(--color-accent-400)', '#402310'],
+};
+const [sfondoPastiglia, inchiostroPastiglia] =
+  TONI_PASTIGLIA[giornata.tono] ?? TONI_PASTIGLIA.accent;
+
+const giorno = new Date(`${giornata.data}T12:00:00`);
+const numero = giorno.getDate();
+const abbreviazione = new Intl.DateTimeFormat('it-IT', {
+  weekday: 'short',
+  timeZone: 'Europe/Rome',
+}).format(giorno).replace('.', '');
+
+const ora = (inizio: string) =>
+  new Intl.DateTimeFormat('it-IT', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Rome',
+  }).format(new Date(inizio)).replace(':', '.');
+---
+
+<article class={`giornata ${giornata.sfondo_chiaro ? 'giornata--chiara' : ''}`.trim()}>
+  <header class="giornata__testa">
+    <div
+      class="giornata__pastiglia"
+      style={`background:${sfondoPastiglia};color:${inchiostroPastiglia}`}
+    >
+      <strong>{numero}</strong>
+      <span>{abbreviazione}</span>
+    </div>
+    <div class="giornata__titoli">
+      <h3>{giornata.etichetta}</h3>
+      {giornata.occhiello && <span class="giornata__occhiello">{giornata.occhiello}</span>}
+    </div>
+  </header>
+
+  <div class="giornata__righe">
+    {
+      eventi.map((evento) => (
+        <RigaOrario
+          ora={ora(evento.inizio)}
+          titolo={evento.titolo}
+          nota={evento.sommario}
+          piatto={evento.piatto_del_giorno}
+          icona={(evento.icona || 'stella') as NomeIcona}
+          risalto={evento.risalto}
+        />
+      ))
+    }
+  </div>
+</article>
+
+<style>
+  .giornata {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+  .giornata--chiara { background: var(--color-neutral-100); }
+
+  .giornata__testa {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-divider);
+  }
+  .giornata__pastiglia {
+    width: 60px;
+    height: 60px;
+    flex: none;
+    border-radius: 999px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .giornata__pastiglia strong {
+    font-family: var(--font-heading);
+    font-size: 23px;
+    line-height: 1;
+    font-weight: 400;
+  }
+  .giornata__pastiglia span {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .giornata__titoli { display: flex; flex-direction: column; gap: 3px; }
+  .giornata__titoli h3 { font-size: 27px; line-height: 1.02; margin: 0; }
+  .giornata__occhiello {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-neutral-700);
+  }
+
+  .giornata__righe { display: flex; flex-direction: column; gap: 15px; }
+</style>

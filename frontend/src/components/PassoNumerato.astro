@@ -1,0 +1,36 @@
+---
+/** Un passo numerato delle istruzioni (iscrizioni al Grest). */
+interface Props {
+  numero: number;
+  titolo: string;
+  testo: string;
+}
+const { numero, titolo, testo } = Astro.props;
+---
+
+<div class="passo">
+  <span class="passo__numero">{numero}</span>
+  <div class="passo__testo">
+    <strong>{titolo}</strong>
+    <span>{testo}</span>
+  </div>
+</div>
+
+<style>
+  .passo { display: grid; grid-template-columns: 48px 1fr; gap: 16px; align-items: start; }
+  .passo__numero {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    background: #fff2eb;
+    color: var(--color-accent-800);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-size: 22px;
+  }
+  .passo__testo { display: flex; flex-direction: column; gap: 4px; padding-top: 5px; }
+  .passo__testo strong { font-size: 18px; }
+  .passo__testo span { font-size: 15px; line-height: 1.55; opacity: 0.92; }
+</style>

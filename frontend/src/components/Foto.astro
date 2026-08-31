@@ -1,0 +1,89 @@
+---
+/**
+ * Una foto di contenuto.
+ *
+ * Applica sempre il trattamento `.washed` del sistema e, quando l'immagine
+ * non e' ancora stata caricata in redazione, mostra al suo posto un
+ * riquadro con la didascalia richiesta: la pagina resta impaginata e si
+ * capisce quale foto manca.
+ */
+interface Props {
+  src?: string | null;
+  alt?: string;
+  /** Testo del segnaposto quando manca la foto. */
+  attesa?: string;
+  altezza?: number | string;
+  forma?: 'rettangolo' | 'cerchio';
+  raggio?: string;
+  ombra?: 'sm' | 'md' | 'lg' | 'nessuna';
+  rotazione?: number;
+  class?: string;
+  larghezzaIntrinseca?: number;
+  altezzaIntrinseca?: number;
+}
+
+const {
+  src,
+  alt = '',
+  attesa = 'Foto da caricare',
+  altezza = 300,
+  forma = 'rettangolo',
+  raggio,
+  ombra = 'nessuna',
+  rotazione,
+  class: classe = '',
+  larghezzaIntrinseca = 1200,
+  altezzaIntrinseca,
+} = Astro.props;
+
+const altezzaCss = typeof altezza === 'number' ? `${altezza}px` : altezza;
+const raggioCss = raggio ?? (forma === 'cerchio' ? '999px' : 'var(--radius-lg)');
+
+const stile = [
+  `height:${altezzaCss}`,
+  forma === 'cerchio' ? `width:${altezzaCss};flex:none` : '',
+  `border-radius:${raggioCss}`,
+  ombra !== 'nessuna' ? `box-shadow:var(--shadow-${ombra})` : '',
+  rotazione ? `transform:rotate(${rotazione}deg)` : '',
+]
+  .filter(Boolean)
+  .join(';');
+---
+
+<div class={`foto ${src ? 'washed' : 'foto--attesa'} ${classe}`.trim()} style={stile}>
+  {
+    src ? (
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        width={larghezzaIntrinseca}
+        height={altezzaIntrinseca ?? (typeof altezza === 'number' ? altezza : undefined)}
+      />
+    ) : (
+      <span class="foto__attesa">{attesa}</span>
+    )
+  }
+</div>
+
+<style>
+  .foto { overflow: hidden; position: relative; }
+  .foto img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Segnaposto: nella stessa famiglia cromatica, senza stonare. */
+  .foto--attesa {
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    text-align: center;
+    background: var(--color-neutral-200);
+    border: 1px dashed var(--color-neutral-400);
+  }
+  .foto__attesa {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-neutral-700);
+    max-width: 26ch;
+  }
+</style>

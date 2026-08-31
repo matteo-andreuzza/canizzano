@@ -1,0 +1,78 @@
+---
+/**
+ * La card del sistema: fondo crema o neutro, angoli `radius-lg`, ombra.
+ *
+ * Regge tutte le varianti che compaiono nelle pagine — anche la rotazione
+ * leggera del registro «giocoso» del Grest — senza che ogni pagina
+ * riscriva le stesse dieci righe di stile.
+ */
+interface Props {
+  /** Token di sfondo o colore esplicito. */
+  sfondo?: 'surface' | 'neutral-100' | 'accent' | 'accent-2-700' | 'accent-2-600' | string;
+  inchiostro?: string;
+  imbottitura?: string;
+  ombra?: 'sm' | 'md' | 'lg' | 'nessuna';
+  /** Rotazione in gradi: il Grest usa da -4 a +2.5. */
+  rotazione?: number;
+  href?: string;
+  esterno?: boolean;
+  class?: string;
+  id?: string;
+}
+
+const {
+  sfondo = 'surface',
+  inchiostro,
+  imbottitura = '26px',
+  ombra = 'sm',
+  rotazione,
+  href,
+  esterno = false,
+  class: classe = '',
+  id,
+} = Astro.props;
+
+const TOKEN: Record<string, string> = {
+  surface: 'var(--color-surface)',
+  'neutral-100': 'var(--color-neutral-100)',
+  accent: 'var(--color-accent)',
+  'accent-2-600': 'var(--color-accent-2-600)',
+  'accent-2-700': 'var(--color-accent-2-700)',
+};
+
+const stile = [
+  `background:${TOKEN[sfondo] ?? sfondo}`,
+  `padding:${imbottitura}`,
+  ombra !== 'nessuna' ? `box-shadow:var(--shadow-${ombra})` : '',
+  inchiostro ? `color:${inchiostro}` : '',
+  rotazione ? `--rotazione:${rotazione}deg` : '',
+]
+  .filter(Boolean)
+  .join(';');
+
+const classi = ['scheda', rotazione ? 'scheda--ruotata' : '', href ? 'scheda--link' : '', classe]
+  .filter(Boolean)
+  .join(' ');
+
+const Elemento = href ? 'a' : 'article';
+const attributi = href
+  ? { href, ...(esterno ? { target: '_blank', rel: 'noopener noreferrer' } : {}) }
+  : {};
+---
+
+<Elemento class={classi} style={stile} id={id} {...attributi}>
+  <slot />
+</Elemento>
+
+<style>
+  .scheda {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-radius: var(--radius-lg);
+  }
+  .scheda--ruotata { transform: rotate(var(--rotazione)); }
+  .scheda--link { text-decoration: none; color: inherit; }
+  /* Il sistema chiede che sulle card-link basti il cambio di colore. */
+  .scheda--link:hover { background: var(--color-neutral-200) !important; color: inherit; }
+</style>

@@ -1,0 +1,79 @@
+---
+/**
+ * Il bottone del sistema Organic.
+ *
+ * Rende un `<a>` quando ha un `href` e un `<button>` altrimenti, cosi' le
+ * pagine non devono ricordarsi la differenza. La variante «chiaro» e' il
+ * bottone crema che il design usa sopra le fasce colorate.
+ */
+interface Props {
+  href?: string;
+  variante?: 'primario' | 'secondario' | 'ghost' | 'chiaro' | 'contorno-chiaro';
+  esterno?: boolean;
+  tipo?: 'button' | 'submit';
+  /** Coppia sfondo/testo per la variante «chiaro»: token del sistema. */
+  sfondo?: string;
+  inchiostro?: string;
+  class?: string;
+}
+
+const {
+  href,
+  variante = 'primario',
+  esterno = false,
+  tipo = 'button',
+  sfondo,
+  inchiostro,
+  class: classe = '',
+} = Astro.props;
+
+const CLASSI = {
+  primario: 'btn btn-primary',
+  secondario: 'btn btn-secondary',
+  ghost: 'btn btn-ghost',
+  chiaro: 'btn bottone--chiaro',
+  'contorno-chiaro': 'btn bottone--contorno-chiaro',
+} as const;
+
+const classi = `${CLASSI[variante]} ${classe}`.trim();
+const stile = [
+  sfondo ? `background:${sfondo}` : '',
+  inchiostro ? `color:${inchiostro}` : '',
+]
+  .filter(Boolean)
+  .join(';');
+
+const attributiEsterni = esterno ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+---
+
+{
+  href ? (
+    <a href={href} class={classi} style={stile || undefined} {...attributiEsterni}>
+      <slot />
+    </a>
+  ) : (
+    <button type={tipo} class={classi} style={stile || undefined}>
+      <slot />
+    </button>
+  )
+}
+
+<style>
+  /* Il bottone crema sopra le fasce terracotta e salvia. */
+  .bottone--chiaro {
+    background: var(--color-neutral-100);
+    color: var(--color-accent-800);
+    font-weight: 700;
+  }
+  .bottone--chiaro:hover { background: #fff; color: var(--color-accent-900); }
+
+  /* Il suo compagno solo-contorno, sulle stesse fasce. */
+  .bottone--contorno-chiaro {
+    color: var(--color-accent-2-100);
+    border: 1px solid rgba(240, 250, 225, 0.45);
+  }
+  .bottone--contorno-chiaro:hover {
+    background: rgba(240, 250, 225, 0.14);
+    color: var(--color-accent-2-100);
+  }
+</style>

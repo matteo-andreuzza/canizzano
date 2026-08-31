@@ -1,0 +1,625 @@
+---
+/**
+ * Grest 2026 — «Canizzano sulle orme di San Francesco».
+ *
+ * Registro giocoso: rotazioni leggere, forme circolari sovrapposte e una
+ * sola animazione (il bollino delle iscrizioni), che si ferma se chi
+ * guarda ha chiesto meno movimento.
+ *
+ * Le sezioni «iscrizioni» e «foto» si accendono dall'admin.
+ */
+import Base from '../layouts/Base.astro';
+import Sezione from '../components/Sezione.astro';
+import Fascia from '../components/Fascia.astro';
+import SchedaNota from '../components/SchedaNota.astro';
+import RigaGiornata from '../components/RigaGiornata.astro';
+import PassoNumerato from '../components/PassoNumerato.astro';
+import CardContatto from '../components/CardContatto.astro';
+import BloccoAzione from '../components/BloccoAzione.astro';
+import Bottone from '../components/Bottone.astro';
+import Etichetta from '../components/Etichetta.astro';
+import Foto from '../components/Foto.astro';
+import { CONTATTI, ROTTE } from '../lib/sito.ts';
+import { fotoDi, impostazioni } from '../lib/contenuti.ts';
+
+const config = await impostazioni();
+const locandina = (await fotoDi('grest-locandina'))[0];
+const foto = await fotoDi('grest');
+
+const COSA_SI_FA = [
+  {
+    titolo: 'Laboratori',
+    testo: 'Colori, legno, cucina e cose che tornano a casa fatte da te.',
+    icona: 'pennello' as const,
+    tono: 'accent-200',
+    rotazione: -1.5,
+  },
+  {
+    titolo: 'Giochi',
+    testo: 'Grandi giochi a squadre nel prato, gavettoni compresi.',
+    icona: 'gioco' as const,
+    tono: 'accent-2-200',
+    rotazione: 1.2,
+  },
+  {
+    titolo: 'Uscite',
+    testo: 'Piscina, gite in giornata e la camminata di fine Grest.',
+    icona: 'bici' as const,
+    tono: 'accent-300',
+    rotazione: -1,
+  },
+  {
+    titolo: 'Nuovi amici',
+    testo: 'Squadre miste: si finisce sempre con qualcuno in più da salutare.',
+    icona: 'persone' as const,
+    tono: 'accent-2-300',
+    rotazione: 1.6,
+  },
+];
+
+const GIORNATA = [
+  ['15.30', 'Accoglienza e bandiera', 'Si arriva in oratorio, appello per squadre e canto d’inizio.', false],
+  ['15.50', 'Il racconto del giorno', 'Una tappa della vita di Francesco, messa in scena dagli animatori.', false],
+  ['16.15', 'Laboratori a rotazione', 'Ogni squadra il suo: manualità, cucina, musica, sport.', true],
+  ['17.15', 'Merenda', 'Offerta dal Circolo NOI. Segnalaci allergie e intolleranze.', false],
+  ['17.35', 'Grande gioco', 'Nel prato dietro il patronato, con punteggio per le squadre.', false],
+  ['18.30', 'Preghiera e saluti', 'Classifica del giorno e ritiro dei bambini all’ingresso.', false],
+] as const;
+
+const ANIMATORI = [
+  { nome: 'Daniela', telefono: '327 1648363', tono: 'var(--color-accent-300)' },
+  { nome: 'Daniele', telefono: '333 6320030', tono: 'var(--color-accent-200)' },
+  { nome: 'Matteo', telefono: '380 1510324', tono: 'var(--color-accent-2-300)' },
+];
+
+const SERVE_SAPERE = [
+  ['Dove', 'oratorio di Canizzano, via Canizzano'],
+  ['Età', 'dalla 1ª elementare alla 3ª media'],
+  ['Animatori', 'dai 15 anni, iscrizione a parte'],
+  ['Quota', 'da confermare, maglietta inclusa'],
+];
+
+const LETTERE = [
+  ['G', -4, '#fff2eb'],
+  ['R', 2, 'var(--color-accent-200)'],
+  ['E', -2, '#fbfff2'],
+  ['S', 4, 'var(--color-accent-300)'],
+  ['T', -3, '#fff2eb'],
+] as const;
+---
+
+<Base
+  pagina="grest"
+  tema="verde"
+  titolo="Grest 2026, sulle orme di San Francesco"
+  descrizione="Il Grest di Canizzano: dal 15 giugno al 3 luglio 2026, dalle 15.30 alle 18.30, per bambini e ragazzi dalla prima elementare alla terza media."
+  marchio="grest"
+  nomeLockup="Grest 2026"
+  sottotitoloLockup="sulle orme di San Francesco"
+>
+  <!-- Hero: le lettere ruotate una per una -->
+  <section class="apertura">
+    <span class="apertura__bolla apertura__bolla--1" aria-hidden="true"></span>
+    <span class="apertura__bolla apertura__bolla--2" aria-hidden="true"></span>
+    <span class="apertura__bolla apertura__bolla--3" aria-hidden="true"></span>
+
+    <div class="contenitore apertura__griglia">
+      <div class="apertura__testo">
+        <span class="apertura__pillola">Parrocchia di Canizzano · Circolo NOI</span>
+
+        <h1 class="apertura__titolo">
+          {
+            LETTERE.map(([lettera, gradi, colore]) => (
+              <span class="apertura__lettera" style={`transform:rotate(${gradi}deg);color:${colore}`}>
+                {lettera}
+              </span>
+            ))
+          }
+          <span class="apertura__anno">2026</span>
+        </h1>
+
+        <p class="apertura__sottotitolo">Canizzano sulle orme di San Francesco</p>
+        <p class="apertura__testo-lungo">
+          Tre settimane di laboratori, giochi, uscite e nuovi amici. Si sta in oratorio, si esce in
+          gita, si torna a casa stanchi e contenti.
+        </p>
+
+        <div class="apertura__pillole">
+          <span class="apertura__dato apertura__dato--ambra">15 giugno → 3 luglio</span>
+          <span class="apertura__dato apertura__dato--crema">dalle 15.30 alle 18.30</span>
+        </div>
+
+        <div class="riga riga--bottoni apertura__bottoni">
+          <Bottone href="#iscrizioni" sfondo="var(--color-accent)" inchiostro="#fff2eb">
+            Iscriviti ora
+          </Bottone>
+          <Bottone href="#giornata" variante="ghost" class="apertura__ghost">
+            Com’è una giornata
+          </Bottone>
+        </div>
+      </div>
+
+      <div class="apertura__lato">
+        <div class="apertura__cornice">
+          <Foto
+            src={locandina?.immagine}
+            alt={locandina?.testo_alternativo ?? 'Locandina del Grest 2026'}
+            attesa="Locandina del Grest 2026 (grest-locandina.jpg)"
+            altezza="auto"
+            raggio="var(--radius-md)"
+          />
+        </div>
+        {
+          config.iscrizioni_grest_aperte && (
+            <span class="apertura__bollino">Iscrizioni<br />aperte!</span>
+          )
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Cosa si fa -->
+  <Sezione id="cosa-si-fa" stacco="corto">
+    <div class="pila" style="gap:30px">
+      <div class="pila" style="gap:12px">
+        <Etichetta tono="accent" class="apertura__tag">Potrai trovare</Etichetta>
+        <h2 class="cosa__titolo">Cosa si fa al Grest</h2>
+      </div>
+      <div class="cosa__griglia">
+        {
+          COSA_SI_FA.map((voce) => (
+            <SchedaNota
+              titolo={voce.titolo}
+              testo={voce.testo}
+              icona={voce.icona}
+              tono={voce.tono}
+              sfondo="var(--color-surface)"
+              dimensioneDisco={58}
+              dimensioneTitolo={25}
+              rotazione={voce.rotazione}
+              ombra="sm"
+            />
+          ))
+        }
+        <SchedaNota
+          titolo="E molto altro…"
+          testo="Preghiera del mattino, canti, tornei, la festa finale con i genitori."
+          icona="stella"
+          tono="accent-600"
+          sfondo="var(--color-accent)"
+          inchiostro="#fff2eb"
+          dimensioneDisco={58}
+          dimensioneTitolo={25}
+          rotazione={-2}
+          ombra="md"
+        />
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- La giornata tipo -->
+  <section id="giornata" class="giornata">
+    <div class="contenitore giornata__griglia">
+      <div class="pila" style="gap:18px">
+        <Etichetta tono="accent-2" class="apertura__tag">Una giornata tipo</Etichetta>
+        <h2 class="titolo-sezione">Dalle 15.30 alle 18.30, tre ore piene</h2>
+        <p class="giornata__testo">
+          Gli orari sono una traccia: nei giorni di uscita cambia tutto e lo diciamo in anticipo sul
+          gruppo WhatsApp dei genitori.
+        </p>
+        <Foto
+          class="giornata__foto"
+          src={foto[1]?.immagine}
+          alt={foto[1]?.testo_alternativo ?? ''}
+          attesa="Foto di un laboratorio o di un gioco"
+          altezza={230}
+        />
+      </div>
+
+      <div class="pila" style="gap:14px">
+        {
+          GIORNATA.map(([ora, titolo, testo, risalto]) => (
+            <RigaGiornata ora={ora} titolo={titolo} testo={testo} risalto={risalto} />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Iscrizioni: si accende dall'admin -->
+  {
+    config.iscrizioni_grest_aperte && (
+      <Sezione id="iscrizioni" stacco="corto">
+        <div class="iscrizioni">
+          <span class="iscrizioni__bolla" aria-hidden="true"></span>
+
+          <div class="iscrizioni__testo">
+            <span class="occhiello" style="color:var(--color-accent-200)">Iscrizioni</span>
+            <h2 class="iscrizioni__titolo">Due passi e sei dentro</h2>
+
+            <div class="pila" style="gap:16px">
+              <PassoNumerato
+                numero={1}
+                titolo="Compila il modulo online"
+                testo="Inquadra il QR della locandina o scrivici una mail: ti mandiamo il link."
+              />
+              <PassoNumerato
+                numero={2}
+                titolo="Passa in oratorio a consegnare"
+                testo="Con la quota e il modulo firmato. Siamo lì ad aspettarti."
+              />
+            </div>
+
+            <div class="iscrizioni__date">
+              <div class="iscrizioni__data">
+                <span class="iscrizioni__giorno">Sabato 9 maggio</span>
+                <span class="iscrizioni__orario">10.00 → 12.00</span>
+              </div>
+              <div class="iscrizioni__data">
+                <span class="iscrizioni__giorno">Domenica 10 maggio</span>
+                <span class="iscrizioni__orario">09.30 → 12.00</span>
+              </div>
+            </div>
+
+            <Bottone
+              href={`mailto:${CONTATTI.grestEmail}`}
+              variante="chiaro"
+              sfondo="#fff2eb"
+              class="iscrizioni__bottone"
+            >
+              Scrivi per il modulo
+            </Bottone>
+          </div>
+
+          <div class="iscrizioni__lato">
+            <div class="iscrizioni__scheda">
+              <span class="iscrizioni__occhiello">Serve sapere</span>
+              <div class="iscrizioni__righe">
+                {SERVE_SAPERE.map(([voce, valore]) => (
+                  <span><strong>{voce}</strong> · {valore}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Sezione>
+    )
+  }
+
+  <!-- Foto: si accende dall'admin -->
+  {
+    config.mostra_foto_grest && (
+      <Sezione id="foto">
+        <div class="pila" style="gap:28px">
+          <div class="foto__testata">
+            <div class="pila" style="gap:12px">
+              <Etichetta tono="accent-2" class="apertura__tag">L’anno scorso</Etichetta>
+              <h2 class="titolo-sezione">Eravamo in centoventi</h2>
+              <p class="testo-guida" style="max-width:54ch">
+                Foto della gita di fine Grest e delle giornate in oratorio. Se ne hai altre,
+                mandale agli animatori.
+              </p>
+            </div>
+            <Bottone href={`mailto:${CONTATTI.grestEmail}`} variante="secondario">
+              Manda le tue foto
+            </Bottone>
+          </div>
+
+          <Foto
+            src={foto[0]?.immagine}
+            alt={foto[0]?.testo_alternativo ?? 'Foto di gruppo del Grest'}
+            attesa="Foto di gruppo del Grest (grest-gruppo.jpg)"
+            altezza={460}
+            ombra="md"
+          />
+
+          <div class="foto__mosaico">
+            <Foto
+              src={foto[2]?.immagine}
+              alt={foto[2]?.testo_alternativo ?? ''}
+              attesa="Laboratorio ai tavoli"
+              altezza={200}
+            />
+            <Foto
+              class="foto__larga"
+              src={foto[3]?.immagine}
+              alt={foto[3]?.testo_alternativo ?? ''}
+              attesa="Grande gioco nel prato"
+              altezza={200}
+            />
+            <Foto
+              src={foto[4]?.immagine}
+              alt={foto[4]?.testo_alternativo ?? ''}
+              attesa="Un animatore in azione"
+              altezza={200}
+              forma="cerchio"
+            />
+          </div>
+        </div>
+      </Sezione>
+    )
+  }
+
+  <!-- Animatori -->
+  <Fascia id="animatori" inchiostro="#fbfff2" imbottitura="72px 0">
+    <div class="animatori">
+      <div class="pila" style="gap:22px">
+        <span class="occhiello" style="color:var(--color-accent-300)">Chi c’è dietro</span>
+        <h2 class="animatori__titolo">Gli animatori, e chi chiamare</h2>
+        <p class="animatori__testo">
+          Ragazzi e ragazze del quartiere, dai 15 anni in su, con gli adulti del Circolo NOI. Per
+          qualsiasi cosa — iscrizioni, allergie, ritardi, un dubbio — scrivi o chiama.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone
+            href={`mailto:${CONTATTI.grestEmail}`}
+            variante="chiaro"
+            sfondo="#fbfff2"
+            inchiostro="var(--color-accent-2-800)"
+          >
+            {CONTATTI.grestEmail}
+          </Bottone>
+        </div>
+      </div>
+      <div class="animatori__griglia">
+        {
+          ANIMATORI.map((persona) => (
+            <CardContatto nome={persona.nome} telefono={persona.telefono} tono={persona.tono} />
+          ))
+        }
+      </div>
+    </div>
+  </Fascia>
+
+  <!-- Chiusura -->
+  <Sezione stacco="corto">
+    <BloccoAzione
+      titolo="Vuoi fare l’animatore?"
+      testo="Dai 15 anni si può. Formazione in primavera, poi tre settimane insieme: è il modo migliore per passare giugno a Canizzano."
+    >
+      <Bottone href={`mailto:${CONTATTI.grestEmail}`}>Candidati</Bottone>
+      <Bottone href={ROTTE.proloco} variante="secondario">Cos’altro succede in quartiere</Bottone>
+    </BloccoAzione>
+  </Sezione>
+</Base>
+
+<style>
+  /* — hero — */
+  .apertura {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-accent-2-600);
+    color: #fbfff2;
+  }
+  .apertura__bolla { position: absolute; border-radius: 999px; }
+  .apertura__bolla--1 {
+    left: -120px; top: -140px; width: 420px; height: 420px;
+    background: var(--color-accent-2-500); opacity: 0.6;
+  }
+  .apertura__bolla--2 {
+    right: 30%; bottom: -180px; width: 300px; height: 300px;
+    background: var(--color-accent-400); opacity: 0.35;
+  }
+  .apertura__bolla--3 {
+    right: -90px; top: 40px; width: 240px; height: 240px;
+    background: var(--color-accent-300); opacity: 0.4;
+  }
+
+  .apertura__griglia {
+    position: relative;
+    padding-top: 70px;
+    padding-bottom: 84px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .apertura__testo { display: flex; flex-direction: column; gap: 24px; }
+  .apertura__pillola {
+    align-self: flex-start;
+    background: rgba(251, 255, 242, 0.22);
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .apertura__titolo { font-size: 122px; line-height: 0.82; letter-spacing: -0.01em; margin: 0; }
+  /* Ogni lettera ha la sua inclinazione: e' la firma della pagina. */
+  .apertura__lettera { display: inline-block; }
+  .apertura__anno { font-size: 46px; vertical-align: super; color: var(--color-accent-2-200); }
+
+  .apertura__sottotitolo {
+    font-family: var(--font-heading);
+    font-size: 34px;
+    line-height: 1.06;
+    max-width: 18ch;
+    margin: 0;
+  }
+  .apertura__testo-lungo {
+    font-size: 18.5px;
+    line-height: 1.55;
+    max-width: 42ch;
+    color: var(--color-accent-2-100);
+    margin: 0;
+  }
+
+  .apertura__pillole { display: flex; flex-wrap: wrap; gap: 12px; }
+  .apertura__dato {
+    border-radius: 999px;
+    padding: 13px 24px;
+    font-family: var(--font-heading);
+    font-size: 21px;
+  }
+  .apertura__dato--ambra {
+    background: var(--color-accent-300);
+    color: var(--color-accent-900);
+    transform: rotate(-1.5deg);
+  }
+  .apertura__dato--crema {
+    background: #fbfff2;
+    color: var(--color-accent-2-800);
+    transform: rotate(1.5deg);
+  }
+  .apertura__bottoni { margin-top: 6px; }
+  .apertura__ghost { color: #fbfff2; border: 1px solid rgba(251, 255, 242, 0.5); }
+  .apertura__ghost:hover { background: rgba(251, 255, 242, 0.16); color: #fbfff2; }
+
+  .apertura__lato { position: relative; display: flex; justify-content: center; }
+  .apertura__cornice {
+    background: #fbfff2;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    transform: rotate(2.5deg);
+    max-width: 360px;
+    width: 100%;
+  }
+  .apertura__bollino {
+    position: absolute;
+    left: -24px;
+    bottom: -26px;
+    width: 118px;
+    height: 118px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: #fff2eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-heading);
+    font-size: 19px;
+    line-height: 1.05;
+    animation: grestBob 4s ease-in-out infinite;
+  }
+  /* L'unica animazione della pagina. */
+  @keyframes grestBob {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-10px) rotate(3deg); }
+  }
+
+  .apertura__tag { align-self: flex-start; }
+
+  /* — cosa si fa — */
+  .cosa__titolo { font-size: 44px; line-height: 1.02; margin: 0; }
+  .cosa__griglia {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  /* — giornata tipo — */
+  .giornata { margin-top: var(--stacco-sezione); background: var(--color-neutral-100); }
+  .giornata__griglia {
+    padding-top: 70px;
+    padding-bottom: 76px;
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: 52px;
+    align-items: center;
+  }
+  .giornata__testo { font-size: 16px; line-height: 1.6; color: var(--color-neutral-800); margin: 0; }
+  .giornata__foto { margin-top: 8px; }
+
+  /* — iscrizioni — */
+  .iscrizioni {
+    background: var(--color-accent);
+    color: #fff2eb;
+    border-radius: var(--radius-lg);
+    padding: 46px 48px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 46px;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+  }
+  .iscrizioni__bolla {
+    position: absolute;
+    right: -120px; bottom: -160px; width: 380px; height: 380px;
+    border-radius: 999px;
+    background: var(--color-accent-400);
+    opacity: 0.45;
+  }
+  .iscrizioni__testo { display: flex; flex-direction: column; gap: 20px; position: relative; }
+  .iscrizioni__titolo { font-size: 46px; line-height: 1.02; margin: 0; }
+  .iscrizioni__date { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+  .iscrizioni__data {
+    background: rgba(255, 242, 235, 0.16);
+    border-radius: var(--radius-md);
+    padding: 16px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .iscrizioni__giorno { font-family: var(--font-heading); font-size: 21px; }
+  .iscrizioni__orario { font-size: 15px; opacity: 0.92; }
+  .iscrizioni__bottone { align-self: flex-start; margin-top: 4px; }
+
+  .iscrizioni__lato {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .iscrizioni__scheda {
+    background: #fff2eb;
+    color: var(--color-accent-900);
+    border-radius: var(--radius-lg);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transform: rotate(1.5deg);
+  }
+  .iscrizioni__occhiello {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent-700);
+  }
+  .iscrizioni__righe { display: flex; flex-direction: column; gap: 9px; font-size: 15.5px; line-height: 1.5; }
+
+  /* — foto — */
+  .foto__testata {
+    display: flex; flex-wrap: wrap; gap: 18px;
+    align-items: flex-end; justify-content: space-between;
+  }
+  .foto__mosaico { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .foto__larga { grid-column: span 2; }
+
+  /* — animatori — */
+  .animatori { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; align-items: center; }
+  .animatori__titolo { font-size: 44px; line-height: 1.02; margin: 0; }
+  .animatori__testo { font-size: 16.5px; line-height: 1.6; max-width: 48ch; opacity: 0.92; margin: 0; }
+  .animatori__griglia { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+  @media (max-width: 1100px) {
+    .apertura__titolo { font-size: 92px; }
+    .cosa__griglia { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .apertura__griglia, .giornata__griglia, .iscrizioni, .animatori {
+      grid-template-columns: 1fr;
+      gap: 34px;
+    }
+    .apertura__titolo { font-size: 72px; }
+    .apertura__sottotitolo { font-size: 27px; }
+    .iscrizioni { padding: 34px 30px; }
+    .iscrizioni__titolo, .animatori__titolo, .cosa__titolo { font-size: 34px; }
+    .foto__mosaico { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .apertura__titolo { font-size: 64px; }
+    .apertura__anno { font-size: 28px; }
+    .cosa__griglia { grid-template-columns: 1fr; }
+    .foto__larga { grid-column: span 2; }
+    .animatori__griglia { grid-template-columns: 1fr; }
+  }
+</style>

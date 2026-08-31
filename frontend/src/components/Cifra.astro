@@ -1,0 +1,34 @@
+---
+/**
+ * Una cifra della barra dati (12 appuntamenti, 80+ volontari, 1456…).
+ * Il numero e' in Caprasimo, l'etichetta in micro-maiuscoletto.
+ */
+interface Props {
+  valore: string;
+  etichetta: string;
+  colore?: string;
+  dimensione?: number;
+}
+const {
+  valore,
+  etichetta,
+  colore = 'var(--color-accent-700)',
+  dimensione = 30,
+} = Astro.props;
+---
+
+<div class="cifra">
+  <span class="cifra__valore" style={`color:${colore};font-size:${dimensione}px`}>{valore}</span>
+  <span class="cifra__etichetta">{etichetta}</span>
+</div>
+
+<style>
+  .cifra { display: flex; flex-direction: column; gap: 6px; }
+  .cifra__valore { font-family: var(--font-heading); line-height: 1; }
+  .cifra__etichetta {
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--color-neutral-700);
+    font-weight: 600;
+  }
+</style>

@@ -1,0 +1,73 @@
+---
+/**
+ * Una voce della linea del tempo: il periodo a destra nella colonna
+ * stretta, il pallino sulla riga verticale, il testo a fianco.
+ */
+import Etichetta from './Etichetta.astro';
+
+interface Props {
+  periodo: string;
+  titolo: string;
+  testo: string;
+  /** Il pallino salvia segna le svolte del quartiere, non della chiesa. */
+  salvia?: boolean;
+  nota?: string;
+  ultima?: boolean;
+}
+const { periodo, titolo, testo, salvia = false, nota, ultima = false } = Astro.props;
+---
+
+<div class="voce">
+  <div class="voce__periodo"><span>{periodo}</span></div>
+  <div class={`voce__corpo ${ultima ? 'voce__corpo--ultima' : ''}`.trim()}>
+    <span
+      class="voce__pallino"
+      style={`background:${salvia ? 'var(--color-accent-2-600)' : 'var(--color-accent)'}`}
+    ></span>
+    <h3>{titolo}</h3>
+    <p>{testo}</p>
+    {nota && <Etichetta tono="outline" class="voce__nota">{nota}</Etichetta>}
+  </div>
+</div>
+
+<style>
+  .voce { display: grid; grid-template-columns: 190px 1fr; gap: 32px; }
+  .voce__periodo { text-align: right; padding-top: 4px; }
+  .voce__periodo span {
+    font-family: var(--font-heading);
+    font-size: 27px;
+    color: var(--color-accent-700);
+    line-height: 1.1;
+  }
+  .voce__corpo {
+    border-left: 2px solid var(--color-accent-300);
+    padding: 0 0 38px 32px;
+    position: relative;
+  }
+  /* L'ultima voce non prosegue: la linea si ferma qui. */
+  .voce__corpo--ultima { border-left-color: transparent; padding-bottom: 0; }
+  .voce__pallino {
+    position: absolute;
+    left: -11px;
+    top: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    border: 4px solid var(--color-bg);
+  }
+  .voce__corpo h3 { font-size: 24px; line-height: 1.1; margin: 0 0 8px; }
+  .voce__corpo p {
+    font-size: 16px;
+    line-height: 1.65;
+    max-width: 62ch;
+    color: var(--color-neutral-800);
+    margin: 0;
+  }
+  .voce__nota { margin-top: 12px; }
+
+  @media (max-width: 760px) {
+    .voce { grid-template-columns: 1fr; gap: 8px; }
+    .voce__periodo { text-align: left; padding-left: 32px; }
+    .voce__periodo span { font-size: 22px; }
+  }
+</style>

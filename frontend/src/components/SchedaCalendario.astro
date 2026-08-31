@@ -1,0 +1,81 @@
+---
+/**
+ * La card compatta del calendario stagionale: occhiello con la data,
+ * titolo e una riga di descrizione.
+ *
+ * La tinta arriva dal CMS: le feste piu' grosse sono card colorate, le
+ * altre restano crema. Se l'evento ha un collegamento diventa un link con
+ * la freccia.
+ */
+import type { Evento } from '../lib/contenuti.ts';
+import { quandoBreve } from '../lib/date.ts';
+
+interface Props {
+  evento: Evento;
+  /** Destinazione interna, quando la voce rimanda a un'altra pagina. */
+  href?: string;
+  etichettaLink?: string;
+}
+const { evento, href, etichettaLink } = Astro.props;
+
+/** Le tinte piene usate dal calendario, con il loro inchiostro. */
+const TINTE: Record<string, { sfondo: string; testo: string; occhiello: string }> = {
+  'accent-2-700': {
+    sfondo: 'var(--color-accent-2-700)',
+    testo: 'var(--color-accent-2-100)',
+    occhiello: 'var(--color-accent-300)',
+  },
+  'accent-2-600': {
+    sfondo: 'var(--color-accent-2-600)',
+    testo: 'var(--color-accent-2-100)',
+    occhiello: 'var(--color-accent-2-200)',
+  },
+  accent: { sfondo: 'var(--color-accent)', testo: '#fff2eb', occhiello: 'var(--color-accent-200)' },
+};
+
+const tinta = TINTE[evento.tono];
+const collegamento = href ?? (evento.link || undefined);
+const Elemento = collegamento ? 'a' : 'div';
+const data = evento.etichetta_data || quandoBreve(evento);
+---
+
+<Elemento
+  class={`calendario ${tinta ? 'calendario--tinta' : ''}`.trim()}
+  href={collegamento}
+  style={tinta ? `background:${tinta.sfondo};color:${tinta.testo}` : undefined}
+>
+  <span class="calendario__data" style={tinta ? `color:${tinta.occhiello}` : undefined}>{data}</span>
+  <strong class="calendario__titolo">{evento.titolo}</strong>
+  {evento.sommario && <p class="calendario__testo">{evento.sommario}</p>}
+  {
+    collegamento && (
+      <span class="calendario__freccia">{etichettaLink ?? evento.link_etichetta ?? 'Vai'} →</span>
+    )
+  }
+</Elemento>
+
+<style>
+  .calendario {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    text-decoration: none;
+    color: inherit;
+  }
+  a.calendario:hover { filter: brightness(0.96); color: inherit; }
+  .calendario__data {
+    font-size: 12.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent-2-700);
+  }
+  .calendario__titolo { font-size: 17px; line-height: 1.25; }
+  .calendario__testo { font-size: 14.5px; line-height: 1.55; color: var(--color-neutral-800); margin: 0; }
+  .calendario--tinta .calendario__testo { color: inherit; opacity: 0.92; }
+  .calendario__freccia { font-size: 14px; font-weight: 700; color: var(--color-accent-2-800); }
+  .calendario--tinta .calendario__freccia { color: inherit; }
+</style>

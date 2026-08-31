@@ -1,0 +1,79 @@
+---
+/**
+ * La card verticale con la foto in testa: «i tre grandi» della Pro Loco.
+ * Foto, disco icona + tag, titolo, testo e le righe Quando/Dove/Per chi.
+ */
+import Foto from './Foto.astro';
+import DiscoIcona from './DiscoIcona.astro';
+import Etichetta from './Etichetta.astro';
+import type { NomeIcona } from './Icona.astro';
+
+interface Props {
+  titolo: string;
+  testo: string;
+  icona: NomeIcona;
+  tonoIcona?: string;
+  etichetta: string;
+  tonoEtichetta?: 'accent' | 'accent-2' | 'neutral' | 'outline';
+  righe?: [string, string][];
+  foto?: string | null;
+  fotoAlt?: string;
+  attesaFoto?: string;
+}
+
+const {
+  titolo,
+  testo,
+  icona,
+  tonoIcona = 'accent-2-600',
+  etichetta,
+  tonoEtichetta = 'accent-2',
+  righe = [],
+  foto,
+  fotoAlt = '',
+  attesaFoto = 'Foto da caricare',
+} = Astro.props;
+---
+
+<article class="ritratto">
+  <Foto src={foto} alt={fotoAlt} attesa={attesaFoto} altezza={210} raggio="0" />
+  <div class="ritratto__corpo">
+    <div class="ritratto__testa">
+      <DiscoIcona icona={icona} tono={tonoIcona} dimensione={52} />
+      <Etichetta tono={tonoEtichetta}>{etichetta}</Etichetta>
+    </div>
+    <h3>{titolo}</h3>
+    <p class="ritratto__testo">{testo}</p>
+    {
+      righe.length > 0 && (
+        <div class="ritratto__righe">
+          {righe.map(([voce, valore]) => (
+            <span><strong>{voce}</strong> · {valore}</span>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .ritratto {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-sm);
+  }
+  .ritratto__corpo { padding: 26px 28px 30px; display: flex; flex-direction: column; gap: 14px; }
+  .ritratto__testa { display: flex; align-items: center; gap: 14px; }
+  .ritratto h3 { font-size: 30px; line-height: 1.02; margin: 0; }
+  .ritratto__testo { font-size: 15.5px; line-height: 1.6; color: var(--color-neutral-800); margin: 0; flex: 1; }
+  .ritratto__righe {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14.5px;
+    color: var(--color-neutral-800);
+  }
+</style>

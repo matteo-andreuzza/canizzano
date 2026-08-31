@@ -1,0 +1,46 @@
+---
+/**
+ * Il lockup della navbar: marchio, nome della pagina e micro-sottotitolo.
+ * Il link punta sempre alla home, anche quando il marchio e' quello di
+ * un'altra pagina.
+ */
+import Marchio from './Marchio.astro';
+
+interface Props {
+  variante?: 'base' | 'proloco' | 'sagra' | 'grest' | 'storia';
+  nome: string;
+  sottotitolo: string;
+  href?: string;
+  inchiostro?: string;
+  coloreSottotitolo?: string;
+}
+const {
+  variante = 'base',
+  nome,
+  sottotitolo,
+  href = '/',
+  inchiostro = 'inherit',
+  coloreSottotitolo = 'var(--color-neutral-700)',
+} = Astro.props;
+---
+
+<a class="lockup" href={href} style={`color:${inchiostro}`}>
+  <Marchio variante={variante} dimensione={40} />
+  <span class="lockup__testi">
+    <span class="lockup__nome">{nome}</span>
+    <span class="lockup__sottotitolo" style={`color:${coloreSottotitolo}`}>{sottotitolo}</span>
+  </span>
+</a>
+
+<style>
+  .lockup { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .lockup__testi { display: flex; flex-direction: column; gap: 3px; }
+  .lockup__nome { font-family: var(--font-heading); font-size: 19px; line-height: 1; }
+  .lockup__sottotitolo {
+    font-size: 10.5px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  @media (max-width: 420px) { .lockup__sottotitolo { display: none; } }
+</style>

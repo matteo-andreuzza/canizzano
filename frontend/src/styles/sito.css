@@ -1,0 +1,90 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Primitive di impaginazione condivise da tutte le pagine.
+
+   Il sistema Organic definisce i token e i componenti piccoli; qui stanno
+   solo la griglia di pagina, le spaziature fra sezioni e le regole
+   responsive, che il prototipo desktop non copriva.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --larghezza-pagina: 1180px;
+  --margine-pagina: 40px;
+  --stacco-sezione: 104px;
+}
+
+html { scroll-behavior: smooth; }
+
+/* Il contenuto centrato di ogni sezione. */
+.contenitore {
+  width: 100%;
+  max-width: var(--larghezza-pagina);
+  margin: 0 auto;
+  padding: 0 var(--margine-pagina);
+}
+
+/* Griglie: collassano da sole sotto i 900px (vedi in fondo). */
+.griglia { display: grid; gap: 20px; }
+.griglia--2 { grid-template-columns: repeat(2, 1fr); }
+.griglia--3 { grid-template-columns: repeat(3, 1fr); }
+.griglia--4 { grid-template-columns: repeat(4, 1fr); }
+
+.pila { display: flex; flex-direction: column; }
+.riga { display: flex; flex-wrap: wrap; align-items: center; }
+.riga--bottoni { gap: 10px; }
+
+/* Micro-etichetta maiuscola del sistema. */
+.occhiello {
+  font-size: 12.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Testo lungo leggibile: il sistema tiene le colonne strette. */
+.testo-guida { font-size: 17px; line-height: 1.6; max-width: 62ch; color: var(--color-neutral-800); }
+.testo-corpo { font-size: 15.5px; line-height: 1.6; }
+
+/* Titoli grandi delle pagine: piu' stretti della scala base del sistema. */
+.titolo-pagina { font-size: 76px; line-height: 0.96; }
+.titolo-sezione { font-size: 40px; line-height: 1.03; }
+
+/* Le pagine Pro Loco e Grest portano i link sul verde del sistema. */
+.tema--verde a { color: var(--color-accent-2-800); }
+.tema--verde a:hover { color: var(--color-accent-2-900); }
+
+/* Su fondo scuro i link ereditano il colore della fascia. */
+.su-scuro a { color: inherit; }
+
+/* Ancore sotto l'header appiccicoso. */
+[id] { scroll-margin-top: 96px; }
+
+/* ── Responsive ────────────────────────────────────────────────────────────
+   I prototipi erano a larghezza desktop: qui le griglie scendono a una o due
+   colonne e i titoli si riducono, come indicato nell'handoff. */
+
+@media (max-width: 1100px) {
+  .titolo-pagina { font-size: 62px; }
+  .titolo-sezione { font-size: 34px; }
+}
+
+@media (max-width: 900px) {
+  :root { --margine-pagina: 20px; --stacco-sezione: 72px; }
+  .griglia--3, .griglia--4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .griglia--2, .griglia--3, .griglia--4 { grid-template-columns: 1fr; }
+  .titolo-pagina { font-size: 46px; line-height: 1.02; }
+  .titolo-sezione { font-size: 29px; }
+  h2 { font-size: 27px; }
+}
+
+/* Chi preferisce meno movimento non vede animazioni ne' scroll morbido. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

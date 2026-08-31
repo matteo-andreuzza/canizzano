@@ -1,0 +1,493 @@
+---
+/**
+ * Canizzano in Festa — la sagra d'ottobre. Identita' terracotta.
+ *
+ * Il programma e' interamente dinamico: le giornate e i loro orari
+ * arrivano dal CMS, cosi' la Pro Loco aggiorna la locandina online senza
+ * toccare il codice.
+ */
+import Base from '../layouts/Base.astro';
+import Sezione from '../components/Sezione.astro';
+import Fascia from '../components/Fascia.astro';
+import TestataSezione from '../components/TestataSezione.astro';
+import CardGiornata from '../components/CardGiornata.astro';
+import SchedaTesto from '../components/SchedaTesto.astro';
+import ContoRovescia from '../components/ContoRovescia.astro';
+import ModuloPrenotazione from '../components/ModuloPrenotazione.astro';
+import BarraCifre from '../components/BarraCifre.astro';
+import Bottone from '../components/Bottone.astro';
+import Etichetta from '../components/Etichetta.astro';
+import Foto from '../components/Foto.astro';
+import { CONTATTI, ROTTE } from '../lib/sito.ts';
+import { fotoDi, impostazioni, menuDellaSagra, programma } from '../lib/contenuti.ts';
+
+const config = await impostazioni();
+const giornate = await programma('sagra');
+const menu = await menuDellaSagra('sagra');
+const foto = await fotoDi('sagra');
+
+// Il programma sta su due colonne: primo weekend a sinistra, secondo a destra.
+const meta = Math.ceil(giornate.length / 2);
+const colonne = [giornate.slice(0, meta), giornate.slice(meta)];
+
+const INFO = [
+  { etichetta: 'Dove', valore: 'Via Canizzano 110' },
+  { etichetta: 'Cucina', valore: 'dalle 19.00' },
+  { etichetta: 'Ingresso', valore: 'libero, tendone coperto' },
+  { etichetta: 'Prenotazioni', valore: CONTATTI.proLocoTelefono },
+];
+
+const TENDONE = [
+  {
+    titolo: 'Tombola',
+    testo: 'Le domeniche alle 21.00, cartelle a 1 €, premi offerti dai negozi del quartiere.',
+  },
+  {
+    titolo: 'Pesca di beneficenza',
+    testo: 'Tutti i giorni. Il ricavato va alle opere della parrocchia.',
+  },
+  {
+    titolo: 'Giochi per i più piccoli',
+    testo: 'Gonfiabili e giochi di legno nel prato, sorvegliati dagli animatori.',
+  },
+  {
+    titolo: 'Mostra fotografica',
+    testo: 'Canizzano di una volta: mulini, campi, sagre. Porta le tue foto, le scansioniamo.',
+  },
+];
+
+const SOSTENITORI = [
+  'Parrocchia della Visitazione della B.V. Maria',
+  'Ascoltare Costruire',
+  'Comune di Treviso',
+  'Provincia di Treviso',
+  'A.R.C. Cannetum',
+];
+
+/** «Sab 3», «Gio 1»: il giorno abbreviato con la maiuscola iniziale. */
+function giornoCorto(iso: string): string {
+  const testo = new Intl.DateTimeFormat('it-IT', {
+    weekday: 'short',
+    day: 'numeric',
+    timeZone: 'Europe/Rome',
+  })
+    .format(new Date(iso))
+    .replace('.', '');
+  return testo.charAt(0).toUpperCase() + testo.slice(1);
+}
+
+/** I pranzi vanno distinti dalle cene: «Dom 4 · pranzo». */
+function quandoSiMangia(iso: string): string {
+  const ora = Number(
+    new Intl.DateTimeFormat('it-IT', { hour: 'numeric', hour12: false, timeZone: 'Europe/Rome' })
+      .format(new Date(iso)),
+  );
+  return ora < 16 ? `${giornoCorto(iso)} · pranzo` : giornoCorto(iso);
+}
+
+const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
+---
+
+<Base
+  pagina="sagra"
+  titolo="Canizzano in Festa 2026"
+  descrizione="La sagra di Canizzano: dal 2 all'11 ottobre 2026, dieci giorni di cucina, musica e giochi in via Canizzano 110, Treviso."
+  marchio="sagra"
+  nomeLockup="Canizzano in Festa"
+  sottotitoloLockup="2 → 11 ottobre 2026"
+>
+  <!-- Hero terracotta con conto alla rovescia -->
+  <section class="apertura">
+    <span class="apertura__bolla" aria-hidden="true"></span>
+    <div class="contenitore apertura__griglia">
+      <div class="apertura__testo">
+        <span class="apertura__pillola">Pro Loco Cannetum · Canizzano</span>
+        <h1>Canizzano<br />in Festa</h1>
+        <p class="apertura__occhiello">
+          La sagra paesana del quartiere: dieci giorni di cucina, musica, giochi e gente che si
+          ritrova. Via Canizzano 110, tendone coperto, ingresso libero.
+        </p>
+        <div class="apertura__date">
+          <span class="apertura__periodo">2 → 11 ottobre</span>
+          <span class="apertura__anno">2026</span>
+        </div>
+        <div class="riga riga--bottoni">
+          <Bottone href="#prenota" variante="chiaro">Prenota la cena</Bottone>
+          <Bottone href="#programma" variante="ghost" class="apertura__ghost">
+            Programma completo
+          </Bottone>
+        </div>
+      </div>
+
+      <div class="apertura__lato">
+        {
+          config.mostra_conto_rovescia && config.data_inizio_sagra && (
+            <ContoRovescia dataInizio={config.data_inizio_sagra} />
+          )
+        }
+        <Foto
+          src={foto[0]?.immagine}
+          alt={foto[0]?.testo_alternativo ?? 'La sagra di Canizzano'}
+          attesa="Foto della sagra: tavoli, tendone, cucina"
+          altezza={260}
+        />
+      </div>
+    </div>
+  </section>
+
+  <BarraCifre voci={INFO} variante="dato" scostamento={32} />
+
+  <!-- Programma: interamente dal CMS -->
+  <Sezione id="programma" stacco="nessuno" class="sezione-programma">
+    <div class="pila" style="gap:30px">
+      <div class="programma__testata">
+        <div class="pila" style="gap:12px">
+          <Etichetta tono="accent" class="programma__tag">Programma 2026</Etichetta>
+          <h2 class="titolo-sezione">Due weekend, dieci giorni di festa</h2>
+          <p class="testo-guida" style="max-width:58ch">
+            Stand gastronomico ogni sera dalle 19.30, musica dal vivo, laboratori per famiglie e i
+            racconti di Pimpa. Piatti del giorno, pranzi e laboratori solo su prenotazione.
+          </p>
+        </div>
+        <div class="programma__categorie">
+          <Etichetta tono="accent">cucina</Etichetta>
+          <Etichetta tono="accent-2">musica</Etichetta>
+          <Etichetta tono="neutral">bambini</Etichetta>
+          <Etichetta tono="outline">comunità</Etichetta>
+        </div>
+      </div>
+
+      {
+        giornate.length > 0 ? (
+          <div class="programma__colonne">
+            {colonne.map((colonna) => (
+              <div class="programma__colonna">
+                {colonna.map((voce) => (
+                  <CardGiornata giornata={voce.giornata} eventi={voce.eventi} />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p class="programma__vuoto">
+            Il programma di quest’anno è in preparazione: torna a trovarci fra qualche giorno.
+          </p>
+        )
+      }
+    </div>
+  </Sezione>
+
+  <!-- Cucina e prenotazioni -->
+  <Sezione id="cucina">
+    <div class="cucina">
+      <div class="pila" style="gap:24px">
+        <TestataSezione
+          titolo="Cosa si mangia"
+          tag="La cucina"
+          tonoTag="accent"
+          testo="Il piatto del giorno cambia ogni sera. Pranzi, piatti del giorno e laboratori vanno prenotati entro il giorno prima."
+        />
+
+        {
+          menu.length > 0 && (
+            <div class="cucina__tabella">
+              <table class="table">
+                <thead>
+                  <tr><th>Sera</th><th>Piatto</th><th>Prenotazione</th></tr>
+                </thead>
+                <tbody>
+                  {menu.map((evento) => (
+                    <tr>
+                      <td>{quandoSiMangia(evento.inizio)}</td>
+                      <td>{evento.piatto_del_giorno || evento.titolo}</td>
+                      <td>
+                        {evento.prenotazione_entro
+                          ? `entro ${giornoCorto(evento.prenotazione_entro)}`
+                          : 'libera'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        }
+
+        <p class="cucina__nota">
+          Ogni sera anche panini, patatine, birra e vino ai banchi, senza prenotazione. Celiaci e
+          vegetariani: segnalatelo quando prenotate.
+        </p>
+      </div>
+
+      <ModuloPrenotazione numero={numeroWhatsApp} numeroLeggibile={CONTATTI.proLocoTelefono} />
+    </div>
+  </Sezione>
+
+  <!-- Sotto il tendone -->
+  <Sezione>
+    <div class="pila" style="gap:28px">
+      <h2 class="titolo-sezione">Sotto il tendone</h2>
+      <div class="griglia griglia--4">
+        {TENDONE.map((voce) => <SchedaTesto titolo={voce.titolo} testo={voce.testo} />)}
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Volontari -->
+  <Fascia id="volontari" imbottitura="74px 0">
+    <div class="volontari">
+      <div class="volontari__testo">
+        <span class="occhiello" style="color:var(--color-accent-300)">Diventa volontario</span>
+        <h2 class="volontari__titolo">La sagra la fanno ottanta persone</h2>
+        <p class="volontari__paragrafo">
+          Cucina, griglia, bar, tavoli, cassa, allestimenti, pulizie. Anche solo una sera: basta
+          dire quando puoi e ti mettiamo in squadra con qualcuno che sa già cosa fare.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone
+            href={`mailto:${CONTATTI.email}?subject=Do%20una%20mano%20alla%20sagra`}
+            variante="chiaro"
+            sfondo="var(--color-accent-2-100)"
+            inchiostro="var(--color-accent-2-800)"
+          >
+            Dai una mano
+          </Bottone>
+          <Bottone href={CONTATTI.proLocoTel} variante="contorno-chiaro">
+            Chiama {CONTATTI.proLocoTelefono}
+          </Bottone>
+        </div>
+      </div>
+      <div class="volontari__foto">
+        <Foto
+          src={foto[1]?.immagine}
+          alt={foto[1]?.testo_alternativo ?? ''}
+          attesa="Volontari in cucina"
+          altezza={170}
+          forma="cerchio"
+        />
+        <Foto
+          class="volontari__foto-bassa"
+          src={foto[2]?.immagine}
+          alt={foto[2]?.testo_alternativo ?? ''}
+          attesa="Volontari al bar"
+          altezza={170}
+          forma="cerchio"
+        />
+      </div>
+    </div>
+  </Fascia>
+
+  <!-- Come arrivare -->
+  <Sezione id="come-arrivare">
+    <div class="arrivare">
+      <div class="pila" style="gap:18px">
+        <Etichetta tono="accent-2" class="arrivare__tag">Come arrivare</Etichetta>
+        <h2 class="arrivare__titolo">Via Canizzano 110, Treviso</h2>
+        <p class="arrivare__testo">
+          Il tendone è sul piazzale accanto alla chiesa. Parcheggio nel campo dietro il patronato,
+          con i volontari a indirizzare le auto. Dal centro di Treviso dieci minuti passando per
+          Ponte Ottavi; in bici lungo l’argine del Sile.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone
+            href="https://www.openstreetmap.org/search?query=Via%20Canizzano%20110%2C%20Treviso"
+            variante="secondario"
+            esterno
+          >
+            Apri in mappe
+          </Bottone>
+        </div>
+      </div>
+      <Foto
+        src={foto[3]?.immagine}
+        alt={foto[3]?.testo_alternativo ?? ''}
+        attesa="Mappa o foto del piazzale"
+        altezza={280}
+      />
+    </div>
+  </Sezione>
+
+  <!-- Chi siamo -->
+  <Sezione stacco="corto">
+    <div class="chi-siamo">
+      <div class="pila" style="gap:14px">
+        <h2 class="chi-siamo__titolo">Chi siamo</h2>
+        <p class="chi-siamo__testo">
+          L’Associazione Ricreativo Culturale <strong>Cannetum</strong> — la Pro Loco di Canizzano —
+          organizza la sagra insieme alla parrocchia, e durante l’anno tiene vive le feste, le
+          camminate lungo il Sile e la memoria del quartiere. Il nome viene dal latino
+          <em>cannetum</em>: il canneto.
+        </p>
+        <p class="chi-siamo__testo">
+          Le assemblee sono aperte a tutti: si trovano in sala NOI, il primo martedì del mese alle
+          21.00.
+        </p>
+      </div>
+      <div class="pila" style="gap:12px">
+        <span class="chi-siamo__occhiello">Contatti</span>
+        <div class="chi-siamo__contatti">
+          <span><strong>Telefono</strong> · {CONTATTI.proLocoTelefono}</span>
+          <span><strong>Email</strong> · {CONTATTI.proLocoEmail}</span>
+          <span><strong>Instagram</strong> · @prolococanizzano</span>
+        </div>
+        <Bottone href={ROTTE.proloco} class="chi-siamo__bottone">Tutto l’anno con la Pro Loco</Bottone>
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Sostenitori: si accende dall'admin -->
+  {
+    config.mostra_sponsor && (
+      <Sezione stacco="corto">
+        <div class="pila" style="gap:18px">
+          <span class="sostegno__occhiello">Con il sostegno di</span>
+          <div class="sostegno__griglia">
+            {SOSTENITORI.map((nome) => <div class="sostegno__riquadro">{nome}</div>)}
+          </div>
+        </div>
+      </Sezione>
+    )
+  }
+</Base>
+
+<style>
+  /* — hero — */
+  .apertura { background: var(--color-accent); color: #fff2eb; position: relative; overflow: hidden; }
+  .apertura__bolla {
+    position: absolute;
+    right: -180px; top: -220px; width: 640px; height: 640px;
+    border-radius: 999px;
+    background: var(--color-accent-400);
+    opacity: 0.5;
+  }
+  .apertura__griglia {
+    position: relative;
+    padding-top: 76px;
+    padding-bottom: 84px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 52px;
+    align-items: center;
+  }
+  .apertura__testo { display: flex; flex-direction: column; gap: 26px; }
+  .apertura__pillola {
+    align-self: flex-start;
+    background: rgba(255, 242, 235, 0.2);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .apertura h1 { font-size: 82px; line-height: 0.94; margin: 0; }
+  .apertura__occhiello {
+    font-size: 21px; line-height: 1.5; max-width: 40ch;
+    color: var(--color-accent-100); margin: 0;
+  }
+  .apertura__date { display: flex; align-items: baseline; gap: 14px; }
+  .apertura__periodo { font-family: var(--font-heading); font-size: 46px; line-height: 1; }
+  .apertura__anno { font-size: 20px; font-weight: 700; color: var(--color-accent-200); }
+  .apertura__ghost { color: #fff2eb; border: 1px solid rgba(255, 242, 235, 0.5); }
+  .apertura__ghost:hover { background: rgba(255, 242, 235, 0.14); color: #fff2eb; }
+  .apertura__lato { display: flex; flex-direction: column; gap: 18px; }
+
+  /* — programma — */
+  .sezione-programma { margin-top: 30px; }
+  .programma__testata {
+    display: flex; flex-wrap: wrap; gap: 18px;
+    align-items: flex-end; justify-content: space-between;
+  }
+  .programma__tag { align-self: flex-start; }
+  .programma__categorie { display: flex; gap: 8px; flex-wrap: wrap; }
+  .programma__colonne { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .programma__colonna { display: flex; flex-direction: column; gap: 20px; }
+  .programma__vuoto {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    font-size: 16px;
+    color: var(--color-neutral-700);
+    margin: 0;
+  }
+
+  /* — cucina — */
+  .cucina { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 40px; align-items: start; }
+  /* La tabella non deve mai far scorrere la pagina intera. */
+  .cucina__tabella { overflow-x: auto; }
+  .cucina__nota { font-size: 14px; line-height: 1.6; color: var(--color-neutral-700); margin: 0; }
+
+  /* — volontari — */
+  .volontari { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 52px; align-items: center; }
+  .volontari__testo { display: flex; flex-direction: column; gap: 22px; }
+  .volontari__titolo { font-size: 46px; line-height: 1.02; margin: 0; }
+  .volontari__paragrafo { font-size: 17px; line-height: 1.6; max-width: 50ch; opacity: 0.92; margin: 0; }
+  .volontari__foto { display: flex; gap: 16px; justify-content: flex-end; }
+  .volontari__foto-bassa { margin-top: 40px; }
+
+  /* — come arrivare — */
+  .arrivare { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  .arrivare__tag { align-self: flex-start; }
+  .arrivare__titolo { font-size: 34px; line-height: 1.05; margin: 0; }
+  .arrivare__testo { font-size: 15.5px; line-height: 1.65; color: var(--color-neutral-800); margin: 0; }
+
+  /* — chi siamo — */
+  .chi-siamo {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 40px;
+    box-shadow: var(--shadow-sm);
+  }
+  .chi-siamo__titolo { font-size: 30px; line-height: 1.06; margin: 0; }
+  .chi-siamo__testo { font-size: 15.5px; line-height: 1.65; color: var(--color-neutral-800); margin: 0; }
+  .chi-siamo__occhiello {
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--color-neutral-700);
+  }
+  .chi-siamo__contatti { display: flex; flex-direction: column; gap: 8px; font-size: 15.5px; }
+  .chi-siamo__bottone { align-self: flex-start; margin-top: 6px; }
+
+  /* — sostenitori — */
+  .sostegno__occhiello {
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--color-neutral-700);
+  }
+  .sostegno__griglia { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .sostegno__riquadro {
+    min-height: 96px;
+    border-radius: var(--radius-md);
+    background: var(--color-neutral-100);
+    border: 1px solid var(--color-divider);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--color-neutral-700);
+  }
+
+  @media (max-width: 1000px) {
+    .programma__colonne { grid-template-columns: 1fr; }
+    .sostegno__griglia { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .apertura__griglia, .cucina, .volontari, .arrivare, .chi-siamo {
+      grid-template-columns: 1fr;
+      gap: 34px;
+    }
+    .apertura h1 { font-size: 54px; }
+    .apertura__periodo { font-size: 34px; }
+    .volontari__titolo { font-size: 34px; }
+    .volontari__foto { justify-content: flex-start; }
+    .volontari__foto-bassa { margin-top: 0; }
+    .chi-siamo { padding: 30px; }
+  }
+  @media (max-width: 640px) {
+    .apertura h1 { font-size: 44px; }
+    .sostegno__griglia { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>

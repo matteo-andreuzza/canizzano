@@ -1,0 +1,77 @@
+---
+/**
+ * La sezione dinamica degli appuntamenti: e' il pezzo che la redazione
+ * aggiorna dall'admin Django e che ricompare, uguale, in piu' pagine.
+ *
+ * Se in CMS non c'e' nulla da mostrare la sezione non viene generata
+ * affatto, cosi' il sito statico non espone griglie vuote.
+ */
+import Sezione from './Sezione.astro';
+import TestataSezione from './TestataSezione.astro';
+import CardEvento from './CardEvento.astro';
+import type { Attivita, Evento } from '../lib/contenuti.ts';
+
+interface Props {
+  id?: string;
+  titolo: string;
+  testo?: string;
+  tag?: string;
+  link?: { testo: string; href: string };
+  eventi: Evento[];
+  attivita: Attivita[];
+  colonne?: 2 | 3 | 4;
+  /** Mostrato quando il CMS non ha ancora appuntamenti futuri. */
+  vuoto?: string;
+}
+
+const {
+  id,
+  titolo,
+  testo,
+  tag,
+  link,
+  eventi,
+  attivita,
+  colonne = 3,
+  vuoto,
+} = Astro.props;
+
+const perSlug = new Map(attivita.map((voce) => [voce.slug, voce]));
+---
+
+{
+  (eventi.length > 0 || vuoto) && (
+    <Sezione id={id}>
+      <div class="eventi">
+        <TestataSezione
+          titolo={titolo}
+          testo={testo}
+          tag={tag}
+          link={link}
+          disposizione={link ? 'affiancato' : 'impilato'}
+        />
+        {eventi.length > 0 ? (
+          <div class={`griglia griglia--${colonne}`}>
+            {eventi.map((evento) => (
+              <CardEvento evento={evento} attivita={perSlug.get(evento.attivita)} />
+            ))}
+          </div>
+        ) : (
+          <p class="eventi__vuoto">{vuoto}</p>
+        )}
+      </div>
+    </Sezione>
+  )
+}
+
+<style>
+  .eventi { display: flex; flex-direction: column; gap: 30px; }
+  .eventi__vuoto {
+    margin: 0;
+    font-size: 16px;
+    color: var(--color-neutral-700);
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    padding: 26px;
+  }
+</style>

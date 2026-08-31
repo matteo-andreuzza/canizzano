@@ -1,0 +1,80 @@
+---
+/**
+ * Una riga oraria: disco icona, ora in Caprasimo, titolo e nota.
+ *
+ * E' la riga del programma della sagra e, con `compatta`, quella della
+ * giornata tipo del Grest.
+ */
+import DiscoIcona from './DiscoIcona.astro';
+import type { NomeIcona } from './Icona.astro';
+
+interface Props {
+  ora: string;
+  titolo: string;
+  nota?: string;
+  piatto?: string;
+  icona?: NomeIcona;
+  tonoIcona?: string;
+  /** Riga a blocco pieno: il momento speciale della giornata. */
+  risalto?: boolean;
+  sfondoRisalto?: string;
+}
+
+const {
+  ora,
+  titolo,
+  nota,
+  piatto,
+  icona,
+  tonoIcona = 'accent-200',
+  risalto = false,
+  sfondoRisalto = 'var(--color-accent-2-700)',
+} = Astro.props;
+---
+
+<div
+  class={`riga-orario ${risalto ? 'riga-orario--risalto' : ''}`.trim()}
+  style={risalto ? `background:${sfondoRisalto}` : undefined}
+>
+  {icona && <DiscoIcona icona={icona} tono={risalto ? 'accent-2-600' : tonoIcona} dimensione={42} />}
+  <span class="riga-orario__ora">{ora}</span>
+  <div class="riga-orario__testo">
+    <strong>{titolo}</strong>
+    {piatto && <span class="riga-orario__piatto">{piatto}</span>}
+    {nota && <span class="riga-orario__nota">{nota}</span>}
+  </div>
+</div>
+
+<style>
+  .riga-orario {
+    display: grid;
+    grid-template-columns: 42px 58px 1fr;
+    gap: 14px;
+    align-items: start;
+  }
+  .riga-orario__ora {
+    font-family: var(--font-heading);
+    font-size: 17px;
+    line-height: 1.35;
+    color: var(--color-accent-700);
+  }
+  .riga-orario__testo { display: flex; flex-direction: column; gap: 3px; }
+  .riga-orario__testo strong { font-size: 16.5px; font-weight: 700; line-height: 1.35; }
+  /* Il piatto del giorno e' l'informazione che la gente cerca per prima. */
+  .riga-orario__piatto { font-size: 15px; font-weight: 700; color: var(--color-accent-2-700); }
+  .riga-orario__nota { font-size: 14.5px; line-height: 1.5; color: var(--color-neutral-700); }
+
+  .riga-orario--risalto {
+    grid-column: 1 / -1;
+    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    color: var(--color-accent-2-100);
+  }
+  .riga-orario--risalto .riga-orario__ora { color: var(--color-accent-2-200); }
+  .riga-orario--risalto .riga-orario__nota { color: rgba(240, 250, 225, 0.82); }
+  .riga-orario--risalto .riga-orario__piatto { color: var(--color-accent-200); }
+
+  @media (max-width: 520px) {
+    .riga-orario { grid-template-columns: 34px 52px 1fr; gap: 10px; }
+  }
+</style>

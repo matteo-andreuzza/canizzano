@@ -1,0 +1,120 @@
+---
+/**
+ * I marchi del sito, tutti su `viewBox="0 0 48 48"`.
+ *
+ * Il marchio base — disco salvia, tre canne crema, l'onda del Sile in
+ * terracotta — viene dall'etimologia del posto: *cannetum*, il canneto.
+ * Ogni pagina ha poi la sua variante nella navbar, mentre il footer usa
+ * sempre la versione base su fondo chiaro.
+ */
+interface Props {
+  variante?: 'base' | 'footer' | 'proloco' | 'sagra' | 'grest' | 'storia';
+  dimensione?: number;
+  class?: string;
+}
+const { variante = 'base', dimensione = 40, class: classe = '' } = Astro.props;
+---
+
+<svg
+  width={dimensione}
+  height={dimensione}
+  viewBox="0 0 48 48"
+  aria-hidden="true"
+  class={`marchio ${classe}`.trim()}
+  style="flex:none"
+>
+  {
+    variante === 'base' && (
+      <>
+        <circle cx="24" cy="24" r="23" fill="#7a8a5e" />
+        <path
+          d="M17 36c0-9 1-15 3-21M24 36c0-11 1.5-18 4-24M31 36c0-8-.5-13-2-18"
+          stroke="#f5ead8" stroke-width="2.75" stroke-linecap="round" fill="none"
+        />
+        <path
+          d="M11 32c4 2 7-1 11 0s6 2 10 0"
+          stroke="#c67139" stroke-width="2.75" stroke-linecap="round" fill="none"
+        />
+      </>
+    )
+  }
+  {
+    variante === 'footer' && (
+      <>
+        <circle cx="24" cy="24" r="23" fill="#f0fae1" />
+        <path
+          d="M17 36c0-9 1-15 3-21M24 36c0-11 1.5-18 4-24M31 36c0-8-.5-13-2-18"
+          stroke="#56633f" stroke-width="2.75" stroke-linecap="round" fill="none"
+        />
+        <path
+          d="M11 32c4 2 7-1 11 0s6 2 10 0"
+          stroke="#c67139" stroke-width="2.75" stroke-linecap="round" fill="none"
+        />
+      </>
+    )
+  }
+  {
+    /* Pro Loco: l'arco «C» di Cannetum che abbraccia tre canne. */
+    variante === 'proloco' && (
+      <>
+        <circle cx="24" cy="24" r="23" fill="#56633f" />
+        <path
+          d="M33 15a12 12 0 1 0 0 18"
+          stroke="#f5ead8" stroke-width="3.2" stroke-linecap="round" fill="none"
+        />
+        <path
+          d="M20 32c0-6 .6-10 2-14M24.5 32c0-7 1-11.5 2.6-15.5M29 32c0-5.5-.4-9-1.4-12"
+          stroke="#c67139" stroke-width="2.4" stroke-linecap="round" fill="none"
+        />
+      </>
+    )
+  }
+  {
+    /* Sagra: il tendone, il palo e il pennone. */
+    variante === 'sagra' && (
+      <>
+        <circle cx="24" cy="24" r="23" fill="#c67139" />
+        <path
+          d="M11 30c3.5-9 8-13.5 13-13.5S33.5 21 37 30z"
+          fill="#f5ead8"
+        />
+        <path d="M24 30V16.5" stroke="#7a8a5e" stroke-width="2.75" stroke-linecap="round" />
+        <path d="M24 16.5V10M24 10l6 2.5-6 2.5" stroke="#f5ead8" stroke-width="2.4"
+              stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        <path d="M11 30h26" stroke="#f5ead8" stroke-width="2.75" stroke-linecap="round" />
+      </>
+    )
+  }
+  {
+    /* Grest: il tau francescano, ruotato come tutto il registro della pagina. */
+    variante === 'grest' && (
+      <g transform="rotate(-6 24 24)">
+        <circle cx="24" cy="24" r="22" fill="#f5ead8" stroke="#c67139" stroke-width="2.75" />
+        <path
+          d="M15 18h18M24 18v15"
+          stroke="#8c491a" stroke-width="3.4" stroke-linecap="round" fill="none"
+        />
+        <circle cx="14" cy="31" r="2.2" fill="#7a8a5e" />
+        <circle cx="24" cy="38" r="2.2" fill="#7a8a5e" />
+        <circle cx="34" cy="31" r="2.2" fill="#7a8a5e" />
+      </g>
+    )
+  }
+  {
+    /* Storia: la ruota del mulino sopra l'onda del Sile. */
+    variante === 'storia' && (
+      <>
+        <circle cx="24" cy="24" r="23" fill="#3b3531" />
+        <circle cx="24" cy="21" r="9" stroke="#f5ead8" stroke-width="2.6" fill="none" />
+        <path
+          d="M24 12v18M15 21h18M17.6 14.6l12.8 12.8M30.4 14.6L17.6 27.4"
+          stroke="#f5ead8" stroke-width="2" stroke-linecap="round"
+        />
+        <path
+          d="M11 36c4 2 7-1 11 0s6 2 10 0"
+          stroke="#c67139" stroke-width="2.75" stroke-linecap="round" fill="none"
+        />
+      </>
+    )
+  }
+</svg>

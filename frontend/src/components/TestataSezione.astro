@@ -1,0 +1,56 @@
+---
+/**
+ * L'intestazione ricorrente di una sezione: occhiello o tag, titolo, testo
+ * guida e un eventuale link «tutto il…» allineato a destra.
+ */
+import Etichetta from './Etichetta.astro';
+
+interface Props {
+  titolo: string;
+  occhiello?: string;
+  tag?: string;
+  tonoTag?: 'accent' | 'accent-2' | 'neutral' | 'outline';
+  testo?: string;
+  link?: { testo: string; href: string };
+  /** `affiancato` mette il link sulla stessa riga del titolo. */
+  disposizione?: 'affiancato' | 'impilato';
+}
+const {
+  titolo,
+  occhiello,
+  tag,
+  tonoTag = 'accent-2',
+  testo,
+  link,
+  disposizione = 'impilato',
+} = Astro.props;
+---
+
+<div class={`testata testata--${disposizione}`}>
+  <div class="testata__testo">
+    {tag && <Etichetta tono={tonoTag} class="testata__tag">{tag}</Etichetta>}
+    {occhiello && <span class="occhiello testata__occhiello">{occhiello}</span>}
+    <h2 class="titolo-sezione">{titolo}</h2>
+    {testo && <p class="testo-guida">{testo}</p>}
+  </div>
+  {link && (
+    <a href={link.href} class="testata__link">{link.testo}</a>
+  )}
+</div>
+
+<style>
+  .testata { display: flex; flex-direction: column; gap: 12px; }
+  .testata--affiancato {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .testata__testo { display: flex; flex-direction: column; gap: 12px; }
+  .testata__tag, .testata__occhiello { align-self: flex-start; }
+  .testata__occhiello { color: var(--color-accent-700); }
+  .testata h2 { margin: 0; }
+  .testata p { margin: 0; }
+  .testata__link { font-size: 15px; font-weight: 600; align-self: flex-start; }
+</style>
