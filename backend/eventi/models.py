@@ -574,7 +574,7 @@ class Articolo(ModelloConSlug):
             "sottotitolo; «- » = voce di elenco; «> » = nota in evidenza."
         ),
     )
-    copertina = models.ImageField(upload_to="articoli/", blank=True)
+    copertina = models.ImageField(upload_to="articoli/", blank=True, help_text="immagine grande nel corpo dell'articolo")
     copertina_url = models.URLField(
         blank=True,
         help_text=(

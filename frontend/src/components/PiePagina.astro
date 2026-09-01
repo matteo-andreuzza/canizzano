@@ -42,7 +42,12 @@ import { PIE_PAGINA, SITO } from '../lib/sito.ts';
 
   <div class="contenitore">
     <div class="pie__chiusura">
-      <span>{PIE_PAGINA.chiusura}</span>
+      <span>
+        {PIE_PAGINA.chiusura}{' '}
+        <a href={PIE_PAGINA.chiusuraAutore.href} target="_blank" rel="noopener noreferrer">
+          {PIE_PAGINA.chiusuraAutore.testo}
+        </a>
+      </span>
       <span>{PIE_PAGINA.social}</span>
     </div>
   </div>
@@ -93,6 +98,8 @@ import { PIE_PAGINA, SITO } from '../lib/sito.ts';
     font-size: 13.5px;
     opacity: 0.72;
   }
+  .pie__chiusura a { color: inherit; text-decoration: underline; }
+  .pie__chiusura a:hover { color: #fff; }
 
   @media (max-width: 900px) { .pie__griglia { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 560px) { .pie__griglia { grid-template-columns: 1fr; gap: 30px; } }
