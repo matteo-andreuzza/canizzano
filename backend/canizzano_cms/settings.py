@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "eventi",
+    "assistente",
 ]
 
 MIDDLEWARE = [
@@ -128,6 +129,12 @@ REST_FRAMEWORK = {
 
 # Il consumatore delle API e' il builder Astro sulla rete Docker locale.
 CORS_ALLOW_ALL_ORIGINS = True
+
+# --- Assistente AI (server MCP su /mcp/) -----------------------------------
+
+# Un agente puo' caricare la locandina di un evento dentro alla chiamata,
+# codificata in base64: il tetto di Django (2,5 MB) la taglierebbe a meta'.
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("MCP_MAX_CORPO_MB", "32")) * 1024 * 1024
 
 # --- Sito ------------------------------------------------------------------
 

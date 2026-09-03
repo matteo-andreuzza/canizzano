@@ -37,6 +37,7 @@ cp .env.example .env      # poi compila i valori (vedi sotto)
 | `./canizzano.sh tutto` | `build` + `pubblica` |
 | `./canizzano.sh prova-ftp` | Simula il caricamento FTP **senza scrivere nulla** sul server |
 | `./canizzano.sh stato` / `log` | Container attivi / log in tempo reale |
+| `./canizzano.sh mcp` | Indirizzo e chiave per collegare un **assistente AI** al CMS |
 | `./canizzano.sh gestisci …` | Un comando `manage.py` dentro al container (es. `gestisci createsuperuser`) |
 | `./canizzano.sh esempi` | Popola il CMS con i contenuti reali 2026 |
 | `./canizzano.sh backup` | Esporta il database in `./backup` |
@@ -76,7 +77,8 @@ canizzano/
 │
 ├── backend/                  CMS Django 6 + DRF — gira solo in locale
 │   ├── canizzano_cms/        impostazioni, rotte, wsgi
-│   └── eventi/               modelli, admin in italiano, API
+│   ├── eventi/               modelli, admin in italiano, API
+│   └── assistente/           il server MCP: il CMS parlato con un agente AI
 │
 ├── frontend/                 sito Astro 7, output statico
 │   ├── src/components/       la libreria di componenti (vedi sotto)
@@ -227,6 +229,141 @@ senza le sezioni dinamiche, così un CMS fermo non blocca una pubblicazione.
 
 ---
 
+## L'assistente AI: cambiare il sito parlando
+
+Il CMS espone un **server MCP** (Model Context Protocol) su `/mcp/`. È la
+stessa redazione dell'admin, ma invece dei moduli c'è un agente: gli si
+chiede a parole di aggiungere un evento, cambiare il menù di una serata
+della sagra o scrivere un articolo, e lui lo fa nel database.
+
+```
+      tu ─parli─▶ il tuo agente AI ─MCP─▶ CMS Django ─▶ build ─▶ sito
+```
+
+L'agente non è al buio: prima di scrivere legge la **guida della redazione**
+che il server gli serve — quando un evento merita una pagina di
+approfondimento, come è fatta la sagra, quale icona sta bene a una folpata,
+come si scrive il corpo di un articolo. Gli elenchi (attività, icone, tinte,
+campi) li legge dai modelli del CMS, quindi non può proporre un'icona che non
+esiste o un'attività che non c'è.
+
+### Dove si prende la chiave
+
+Il «login» dell'assistente è una **chiave**, e sta nell'admin:
+
+> <http://localhost:8000/admin/> → **Assistente AI** → **chiavi
+> dell'assistente** → apri *«Il mio assistente»*
+
+Una chiave viene creata da sola al primo avvio: nella sua pagina trovi
+l'indirizzo, la chiave e i comandi già pronti da copiare. Le stesse
+istruzioni, senza aprire il browser:
+
+```bash
+./canizzano.sh mcp                          # mostra la chiave che c'è
+./canizzano.sh mcp --nuova --nome "Cursor"  # ne aggiunge un'altra
+```
+
+**La chiave vale come una password**: chi ce l'ha può cambiare il sito. Se ne
+dai una a ogni agente puoi revocarne una senza spegnere le altre — basta
+togliere la spunta *attiva*. La spunta *sola lettura* fa una chiave che
+guarda e basta: comoda per provare un assistente nuovo.
+
+### Come si collega
+
+Il CMS deve essere acceso (`./canizzano.sh avvia`). Poi, a seconda del client:
+
+```bash
+# Claude Code, dal terminale
+claude mcp add --transport http canizzano http://localhost:8000/mcp/ \
+  --header "Authorization: Bearer LA-TUA-CHIAVE"
+```
+
+```jsonc
+// Claude Desktop, Cursor e gli altri che si configurano a file
+{
+  "mcpServers": {
+    "canizzano": {
+      "type": "http",
+      "url": "http://localhost:8000/mcp/",
+      "headers": { "Authorization": "Bearer LA-TUA-CHIAVE" }
+    }
+  }
+}
+```
+
+I client che accettano solo un indirizzo possono usare
+`http://localhost:8000/mcp/?chiave=LA-TUA-CHIAVE`, ma così la chiave finisce
+nei log del server: meglio l'intestazione, quando si può.
+
+Se l'agente gira su un'altra macchina, il CMS di casa dev'essere
+raggiungibile da lì (un tunnel, un dominio): metti l'indirizzo pubblico in
+`MCP_URL_PUBBLICO` e aggiungi l'host a `DJANGO_ALLOWED_HOSTS` nel `.env`.
+
+### Che cosa dirgli all'inizio
+
+Come è fatto il sito non serve spiegarglielo: glielo racconta il server al
+collegamento, e il resto sta in `guida_del_sito`. Serve invece dirgli **come
+vuoi lavorare** — quanto può fare da solo, che cosa deve chiederti prima, che
+tono usare. C'è un prompt già scritto da incollare nelle istruzioni di
+sistema del tuo agente, con segnate le righe da riadattare:
+[`backend/assistente/PROMPT.md`](backend/assistente/PROMPT.md).
+
+### Che cosa gli si può chiedere
+
+> «Il Principato organizza la folpata il 13 dicembre alle 19.30 in piazza:
+> crea l'evento, mettilo in evidenza in home e scrivimi anche l'articolo con
+> ritrovo e quota.»
+
+> «Fammi vedere il programma della sagra. Sabato 3 cambia il piatto del
+> giorno: non tagliata, ma sarde in saor.»
+
+> «Questa è la locandina del Grest: caricala e mettila come copertina
+> dell'articolo.» *(l'immagine viaggia dentro la richiesta)*
+
+> «Controlla il sito prima che pubblichi: eventi passati ancora in evidenza,
+> articoli senza copertina, foto senza testo alternativo.»
+
+Gli strumenti sono venticinque: `panoramica`, `cerca_contenuti`,
+`leggi_contenuto`, `programma_sagra` e `guida_del_sito` per guardare;
+`crea_…` e `aggiorna_…` per ognuno degli otto tipi di contenuto (evento,
+articolo, giornata, foto, attività, edizione, luogo, album);
+`imposta_dettagli_articolo`, `aggiorna_impostazioni`, `carica_immagine` e
+`elimina_contenuto` per il resto. Cancellare chiede sempre conferma e prima
+mostra che cosa si porterebbe dietro — eliminare un evento porta via il suo
+articolo, i dettagli e le foto.
+
+### Quello che l'assistente NON fa
+
+**Non pubblica.** Il sito è statico: quello che l'agente scrive sta nel CMS e
+va online solo al build successivo. Il server glielo ricorda a ogni
+modifica, e a te resta l'ultima parola:
+
+```bash
+./canizzano.sh dev      # per vedere com'è venuto, su localhost:4321
+./canizzano.sh tutto    # quando sei contento: build + pubblicazione
+```
+
+Se il tuo agente ha un terminale sulla cartella del progetto (Claude Code, per
+esempio), puoi chiedergli di lanciarlo lui — ma è una cosa che fa da fuori,
+non attraverso il CMS.
+
+### Com'è fatto
+
+Sta tutto in `backend/assistente/`, senza dipendenze in più: il protocollo
+MCP che serve qui sono otto metodi JSON-RPC su una rotta POST
+(`protocollo.py`), e una libreria in più sarebbe una cosa da aggiornare al
+posto di una cosa che funziona. Gli strumenti `crea_…` e `aggiorna_…` non
+sono scritti a mano: `schemi.py` li genera dai modelli di `eventi/models.py`
+— tipo, obbligatorietà, valori ammessi, testo d'aiuto. Aggiungere un'icona
+resta una riga in `models.py` e l'assistente la sa al riavvio, come
+aggiungere una tinta è una riga in `toni.ts`. In `guida.py` c'è invece
+quello che dai modelli non si legge: il mestiere della redazione.
+
+Il server non tiene sessioni: ogni richiesta è completa in sé, così i tre
+worker di gunicorn si equivalgono e non c'è stato da sincronizzare.
+
+---
+
 ## Se qualcosa non va
 
 **`relation "eventi_..." does not exist` nell'admin**
@@ -264,6 +401,22 @@ Se ricapita basta:
 **Non serve mai toccare il database per un problema dell'anteprima.**
 `ferma`, `ferma-dev` e `down` non cancellano nulla: i dati spariscono solo
 con `pulisci` o `ripristina-db`, che lo dicono chiaramente prima di agire.
+
+**L'assistente AI risponde «401» o non vede nessuno strumento**
+
+Nell'ordine: il CMS è acceso (`./canizzano.sh stato`)? L'indirizzo è
+`http://localhost:8000/mcp/`, con la barra finale? La chiave è quella giusta
+e ha ancora la spunta *attiva*? Le trovi tutte con `./canizzano.sh mcp`, e
+per provare il server senza scomodare l'agente:
+
+```bash
+curl -sS http://localhost:8000/mcp/ -H 'Authorization: Bearer LA-TUA-CHIAVE' \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | head -c 300
+```
+
+Se hai cambiato i modelli in `eventi/models.py`, l'assistente se ne accorge
+solo al riavvio del CMS: `./canizzano.sh avvia`.
 
 **Il build non trova il CMS**
 

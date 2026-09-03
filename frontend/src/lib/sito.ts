@@ -47,6 +47,7 @@ export const CONTATTI = {
   proLocoTel: 'tel:+393282143250',
   parrocchiaTelefono: '0422 379269',
   redazioneTelefono:'3801510324',
+  redazioneEmail:'canizzano@altervista.org',
   parrocchiaTel: 'tel:+390422379269',
   parrocchiaSito: 'https://www.parrocchiacanizzano.it',
   parrocchiaEmail: 'canizzano@diocesitv.it',
@@ -180,6 +181,7 @@ export const PIE_PAGINA = {
       ],
     },
   ],
-  chiusura: 'canizzano.it — pagine fatte in casa, per il quartiere',
+  chiusura: 'canizzano.it — made with ❤️ by',
+  chiusuraAutore: { testo: 'Matteo', href: 'https://github.com/matteo-andreuzza' },
   social: 'Instagram · Facebook · WhatsApp',
 } as const;

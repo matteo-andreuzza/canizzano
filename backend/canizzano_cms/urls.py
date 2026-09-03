@@ -1,4 +1,7 @@
-"""Rotte del CMS: pannello admin + API di sola lettura per il build Astro."""
+"""
+Rotte del CMS: pannello admin, API di sola lettura per il build Astro e la
+rotta dell'assistente AI (server MCP).
+"""
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -14,6 +17,10 @@ urlpatterns = [
     path("", RedirectView.as_view(url="/admin/", permanent=False)),
     path("admin/", admin.site.urls),
     path("api/", include("eventi.urls")),
+    # Il server MCP risponde con e senza barra finale: i client MCP scrivono
+    # l'indirizzo a mano, e una POST non si puo' redirigere senza perderla.
+    path("mcp/", include("assistente.urls")),
+    path("mcp", include("assistente.urls")),
 ]
 
 # In locale il CMS serve anche i media, cosi' l'anteprima in admin funziona.

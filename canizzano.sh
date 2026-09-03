@@ -7,6 +7,7 @@
 #    ./canizzano.sh build       genera il sito statico in ./dist
 #    ./canizzano.sh pubblica    build + caricamento FTP sull'hosting
 #    ./canizzano.sh tutto       avvia + build + pubblica
+#    ./canizzano.sh mcp         chiave e istruzioni per l'assistente AI
 #
 #  Vedi «./canizzano.sh aiuto» per l'elenco completo.
 # ─────────────────────────────────────────────────────────────────────────────
@@ -224,6 +225,17 @@ comando_gestisci() {
     compose exec backend python manage.py "$@"
 }
 
+# Le istruzioni per collegare un agente AI al CMS: indirizzo, chiave e i
+# comandi gia' pronti per i client piu' diffusi.
+comando_mcp() {
+    verifica_env
+    if ! compose ps backend --format '{{.Health}}' 2>/dev/null | grep -q healthy; then
+        avviso "il CMS non è acceso: lo avvio."
+        comando_avvia
+    fi
+    compose exec -T backend python manage.py chiave_assistente "$@"
+}
+
 comando_esempi()  { compose exec backend python manage.py dati_esempio; }
 comando_backup() {
     mkdir -p backup
@@ -261,6 +273,10 @@ canizzano.it — gestione dello stack locale
     pubblica      Carica ./dist sull'hosting via FTP (fa il build se manca)
     tutto         build + pubblica
 
+  ASSISTENTE AI
+    mcp           Indirizzo e chiave per collegare un agente AI al CMS
+                  («mcp --nuova --nome "..."» ne crea un'altra)
+
   UTILITÀ
     prova-ftp     Simula il caricamento FTP senza scrivere sul server
     stato         Mostra i container attivi
@@ -290,6 +306,7 @@ case "${1:-aiuto}" in
     gestisci|manage)   shift; comando_gestisci "$@" ;;
     ripristina-db)     shift; comando_ripristina_db "$@" ;;
     verifica-db)       shift; comando_verifica_db "$@" ;;
+    mcp|assistente)    shift; comando_mcp "$@" ;;
     esempi)            shift; comando_esempi "$@" ;;
     backup)            shift; comando_backup "$@" ;;
     chiave)            shift; comando_chiave "$@" ;;

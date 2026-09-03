@@ -36,9 +36,9 @@ if (apertura) ROTTE_EVENTI[apertura.slug] = { href: ROTTE.sagra, etichetta: 'vai
 
 const CIFRE = [
   { valore: '12', etichetta: 'appuntamenti in un anno' },
-  { valore: '80+', etichetta: 'volontari sotto il tendone' },
+  { valore: '30+', etichetta: 'volontari sotto il tendone' },
   { valore: '10 €', etichetta: 'la tessera di socio, un anno' },
-  { valore: '1° mar', etichetta: 'assemblea aperta, in sala NOI' },
+  { valore: '2 ott', etichetta: 'Inizio della sagra' },
 ];
 
 const STAGIONI = [
@@ -87,27 +87,26 @@ const TRE_GRANDI = [
     tonoIcona: 'accent',
     attesaFoto: 'Il falò del Processo alla Vecchia',
     testo:
-      'La tradizione trevigiana come si fa qui: il fantoccio della Vecchia in mezzo al prato, il processo recitato in dialetto con accuse, testimoni e sentenza, e alla fine il falò. Vin brulè, frittelle e tutto il quartiere intorno al fuoco.',
+      'La tradizione che si ripete: il fantoccio della Vecchia vive il processo recitato in dialetto con accuse, testimoni e sentenza. Vin brulè e frittelle per tutto il quartiere.',
     righe: [
       ['Quando', 'sabato di metà quaresima, ore 20.30'],
-      ['Dove', 'prato dietro il oratorio'],
-      ['Da portare', 'sciarpa e voce per le accuse'],
+      ['Dove', 'tendone della sagra'],
     ] as [string, string][],
   },
 ];
 
 const RESTO = [
   {
-    titolo: 'La sala per le feste',
+    titolo: 'Il tendone per le feste',
     icona: 'casa' as const,
     testo:
-      'Compleanni, battesimi, riunioni di condominio: la sala NOI si chiede alla Pro Loco.',
+      'Compleanni, battesimi, rinfreschi.',
   },
   {
-    titolo: 'La memoria del quartiere',
-    icona: 'libro' as const,
+    titolo: 'Pranzi e cene',
+    icona: 'cibo' as const,
     testo:
-      'Raccogliamo foto e racconti dei mulini e delle vecchie sagre. Le scansioniamo e te le restituiamo.',
+      'Su richiesta, organizziamo insieme pranzi e cene con menù e modalità concordati.',
   },
   {
     titolo: 'Gite e trasferte',
@@ -116,9 +115,9 @@ const RESTO = [
       "Un pullman all'anno: mercatini, santuari, una città. Iscrizioni al bar del oratorio.",
   },
   {
-    titolo: 'Assemblea aperta',
+    titolo: 'Assemblea dei soci',
     icona: 'persone' as const,
-    testo: 'Primo martedì del mese alle 21.00 in sala NOI. Si può venire solo ad ascoltare.',
+    testo: 'Per ogni evento maggiore.',
   },
 ];
 ---
@@ -140,11 +139,9 @@ const RESTO = [
     <div class="contenitore apertura__griglia">
       <div class="apertura__testo">
         <span class="apertura__pillola">A.R.C. Cannetum · Pro Loco di Canizzano</span>
-        <h1>Tutto l’anno,<br />in mezzo al<br />quartiere</h1>
+        <h1>A servizio del quartiere tutto l'anno</h1>
         <p class="apertura__occhiello">
-          Non solo la sagra: lo sport in primavera, il Processo alla Vecchia, il concorso dei
-          giardini, le camminate lungo il Sile e le serate in cui il piazzale si riempie senza un
-          motivo particolare.
+          Non solo la sagra: Sportizzando, il processo alla vecchia e "Ama il tuo quartiere", Le camminate lungo il Sile e i momenti di comunità.
         </p>
         <div class="riga riga--bottoni">
           <Bottone
@@ -199,15 +196,14 @@ const RESTO = [
       </Sezione>
     )
   }
-
+<br><br>
   <!-- I tre grandi -->
   <Sezione id="eventi" stacco="nessuno" class="sezione-tre-grandi">
     <div class="pila" style="gap:30px">
       <TestataSezione
-        titolo="Gli appuntamenti che nessuno si perde"
-        tag="I tre grandi"
+        titolo="Gli appuntamenti dell'anno"
         tonoTag="accent-2"
-        testo="Tre feste diverse fra loro, ognuna con la sua stagione e le sue facce. Date e dettagli si confermano in assemblea."
+        testo="Tre eventi diversi fra loro, ognuno con la sua stagione e le sue peculiarità. Date e dettagli si confermano in assemblea."
       />
       <div class="griglia griglia--3">
         {
@@ -266,9 +262,9 @@ const RESTO = [
           <div class="anno__testata">
             <div class="pila" style="gap:12px">
               <Etichetta tono="accent-2" class="anno__tag">Raccolta foto</Etichetta>
-              <h2 class="titolo-sezione">Come siamo, quando ci si trova</h2>
+              <h2 class="titolo-sezione">Una comunità in servizio</h2>
               <p class="testo-guida" style="max-width:56ch">
-                Le foto le fanno i volontari con il telefono, e va benissimo così. Se hai scatti
+                Se hai scatti
                 belli, mandaceli: entrano qui dentro.
               </p>
             </div>
@@ -301,11 +297,9 @@ const RESTO = [
     <div class="socio">
       <div class="socio__testo">
         <span class="occhiello" style="color:var(--color-accent-300)">Diventa socio</span>
-        <h2 class="socio__titolo">Dieci euro e una serata quando puoi</h2>
+        <h2 class="socio__titolo">Quest'anno la tessera è offerta</h2>
         <p class="socio__paragrafo">
-          Non serve saper cucinare per ottanta persone. Serve dire quando hai due ore libere: c’è
-          chi monta i tavoli, chi sta in cassa, chi porta i piatti, chi scatta le foto. La tessera
-          vale un anno e si fa al bar del oratorio.
+          Per ringraziare chi fa servizio in ProLoco, il prezzo della tessera viene rimborsato. Vieni anche tu a darci una mano!
         </p>
         <div class="riga riga--bottoni">
           <Bottone
@@ -348,13 +342,12 @@ const RESTO = [
         <h2 class="chi-siamo__titolo">Chi siamo</h2>
         <p class="chi-siamo__testo">
           L’Associazione Ricreativo Culturale <strong>Cannetum</strong> è la Pro Loco di Canizzano:
-          un gruppo di volontari che tiene in piedi le feste del quartiere insieme alla parrocchia
+          un gruppo di volontari che tiene mantiene vive le tradizioni del quartiere insieme alla Parrocchia
           della Visitazione. Il nome viene dal latino <em>cannetum</em>, il canneto: quello che
-          c’era qui prima delle case.
+          era Canizzano prima delle case.
         </p>
         <p class="chi-siamo__testo">
-          Il verde è il nostro colore da sempre — quello dei campi dietro la chiesa e delle canne
-          lungo il Sile.
+          Il verde è il nostro colore da sempre — quello dell'ambiente fluviale del sile.
         </p>
       </div>
       <div class="pila" style="gap:12px">
