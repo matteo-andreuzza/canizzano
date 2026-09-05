@@ -1,9 +1,10 @@
 # Stack locale di canizzano.it.
 #
-#   cms      → PostgreSQL + Django: la redazione dei contenuti (sempre attivo)
-#   sito     → Astro: genera il sito statico in ./dist        (profilo "build")
-#   dev      → Astro dev server con ricarica automatica       (profilo "dev")
-#   deploy   → lftp: carica ./dist sull'hosting via FTP       (profilo "deploy")
+#   cms       → PostgreSQL + Django: la redazione dei contenuti (sempre attivo)
+#   esecutore → esegue i comandi premuti sulla dashboard        (sempre attivo)
+#   sito      → Astro: genera il sito statico in ./dist        (profilo "build")
+#   dev       → Astro dev server con ricarica automatica       (profilo "dev")
+#   deploy    → lftp: carica ./dist sull'hosting via FTP       (profilo "deploy")
 #
 # Tutto passa da ./canizzano.sh, che attiva i profili giusti.
 
@@ -18,7 +19,11 @@ x-ambiente-cms: &ambiente-cms
 services:
   db:
     image: postgres:17-alpine
-    restart: unless-stopped
+    # "always" (non "unless-stopped"): se il server si spegne mentre il
+    # container era stato fermato a mano (es. durante una manutenzione), al
+    # riavvio del demone Docker deve ripartire comunque - la redazione non
+    # deve restare giu' per sempre per una dimenticanza.
+    restart: always
     env_file: [.env]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-canizzano}
@@ -34,8 +39,15 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        # Django gira come «appuser»: gli diamo lo stesso uid di chi possiede
+        # la cartella del progetto, cosi' i file che scrive nei bind mount qui
+        # sotto (la coda dei comandi) restano leggibili e cancellabili
+        # dall'utente, e l'esecutore trova quello che il CMS gli lascia.
+        UID_APP: ${UID_HOST:-1000}
+        GID_APP: ${GID_HOST:-1000}
     <<: *ambiente-cms
-    restart: unless-stopped
+    restart: always
     depends_on:
       db:
         condition: service_healthy
@@ -44,12 +56,80 @@ services:
     volumes:
       - media:/app/media
       - statici_cms:/app/staticfiles
+      # Le due cartelle condivise con l'esecutore: qui Django deposita i
+      # comandi da eseguire, e da qui rilegge com'e' andata. Bind mount e non
+      # volume perche' devono essere le stesse che vede lo script sull'host.
+      - ./coda:/app/coda
+      - ./logs:/app/logs
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/snapshot/', timeout=5).status == 200 else 1)\""]
       interval: 10s
       timeout: 10s
       retries: 12
       start_period: 40s
+
+  # Il braccio operativo della dashboard riservata. E' l'unico container con
+  # accesso al demone Docker: Django non ce l'ha e non deve averlo.
+  #
+  # Sta in un container separato per una ragione precisa: «avvia» e «tutto»
+  # eseguono «compose up -d --build db backend», cioe' ricreano il CMS. Se a
+  # lanciarli fosse il CMS stesso, si spegnerebbe a meta' comando e nessuno
+  # potrebbe piu' raccontare com'e' finita. Qui invece niente lo tocca.
+  esecutore:
+    build:
+      context: ./esecutore
+    restart: always
+    environment:
+      CANIZZANO_SCRIPT: ${CARTELLA_PROGETTO:-${PWD}}/canizzano.sh
+      CANIZZANO_CODA: ${CARTELLA_PROGETTO:-${PWD}}/coda
+      CANIZZANO_REGISTRO: ${CARTELLA_PROGETTO:-${PWD}}/logs/attivita.log
+      # Un Raspberry Pi puo' metterci parecchio piu' di un portatile: i
+      # tetti sono generosi apposta e si alzano dal .env se serve. Servono a
+      # non restare appesi per sempre, non a misurare la macchina.
+      TIMEOUT_AVVIA: ${TIMEOUT_AVVIA:-1800}
+      TIMEOUT_DEV: ${TIMEOUT_DEV:-1800}
+      TIMEOUT_FERMA_DEV: ${TIMEOUT_FERMA_DEV:-300}
+      TIMEOUT_TUTTO: ${TIMEOUT_TUTTO:-7200}
+      # Lo script, girando qui dentro, non puo' chiedere «id -u» per sapere
+      # di chi sono i file dell'host: glielo diciamo noi.
+      UID_HOST: ${UID_HOST:-1000}
+      GID_HOST: ${GID_HOST:-1000}
+      DOCKER_GID: ${DOCKER_GID:-999}
+      # Senza questo il container registra gli orari in UTC: le righe scritte
+      # da qui e quelle scritte dallo script sull'host finirebbero nello
+      # stesso file con due fusi diversi.
+      TZ: ${TZ:-Europe/Rome}
+      # Il container gira con l'uid dell'host, che qui dentro non ha una home:
+      # senza queste due la CLI di Docker prova a crearsi la configurazione in
+      # «/.docker» e si ferma con «permission denied» al primo build.
+      HOME: /tmp
+      DOCKER_CONFIG: /tmp/.docker
+      # Marcatore: dice a canizzano.sh che sta girando dentro all'esecutore,
+      # e che quindi non deve ne' ricreare questo container ne' scrivere lui
+      # la riga di registro (la scrive esecutore.py, con l'id del lavoro).
+      CANIZZANO_ESECUTORE: "1"
+    user: "${UID_HOST:-1000}:${GID_HOST:-1000}"
+    # Il socket appartiene al gruppo «docker», che ha un id diverso su ogni
+    # macchina: canizzano.sh lo legge da /var/run/docker.sock e lo passa qui.
+    group_add:
+      - "${DOCKER_GID:-999}"
+    # La cartella del progetto e' montata sullo STESSO percorso assoluto che
+    # ha sull'host. Non e' un vezzo: «docker compose» qui dentro parla col
+    # demone dell'host, e i bind mount di questo file (./dist, ./frontend/src)
+    # li risolve il demone, sull'host. Se i due percorsi non coincidessero,
+    # ogni build monterebbe cartelle inesistenti.
+    working_dir: ${CARTELLA_PROGETTO:-${PWD}}
+    volumes:
+      # Sintassi lunga e non «sorgente:destinazione»: un percorso che contiene
+      # spazi o due punti manderebbe in confusione la forma breve.
+      - type: bind
+        source: ${CARTELLA_PROGETTO:-${PWD}}
+        target: ${CARTELLA_PROGETTO:-${PWD}}
+      # Dentro al container il socket resta al posto standard, cosi' la CLI lo
+      # trova da sola; sull'host puo' stare altrove (installazioni rootless).
+      - type: bind
+        source: ${DOCKER_SOCKET:-/var/run/docker.sock}
+        target: /var/run/docker.sock
 
   sito:
     build:

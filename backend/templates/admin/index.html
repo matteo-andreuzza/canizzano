@@ -1,0 +1,14 @@
+{% extends "admin/index.html" %}
+
+{% block sidebar %}
+  {{ block.super }}
+  <div class="module">
+    <h2>Area riservata</h2>
+    <div class="module">
+      <a href="{% url 'pagina_riservata' %}">Dashboard della redazione</a>
+      <p style="padding: 0 10px 8px; font-size: 11px; opacity: .75">
+        Avvia, anteprima, pubblicazione del sito e registro delle attività.
+      </p>
+    </div>
+  </div>
+{% endblock %}

@@ -243,3 +243,8 @@ frontend/public/media/
 # Media caricati dal CMS (vivono nel volume Docker)
 backend/media/
 backend/staticfiles/
+
+# Dashboard della redazione: registro delle attivita' e coda dei comandi.
+# Sono stato locale della macchina, non contenuto del progetto.
+/logs/
+/coda/

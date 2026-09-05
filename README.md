@@ -30,8 +30,9 @@ cp .env.example .env      # poi compila i valori (vedi sotto)
 
 | Comando | Cosa fa |
 | --- | --- |
-| `./canizzano.sh avvia` | Avvia PostgreSQL + CMS Django — redazione su <http://localhost:8000/admin/> |
+| `./canizzano.sh avvia` | Avvia PostgreSQL + CMS Django — redazione su <http://localhost:8000/admin/>, dashboard su <http://localhost:8000/riservata/> |
 | `./canizzano.sh dev` | Anteprima del sito con ricarica automatica su <http://localhost:4321> |
+| `./canizzano.sh dev-sfondo` | Come `dev`, ma senza restare in primo piano (è la forma che usa la dashboard) |
 | `./canizzano.sh build` | Genera il sito statico in `./dist` |
 | `./canizzano.sh pubblica` | Carica `./dist` sull'hosting via FTP (fa il build se manca) |
 | `./canizzano.sh tutto` | `build` + `pubblica` |
@@ -46,6 +47,118 @@ cp .env.example .env      # poi compila i valori (vedi sotto)
 
 > Se Docker richiede i privilegi lo script usa `sudo docker` da solo. Per
 > evitarlo: `sudo usermod -aG docker $USER`, poi rifai il login.
+
+---
+
+## La dashboard della redazione
+
+Gli stessi comandi hanno un bottone su <http://localhost:8000/riservata/>,
+dietro il login dell'admin. È pensata per non dover mai aprire il terminale:
+un collegamento all'admin, uno alle chiavi dell'assistente AI, i bottoni
+**Avvia** / **Anteprima** / **Ferma anteprima**, e — staccato dagli altri,
+rosso, con conferma — **Pubblica tutto**, l'unico che tocca il sito pubblico.
+Sotto, la cronologia delle ultime attività con il dettaglio espandibile.
+
+### Chi esegue i comandi
+
+Django gira dentro un container costruito dalla sola cartella `backend/`: non
+ha `canizzano.sh`, non ha la CLI di Docker, e soprattutto `avvia` e `tutto`
+ricreano il container del CMS — cioè ucciderebbero il processo che sta
+servendo la richiesta. Per questo l'esecuzione sta altrove:
+
+```
+browser ──POST──▶ Django          scrive coda/<id>.json
+                                        │
+                                        ▼
+                                     coda/           bind mount condiviso
+                                        │
+                            esecutore (container)    legge, esegue lo script
+                                        │            sull'host via docker.sock
+                                        ▼
+                              logs/attivita.log      l'esito, in JSON Lines
+                                        │
+browser ◀──polling── Django rilegge il registro
+```
+
+Il container `esecutore` si accende insieme al resto con `./canizzano.sh
+avvia` e riparte da solo al riavvio della macchina (`restart: always`).
+Nessun comando della dashboard lo tocca: è per questo che sopravvive al
+riavvio del CMS e può raccontare com'è finita.
+
+È l'unico container con accesso a `/var/run/docker.sock` — cioè, di fatto,
+ai privilegi di root sulla macchina. Django quell'accesso non ce l'ha e non
+deve averlo. La lista dei comandi eseguibili è fissa nel codice (in
+`backend/canizzano_cms/views.py` e ripetuta in `esecutore/esecutore.py`): il
+nome passato allo script esce sempre da lì, mai dal contenuto della
+richiesta.
+
+### Su un'altra macchina (Raspberry Pi, server, un altro portatile)
+
+Non c'è niente da configurare: **si clona e si lancia `./canizzano.sh avvia`**.
+Il percorso del progetto, l'utente proprietario dei file e il gruppo del
+socket Docker si ricavano a ogni avvio, quindi lo stesso repo funziona da
+`/home/matte/…` come da `/opt/canizzano` o `/home/pi/canizzano`, e continua a
+funzionare se sposti la cartella.
+
+Tutte le immagini di base sono multi-architettura (`amd64`, `arm64`,
+`arm/v7`), quindi il Raspberry Pi va — anche il `docker:cli` dell'esecutore,
+che porta con sé il plugin `compose`. Due avvertenze pratiche:
+
+- **Prendi un sistema a 64 bit.** Su Raspberry Pi OS a 32 bit alcune immagini
+  esistono ma il build di Astro è al limite della memoria indirizzabile.
+- **Il primo `avvia` è lento** (build di quattro immagini). I tetti di tempo
+  dei comandi sono larghi apposta — mezz'ora per `avvia`, due ore per
+  `tutto` — e si alzano dal `.env` se non bastassero.
+
+Per le macchine fuori standard il `.env` ha un blocco di scavalcamenti, tutto
+commentato perché di norma non serve: `DOCKER_SOCKET` (Docker rootless tiene
+il socket in `/run/user/<uid>/`), `UID_HOST` / `GID_HOST`, e i `TIMEOUT_*`.
+L'ordine di precedenza è **ambiente → `.env` → rilevamento automatico**.
+
+> Il percorso dello script **non** è una variabile di configurazione, ed è
+> voluto: una copia scritta a mano nel `.env` sarebbe una cosa in più da
+> tenere allineata e si romperebbe al primo spostamento della cartella.
+> `canizzano.sh` sa già dove si trova e lo comunica a compose.
+
+Se lanci con `sudo` (macchina dove non sei ancora nel gruppo `docker`) i file
+generati restano comunque intestati a te, non a root: lo script legge
+`SUDO_UID`.
+
+### Cosa succede se la macchina si spegne di colpo
+
+`db`, `backend` ed `esecutore` hanno `restart: always`: tornano su da soli,
+senza che nessuno tocchi il terminale. L'anteprima (`dev`) no, ed è voluto —
+non ha senso riaccenderla da sola. Un lavoro che era **in corso** quando è
+mancata la corrente viene chiuso come errore al riavvio («esito
+sconosciuto»), così la dashboard non resta ad aspettare per sempre. Un lavoro
+che era ancora **in coda** e non è mai partito viene **rifiutato** se nel
+frattempo sono passati più di dieci minuti: nessuno si aspetta che il sito
+venga pubblicato da solo al ritorno della corrente, ore dopo.
+
+> **Da verificare una volta sola su ogni macchina nuova:** che Docker riparta
+> al boot, con `systemctl is-enabled docker.service`. Se risponde `disabled`
+> (succede quando è attiva solo `docker.socket`), il demone parte solo al
+> primo comando e i container **non** tornano su da soli dopo un riavvio.
+> Si sistema con `sudo systemctl enable docker.service`.
+
+C'è un solo caso che il riavvio non può salvare: se la corrente manca **a
+metà del caricamento FTP**, sull'hosting resta un sito a metà. Basta premere
+di nuovo «Pubblica tutto».
+
+### Il registro delle attività
+
+`logs/attivita.log`, formato **JSON Lines** — una riga per evento:
+
+```json
+{"timestamp": "2026-09-05T13:47:03+02:00", "processo": "canizzano.sh tutto", "stato": "ok", "dettaglio": "…"}
+```
+
+`stato` è `ok` oppure `errore`; `dettaglio` è testo libero (l'output del
+comando, o il messaggio d'errore). Ci scrivono `canizzano.sh` e l'esecutore;
+ci scriveranno **lo scraper del foglietto parrocchiale e l'OCR del libretto**
+appena esisteranno, senza che serva cambiare nulla: chi legge non sa quali
+processi esistano, prende le ultime righe, scarta quelle malformate e ordina
+per data. Basta appendere una riga in quel formato.
 
 ---
 
@@ -72,11 +185,12 @@ elenca i file che verrebbero caricati e cancellati, senza toccare il server.
 ```
 canizzano/
 ├── canizzano.sh              un comando per tutto
-├── compose.yaml              lo stack: db, cms, build, dev, deploy (a profili)
+├── compose.yaml              lo stack: db, cms, esecutore, build, dev, deploy
 ├── .env.example              modello di configurazione
 │
 ├── backend/                  CMS Django 6 + DRF — gira solo in locale
-│   ├── canizzano_cms/        impostazioni, rotte, wsgi
+│   ├── canizzano_cms/        impostazioni, rotte, wsgi, dashboard riservata
+│   ├── templates/            riservata.html: la dashboard della redazione
 │   ├── eventi/               modelli, admin in italiano, API
 │   └── assistente/           il server MCP: il CMS parlato con un agente AI
 │
@@ -87,7 +201,10 @@ canizzano/
 │   ├── src/lib/              contenuti dal CMS, date, toni, testi, configurazione
 │   └── src/styles/           il design system Organic + le primitive di pagina
 │
+├── esecutore/                esegue i comandi premuti sulla dashboard
 ├── deploy/                   container usa e getta che carica via FTP (lftp)
+├── logs/                     registro delle attività (non versionato)
+├── coda/                     lavori in attesa per l'esecutore (non versionato)
 └── dist/                     il sito generato (non versionato)
 ```
 

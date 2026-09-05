@@ -22,7 +22,15 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends gosu \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -r appuser && mkdir -p /app /app/media /app/staticfiles
+# L'utente che serve le pagine ha lo stesso uid di chi possiede la cartella
+# del progetto sull'host. Serve ai bind mount ./coda e ./logs, condivisi col
+# container «esecutore»: con uid diversi uno dei due non riuscirebbe a
+# scrivere, e i bottoni della dashboard resterebbero senza effetto.
+ARG UID_APP=1000
+ARG GID_APP=1000
+RUN groupadd -g "$GID_APP" appuser 2>/dev/null || true \
+    && useradd -m -u "$UID_APP" -g "$GID_APP" appuser \
+    && mkdir -p /app /app/media /app/staticfiles /app/coda /app/logs
 
 COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
 COPY --from=builder /usr/local/bin/ /usr/local/bin/

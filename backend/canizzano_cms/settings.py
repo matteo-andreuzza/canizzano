@@ -140,3 +140,25 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("MCP_MAX_CORPO_MB", "32")) * 10
 
 SITE_NAME = os.environ.get("SITE_NAME", "Canizzano")
 SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "https://canizzano.it")
+
+# --- Dashboard della redazione (/riservata/) -------------------------------
+
+# Pagina delle chiavi AI dell'altro progetto Django (MCP): la dashboard ci
+# mette un collegamento cosi' la chiave si prende da li' senza passaggi
+# intermedi. Segnaposto finche' l'indirizzo vero non arriva.
+AI_KEYS_ADMIN_URL = os.environ.get("AI_KEYS_ADMIN_URL", "https://TODO-verrà-fornito/")
+
+# Registro condiviso dei processi automatici, in formato JSON Lines: una riga
+# per evento, {timestamp, processo, stato, dettaglio}. Ci scrivono canizzano.sh
+# e il container «esecutore»; ci scriveranno anche lo scraper del foglietto e
+# l'OCR del libretto, senza che qui cambi nulla — chi legge non sa e non deve
+# sapere quali processi esistano.
+CARTELLA_LOG = Path(os.environ.get("CARTELLA_LOG", BASE_DIR / "logs"))
+FILE_ATTIVITA = Path(os.environ.get("FILE_ATTIVITA", CARTELLA_LOG / "attivita.log"))
+
+# Cartella dei lavori che la dashboard passa all'esecutore. E' un bind mount
+# condiviso con quel container: Django ci scrive, l'esecutore ci legge.
+CARTELLA_CODA = Path(os.environ.get("CARTELLA_CODA", BASE_DIR / "coda"))
+
+# Quante attivita' mostrare a pagina aperta, prima di «mostra altre».
+CRONOLOGIA_INIZIALE = 3

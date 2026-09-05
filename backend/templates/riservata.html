@@ -1,0 +1,721 @@
+{% comment %}
+  Dashboard della redazione — pagina protetta da @staff_member_required.
+
+  Stile: i token sono ripresi da «Organic», il design system del sito
+  (frontend/src/styles/organic.css), ma copiati qui dentro invece che
+  importati. Il CSS del sito vive nel build di Astro, che Django non serve, e
+  aggiungere un passaggio di build solo per questa pagina non varrebbe la
+  pena: e' una pagina sola, statica, che cambia raramente.
+
+  L'unica aggiunta al sistema e' la rampa «pericolo»: il rosso non esiste in
+  Organic perche' il sito non ha nulla di distruttivo da segnalare, mentre qui
+  serve a distinguere l'unico bottone che tocca la produzione.
+{% endcomment %}
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Redazione — Canizzano</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg: #f5ead8;
+      --color-surface: #ebddc5;
+      --color-text: #201e1d;
+      --color-accent: #c67139;
+      --color-divider: color-mix(in srgb, #201e1d 16%, transparent);
+
+      --color-neutral-100: #f9f4ed;
+      --color-neutral-800: #474238;
+
+      --color-accent-100: #fff2eb;
+      --color-accent-600: #b2622d;
+      --color-accent-700: #8c491a;
+      --color-accent-800: #643312;
+
+      --color-accent-2-100: #f0fae1;
+      --color-accent-2-700: #56633f;
+      --color-accent-2-800: #3d472b;
+
+      /* Rampa aggiunta: l'unica azione che tocca il sito pubblico. Tarata
+         sulla stessa luminosita' della terracotta, cosi' non stona. */
+      --color-pericolo: #a3301f;
+      --color-pericolo-100: #fbe6e0;
+      --color-pericolo-600: #8a2718;
+      --color-pericolo-800: #5f1a10;
+
+      --font-heading: "Caprasimo", system-ui, sans-serif;
+      --font-body: "Figtree", system-ui, sans-serif;
+
+      --space-1: 4.4px; --space-2: 8.8px; --space-3: 13.2px;
+      --space-4: 17.6px; --space-6: 26.4px; --space-8: 35.2px;
+
+      --radius-md: 16px;
+      --radius-lg: 28px;
+
+      --shadow-sm: 0 1px 2px color-mix(in srgb, #2e2b25 14%, transparent);
+      --shadow-md: 0 3px 10px color-mix(in srgb, #2e2b25 16%, transparent);
+      --shadow-lg: 0 12px 32px color-mix(in srgb, #2e2b25 22%, transparent);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: var(--space-8) var(--space-4) var(--space-8);
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    h1, h2 {
+      font-family: var(--font-heading); font-weight: 400;
+      line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 var(--space-2);
+    }
+    h1 { font-size: 42px; }
+    h2 { font-size: 26px; }
+    p { margin: 0 0 var(--space-3); }
+    a { color: var(--color-accent-700); text-underline-offset: 3px; }
+    a:hover { color: var(--color-accent-800); }
+    :focus { outline: none; }
+    :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+    .pagina { width: 100%; max-width: 780px; margin: 0 auto; }
+
+    .occhiello {
+      font-size: 12.5px; letter-spacing: 0.18em; text-transform: uppercase;
+      font-weight: 700; color: var(--color-accent-700);
+      margin: 0 0 var(--space-1);
+    }
+
+    .testata {
+      display: flex; flex-wrap: wrap; gap: var(--space-3);
+      align-items: flex-end; justify-content: space-between;
+      margin-bottom: var(--space-8);
+    }
+
+    section { margin-bottom: var(--space-8); }
+
+    .pastiglia {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 13px; padding: 5px 13px; border-radius: 999px;
+      background: var(--color-neutral-100); color: var(--color-neutral-800);
+      width: fit-content;
+    }
+    .pastiglia::before {
+      content: ""; width: 8px; height: 8px; border-radius: 50%;
+      background: currentColor; flex: none;
+    }
+    .pastiglia--ok { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+    .pastiglia--guasto { background: var(--color-pericolo-100); color: var(--color-pericolo-800); }
+
+    /* — collegamenti in cima: le due destinazioni fuori da questa pagina — */
+
+    .collegamenti { display: grid; gap: var(--space-3); }
+
+    .collegamento {
+      display: flex; align-items: center; gap: var(--space-4);
+      padding: var(--space-4) var(--space-6);
+      background: var(--color-surface); border: 1px solid transparent;
+      border-radius: var(--radius-lg);
+      text-decoration: none; color: var(--color-text);
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .15s, transform .15s;
+    }
+    .collegamento:hover {
+      color: var(--color-text);
+      box-shadow: var(--shadow-md); transform: translateY(-1px);
+    }
+    .collegamento--principale {
+      background: var(--color-accent); color: var(--color-bg);
+      box-shadow: var(--shadow-md);
+    }
+    .collegamento--principale:hover { background: var(--color-accent-600); color: var(--color-bg); }
+    .collegamento .simbolo { font-size: 30px; line-height: 1; flex: none; }
+    .collegamento .titolo {
+      font-family: var(--font-heading); font-size: 21px; line-height: 1.2;
+      display: block;
+    }
+    .collegamento .sotto { font-size: 14px; opacity: .8; }
+    .collegamento .freccia { margin-left: auto; font-size: 22px; opacity: .65; flex: none; }
+
+    .avviso-todo {
+      margin-top: var(--space-2); font-size: 13px;
+      color: var(--color-pericolo-800); background: var(--color-pericolo-100);
+      padding: var(--space-2) var(--space-4); border-radius: var(--radius-md);
+    }
+    .avviso-todo code { font-size: 12px; }
+
+    /* — bottoni azione — */
+
+    .bottoni {
+      display: grid; gap: var(--space-3);
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      margin-bottom: var(--space-4);
+    }
+
+    .bottone {
+      font-family: var(--font-heading); font-weight: 400; font-size: 18px;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+      text-align: left; cursor: pointer;
+      padding: var(--space-4) var(--space-6);
+      border-radius: var(--radius-lg); border: 1px solid var(--color-divider);
+      background: var(--color-surface); color: var(--color-text);
+      transition: background .15s, box-shadow .15s, transform .15s;
+    }
+    .bottone:hover:not(:disabled) { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .bottone:active:not(:disabled) { transform: none; }
+    .bottone:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .bottone .spiega {
+      font-family: var(--font-body); font-size: 13.5px; font-weight: 400;
+      opacity: .75; line-height: 1.35;
+    }
+
+    /* L'unico che tocca il sito pubblico: piu' grande, rosso, da solo su una
+       riga sua. Deve essere impossibile confonderlo con gli altri tre. */
+    .bottone--pubblica {
+      width: 100%; align-items: center; text-align: center; gap: var(--space-1);
+      font-size: 27px; padding: var(--space-6);
+      background: var(--color-pericolo); color: #fff;
+      border-color: var(--color-pericolo-600);
+      box-shadow: var(--shadow-md);
+    }
+    .bottone--pubblica:hover:not(:disabled) {
+      background: var(--color-pericolo-600); box-shadow: var(--shadow-lg);
+    }
+    .bottone--pubblica .spiega { opacity: .9; font-size: 15px; }
+
+    /* — pannello dell'esito — */
+
+    .esito {
+      margin-top: var(--space-4); padding: var(--space-4) var(--space-6);
+      border-radius: var(--radius-lg); background: var(--color-neutral-100);
+      border-left: 5px solid var(--color-divider);
+    }
+    .esito[hidden] { display: none; }
+    .esito--ok { background: var(--color-accent-2-100); border-left-color: var(--color-accent-2-700); }
+    .esito--errore { background: var(--color-pericolo-100); border-left-color: var(--color-pericolo); }
+    .esito-titolo {
+      font-family: var(--font-heading); font-size: 18px;
+      display: flex; align-items: center; gap: var(--space-2);
+    }
+    .esito-nota { font-size: 14px; margin: var(--space-1) 0 0; opacity: .8; }
+
+    .girella {
+      width: 15px; height: 15px; flex: none; border-radius: 50%;
+      border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+      border-top-color: currentColor;
+      animation: gira .7s linear infinite;
+    }
+    @keyframes gira { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .girella { animation-duration: 2.4s; }
+      .collegamento, .bottone { transition: none; }
+    }
+
+    pre.output {
+      margin: var(--space-3) 0 0; padding: var(--space-3);
+      max-height: 320px; overflow: auto;
+      background: color-mix(in srgb, var(--color-text) 6%, transparent);
+      border-radius: var(--radius-md);
+      font-size: 12.5px; line-height: 1.5;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* — cronologia — */
+
+    .voce {
+      background: var(--color-surface); border-radius: var(--radius-md);
+      margin-bottom: var(--space-2); overflow: hidden;
+    }
+    .voce > summary {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      cursor: pointer; list-style: none;
+    }
+    .voce > summary::-webkit-details-marker { display: none; }
+    .voce > summary::after {
+      content: "▾"; margin-left: auto; opacity: .5; flex: none;
+      transition: transform .15s;
+    }
+    .voce[open] > summary::after { transform: rotate(180deg); }
+    .voce > summary:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+    .voce .nome { font-weight: 600; font-size: 15px; }
+    .voce .data {
+      font-size: 13px; color: color-mix(in srgb, var(--color-text) 55%, transparent);
+      margin-left: var(--space-1);
+    }
+    .voce .corpo { padding: 0 var(--space-4) var(--space-4); }
+
+    .segno {
+      flex: none; width: 24px; height: 24px; border-radius: 50%;
+      display: grid; place-items: center; font-size: 13px; font-weight: 700;
+    }
+    .segno--ok { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+    .segno--errore { background: var(--color-pericolo-100); color: var(--color-pericolo-800); }
+
+    .vuoto {
+      padding: var(--space-6); text-align: center; border-radius: var(--radius-md);
+      background: var(--color-surface);
+      color: color-mix(in srgb, var(--color-text) 60%, transparent);
+    }
+
+    .btn-testo {
+      font: inherit; font-size: 15px; cursor: pointer;
+      background: transparent; border: 1px solid var(--color-divider);
+      border-radius: 999px; padding: var(--space-2) var(--space-4);
+      color: var(--color-accent-700);
+    }
+    .btn-testo:hover:not(:disabled) { background: var(--color-accent-100); }
+    .btn-testo:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* — modale di conferma della pubblicazione — */
+
+    dialog.conferma {
+      border: 0; padding: var(--space-8); max-width: 480px; width: calc(100% - 32px);
+      border-radius: var(--radius-lg);
+      background: var(--color-bg); color: var(--color-text);
+      box-shadow: var(--shadow-lg);
+    }
+    dialog.conferma::backdrop { background: color-mix(in srgb, #201e1d 55%, transparent); }
+    dialog.conferma h2 { color: var(--color-pericolo-800); }
+    .conferma-bottoni {
+      display: flex; flex-wrap: wrap; gap: var(--space-2);
+      justify-content: flex-end; margin-top: var(--space-6);
+    }
+    .conferma-bottoni button {
+      font: inherit; font-size: 16px; cursor: pointer;
+      padding: var(--space-3) var(--space-6); border-radius: 999px;
+      border: 1px solid var(--color-divider); background: transparent;
+      color: var(--color-text);
+    }
+    .conferma-bottoni .procedi {
+      background: var(--color-pericolo); border-color: var(--color-pericolo-600);
+      color: #fff; font-family: var(--font-heading);
+    }
+    .conferma-bottoni .procedi:hover { background: var(--color-pericolo-600); }
+
+    @media (max-width: 560px) {
+      body { padding: var(--space-6) var(--space-3); }
+      h1 { font-size: 32px; }
+      .bottone--pubblica { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<form id="modulo-csrf" hidden>{% csrf_token %}</form>
+
+<div class="pagina">
+
+  <header class="testata">
+    <div>
+      <p class="occhiello">Canizzano</p>
+      <h1>Redazione</h1>
+    </div>
+    <span id="stato-esecutore"
+          class="pastiglia {% if esecutore_pronto %}pastiglia--ok{% else %}pastiglia--guasto{% endif %}">
+      {% if esecutore_pronto %}Pronta a eseguire i comandi
+      {% elif esecutore.vivo %}Non raggiunge Docker
+      {% else %}Esecutore spento{% endif %}
+    </span>
+  </header>
+
+  {% if not esecutore.vivo %}
+    <p class="avviso-todo">
+      Il container che esegue i comandi non risponde: i bottoni qui sotto non
+      partirebbero. Riaccendi lo stack dal terminale con
+      <code>./canizzano.sh avvia</code>.
+    </p>
+  {% elif not esecutore.docker %}
+    <p class="avviso-todo">
+      L'esecutore è acceso ma non riesce a comandare Docker: nessuno dei
+      bottoni qui sotto funzionerebbe. Succede quando lo stack viene avviato
+      con <code>docker compose up</code> invece che con
+      <code>./canizzano.sh avvia</code> — è quest'ultimo che calcola i
+      permessi sul socket. Rilancialo dal terminale.
+      {% if esecutore.perche %}<br><small>Dettaglio: {{ esecutore.perche }}</small>{% endif %}
+    </p>
+  {% endif %}
+
+  {# ── 1 e 2. Le due destinazioni fuori da questa pagina ────────────────── #}
+
+  <section class="collegamenti">
+    <a class="collegamento collegamento--principale" href="/admin/">
+      <span class="simbolo" aria-hidden="true">✎</span>
+      <span>
+        <strong class="titolo">Scrivi i contenuti</strong>
+        <span class="sotto">Articoli, eventi, foto: il pannello di redazione.</span>
+      </span>
+      <span class="freccia" aria-hidden="true">→</span>
+    </a>
+
+    <a class="collegamento" href="{{ url_chiavi_ai }}" target="_blank" rel="noopener noreferrer">
+      <span class="simbolo" aria-hidden="true">🔑</span>
+      <span>
+        <strong class="titolo">Chiavi per l'assistente AI</strong>
+        <span class="sotto">Da copiare quando colleghi Claude Code. Si apre in una scheda nuova.</span>
+      </span>
+      <span class="freccia" aria-hidden="true">↗</span>
+    </a>
+
+    {% if chiavi_ai_da_configurare %}
+      <p class="avviso-todo">
+        L'indirizzo delle chiavi AI non è ancora stato impostato: il
+        collegamento qui sopra non porta da nessuna parte. Scrivi quello vero
+        in <code>AI_KEYS_ADMIN_URL</code> (nel <code>.env</code> oppure in
+        <code>backend/canizzano_cms/settings.py</code>).
+      </p>
+    {% endif %}
+  </section>
+
+  {# ── 3. I comandi ─────────────────────────────────────────────────────── #}
+
+  <section>
+    <p class="occhiello">Comandi</p>
+    <h2>Cosa vuoi fare</h2>
+
+    <div class="bottoni">
+      <button type="button" class="bottone" data-azione="avvia">
+        Avvia
+        <span class="spiega">Accende il CMS e il database.</span>
+      </button>
+      <button type="button" class="bottone" data-azione="dev">
+        Anteprima
+        <span class="spiega">Il sito come sarà, su <code>localhost:4321</code>.</span>
+      </button>
+      <button type="button" class="bottone" data-azione="ferma-dev">
+        Ferma anteprima
+        <span class="spiega">Spegne solo l'anteprima.</span>
+      </button>
+    </div>
+
+    <button type="button" class="bottone bottone--pubblica" data-azione="tutto" data-conferma="1">
+      Pubblica tutto
+      <span class="spiega">Genera il sito e lo carica su canizzano.it. Lo vedranno tutti.</span>
+    </button>
+
+    <div id="esito" class="esito" hidden>
+      <div class="esito-titolo">
+        <span id="esito-girella" class="girella" hidden></span>
+        <span id="esito-segno" aria-hidden="true" hidden></span>
+        <span id="esito-testo"></span>
+      </div>
+      <p id="esito-nota" class="esito-nota" hidden></p>
+      <pre id="esito-output" class="output" hidden></pre>
+    </div>
+  </section>
+
+  {# ── 4. Cronologia dei processi automatici ────────────────────────────── #}
+
+  <section>
+    <p class="occhiello">Registro</p>
+    <h2>Ultime attività</h2>
+    <p class="esito-nota" style="margin-bottom: var(--space-4)">
+      Comandi lanciati da qui e processi che girano da soli. Tocca una riga per
+      aprirne il dettaglio.
+    </p>
+
+    <div id="cronologia">
+      {% for voce in voci %}
+        <details class="voce" data-timestamp="{{ voce.timestamp }}">
+          <summary>
+            <span class="segno segno--{{ voce.stato }}" aria-hidden="true">{% if voce.stato == 'ok' %}✓{% else %}!{% endif %}</span>
+            <span>
+              <span class="nome">{{ voce.processo }}</span>
+              <span class="data">{{ voce.quando }}</span>
+            </span>
+          </summary>
+          <div class="corpo">
+            <pre class="output">{{ voce.dettaglio }}</pre>
+          </div>
+        </details>
+      {% empty %}
+        <p class="vuoto">Ancora nessuna attività registrata.</p>
+      {% endfor %}
+    </div>
+
+    <p style="margin-top: var(--space-4)">
+      <button type="button" id="altre" class="btn-testo" {% if not altre_voci %}hidden{% endif %}>
+        Mostra altre 10
+      </button>
+    </p>
+  </section>
+
+</div>
+
+<dialog id="modale" class="conferma">
+  <h2>Pubblicare il sito?</h2>
+  <p>
+    Il sito viene rigenerato e caricato su <strong>canizzano.it</strong>:
+    da quel momento è quello che vedono tutti.
+  </p>
+  <p class="esito-nota">
+    Ci vogliono alcuni minuti. Puoi lasciare la pagina aperta e guardare come
+    procede: l'esito compare qui sotto e resta nel registro.
+  </p>
+  <div class="conferma-bottoni">
+    <button type="button" id="modale-annulla">Annulla</button>
+    <button type="button" id="modale-procedi" class="procedi">Sì, pubblica</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  var CSRF = document.querySelector("#modulo-csrf [name=csrfmiddlewaretoken]").value;
+  var bottoni = Array.prototype.slice.call(document.querySelectorAll(".bottone[data-azione]"));
+  var esito = document.getElementById("esito");
+  var girella = document.getElementById("esito-girella");
+  var segno = document.getElementById("esito-segno");
+  var testo = document.getElementById("esito-testo");
+  var nota = document.getElementById("esito-nota");
+  var output = document.getElementById("esito-output");
+  var cronologia = document.getElementById("cronologia");
+  var bottoneAltre = document.getElementById("altre");
+  var modale = document.getElementById("modale");
+  var pastiglia = document.getElementById("stato-esecutore");
+
+  var QUANTE_INIZIALI = {{ quante_iniziali }};
+  var PASSO = 10;
+  var mostrate = QUANTE_INIZIALI;
+  var occupato = false;
+
+  // — pannello dell'esito —————————————————————————————————————————————
+
+  function mostra(classe, simbolo, titolo, sottotitolo, corpo, inCorso) {
+    esito.hidden = false;
+    esito.className = "esito" + (classe ? " esito--" + classe : "");
+    girella.hidden = !inCorso;
+    segno.hidden = inCorso || !simbolo;
+    segno.textContent = simbolo || "";
+    testo.textContent = titolo;
+    nota.textContent = sottotitolo || "";
+    nota.hidden = !sottotitolo;
+    output.textContent = corpo || "";
+    output.hidden = !corpo;
+  }
+
+  function bloccaBottoni(bloccati) {
+    occupato = bloccati;
+    bottoni.forEach(function (b) { b.disabled = bloccati; });
+  }
+
+  function segnalaEsecutore(stato) {
+    var pronto = stato && stato.vivo && stato.docker;
+    pastiglia.className = "pastiglia " + (pronto ? "pastiglia--ok" : "pastiglia--guasto");
+    if (pronto) { pastiglia.textContent = "Pronta a eseguire i comandi"; }
+    else if (stato && stato.vivo) { pastiglia.textContent = "Non raggiunge Docker"; }
+    else { pastiglia.textContent = "Esecutore spento"; }
+  }
+
+  // — cronologia ——————————————————————————————————————————————————————
+
+  function disegnaVoce(voce) {
+    var dettagli = document.createElement("details");
+    dettagli.className = "voce";
+    dettagli.setAttribute("data-timestamp", voce.timestamp);
+
+    var titolo = document.createElement("summary");
+
+    var pallino = document.createElement("span");
+    pallino.className = "segno segno--" + voce.stato;
+    pallino.setAttribute("aria-hidden", "true");
+    pallino.textContent = voce.stato === "ok" ? "✓" : "!";
+
+    var testi = document.createElement("span");
+    var nome = document.createElement("span");
+    nome.className = "nome";
+    nome.textContent = voce.processo;
+    var data = document.createElement("span");
+    data.className = "data";
+    data.textContent = voce.quando;
+    testi.appendChild(nome);
+    testi.appendChild(data);
+
+    titolo.appendChild(pallino);
+    titolo.appendChild(testi);
+
+    var corpo = document.createElement("div");
+    corpo.className = "corpo";
+    var pre = document.createElement("pre");
+    pre.className = "output";
+    // textContent, non innerHTML: il dettaglio e' output di comandi e, in
+    // futuro, testo che arriva da scraper e OCR. Non deve poter diventare
+    // markup.
+    pre.textContent = voce.dettaglio;
+    corpo.appendChild(pre);
+
+    dettagli.appendChild(titolo);
+    dettagli.appendChild(corpo);
+    return dettagli;
+  }
+
+  function caricaCronologia(salto, limite, sostituisci) {
+    return fetch("{% url 'storico_attivita' %}?salto=" + salto + "&limite=" + limite, {
+      headers: { "X-Requested-With": "fetch" }
+    }).then(function (r) {
+      return r.json();
+    }).then(function (dati) {
+      if (!dati.ok) { return; }
+      segnalaEsecutore(dati.esecutore);
+      if (sostituisci) { cronologia.innerHTML = ""; }
+      if (!dati.voci.length && sostituisci) {
+        var vuoto = document.createElement("p");
+        vuoto.className = "vuoto";
+        vuoto.textContent = "Ancora nessuna attività registrata.";
+        cronologia.appendChild(vuoto);
+      }
+      dati.voci.forEach(function (voce) { cronologia.appendChild(disegnaVoce(voce)); });
+      bottoneAltre.hidden = !dati.altre;
+    });
+  }
+
+  bottoneAltre.addEventListener("click", function () {
+    bottoneAltre.disabled = true;
+    bottoneAltre.textContent = "Carico…";
+    caricaCronologia(mostrate, PASSO, false).then(function () {
+      mostrate += PASSO;
+    }).catch(function () {
+      bottoneAltre.hidden = false;
+    }).then(function () {
+      bottoneAltre.disabled = false;
+      bottoneAltre.textContent = "Mostra altre " + PASSO;
+    });
+  });
+
+  // — esecuzione ——————————————————————————————————————————————————————
+
+  function sorveglia(identificativo, etichetta) {
+    var erroriDiFila = 0;
+
+    var timer = setInterval(function () {
+      fetch("{% url 'stato_azione' %}?id=" + encodeURIComponent(identificativo), {
+        headers: { "X-Requested-With": "fetch" }
+      }).then(function (r) {
+        return r.json();
+      }).then(function (dati) {
+        erroriDiFila = 0;
+        if (dati.stato === "in_attesa") {
+          mostra("", "", etichetta + ": in coda…", "Parte fra un istante.", "", true);
+          return;
+        }
+        if (dati.stato === "in_esecuzione") { return; }
+
+        clearInterval(timer);
+        bloccaBottoni(false);
+        var voce = dati.voce || {};
+        if (dati.stato === "ok") {
+          mostra("ok", "✓", etichetta + ": fatto.", voce.quando || "", voce.dettaglio || "", false);
+        } else {
+          mostra("errore", "!", etichetta + ": non è riuscito.",
+                 "Qui sotto c'è quello che ha scritto il comando.",
+                 voce.dettaglio || "", false);
+        }
+        mostrate = QUANTE_INIZIALI;
+        caricaCronologia(0, QUANTE_INIZIALI, true).catch(function () {});
+      }).catch(function () {
+        // «avvia» e «pubblica tutto» ricreano il container del CMS: per
+        // qualche secondo questa pagina non ha piu' un server a cui parlare.
+        // E' normale, non e' un errore: si continua a bussare.
+        erroriDiFila += 1;
+        if (erroriDiFila === 3) {
+          mostra("", "", etichetta + ": in corso…",
+                 "Il CMS si sta riavviando, è previsto. Aspetto che torni.", "", true);
+        }
+        if (erroriDiFila > 150) {
+          clearInterval(timer);
+          bloccaBottoni(false);
+          mostra("errore", "!", "Ho perso il contatto con il CMS.",
+                 "Il comando può essere andato a buon fine lo stesso: ricarica la pagina e guarda il registro.",
+                 "", false);
+        }
+      });
+    }, 2000);
+  }
+
+  function esegui(azione, etichetta) {
+    if (occupato) { return; }
+    bloccaBottoni(true);
+    mostra("", "", etichetta + ": avvio…", "", "", true);
+
+    var corpo = new FormData();
+    corpo.append("azione", azione);
+    corpo.append("csrfmiddlewaretoken", CSRF);
+
+    fetch("{% url 'esegui_azione' %}", {
+      method: "POST",
+      headers: { "X-CSRFToken": CSRF, "X-Requested-With": "fetch" },
+      body: corpo
+    }).then(function (r) {
+      return r.json().catch(function () {
+        return { ok: false, errore: "Il server ha risposto in un modo che non capisco (" + r.status + ")." };
+      });
+    }).then(function (dati) {
+      if (!dati.ok) {
+        bloccaBottoni(false);
+        mostra("errore", "!", "Non sono riuscito a lanciare il comando.", dati.errore || "", "", false);
+        // Il messaggio di rifiuto dice gia' cosa non va: la pastiglia si
+        // riallinea alla prossima lettura del registro.
+        caricaCronologia(0, QUANTE_INIZIALI, true).catch(function () {});
+        return;
+      }
+      mostra("", "", etichetta + ": in corso…",
+             "Puoi lasciare la pagina aperta finché non finisce.", "", true);
+      sorveglia(dati.id, etichetta);
+    }).catch(function () {
+      bloccaBottoni(false);
+      mostra("errore", "!", "Il CMS non risponde.",
+             "Controlla che i container siano accesi, poi riprova.", "", false);
+    });
+  }
+
+  // — modale di conferma —————————————————————————————————————————————
+
+  var inSospeso = null;
+
+  function chiudiModale() {
+    if (modale.open) { modale.close(); }
+    inSospeso = null;
+  }
+
+  document.getElementById("modale-annulla").addEventListener("click", chiudiModale);
+  document.getElementById("modale-procedi").addEventListener("click", function () {
+    var richiesta = inSospeso;
+    chiudiModale();
+    if (richiesta) { esegui(richiesta.azione, richiesta.etichetta); }
+  });
+  modale.addEventListener("close", function () { inSospeso = null; });
+
+  bottoni.forEach(function (bottone) {
+    bottone.addEventListener("click", function () {
+      var azione = bottone.getAttribute("data-azione");
+      var etichetta = bottone.firstChild.textContent.trim();
+      if (bottone.hasAttribute("data-conferma")) {
+        inSospeso = { azione: azione, etichetta: etichetta };
+        // showModal() manca solo su browser molto vecchi: li' si ripiega sul
+        // confirm() del browser, che e' brutto ma chiede lo stesso.
+        if (typeof modale.showModal === "function") {
+          modale.showModal();
+        } else if (window.confirm("Pubblicare il sito su canizzano.it? Lo vedranno tutti.")) {
+          document.getElementById("modale-procedi").click();
+        } else {
+          inSospeso = null;
+        }
+        return;
+      }
+      esegui(azione, etichetta);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
