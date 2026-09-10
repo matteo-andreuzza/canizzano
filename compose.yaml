@@ -53,6 +53,13 @@ services:
         condition: service_healthy
     ports:
       - "${CMS_PORT:-8000}:8000"
+    # "default" per parlare con «db»; la rete condivisa serve solo a farsi
+    # trovare dal bot del foglietto (repository canizzano-mcp), che chiama
+    # /mcp/ come http://backend:8000/mcp/ — vedi «Elabora il foglietto» nel
+    # README.
+    networks:
+      - default
+      - rete_condivisa
     volumes:
       - media:/app/media
       - statici_cms:/app/staticfiles
@@ -108,11 +115,23 @@ services:
       # e che quindi non deve ne' ricreare questo container ne' scrivere lui
       # la riga di registro (la scrive esecutore.py, con l'id del lavoro).
       CANIZZANO_ESECUTORE: "1"
+      # Il bot del foglietto parrocchiale (repository canizzano-mcp): vuoti di
+      # default, il bottone «Elabora il foglietto» semplicemente non funziona
+      # finche' non li compili — vedi «Elabora il foglietto» nel README.
+      BOT_FOGLIETTO_URL: ${BOT_FOGLIETTO_URL:-}
+      BOT_FOGLIETTO_TOKEN: ${BOT_FOGLIETTO_TOKEN:-}
+      TIMEOUT_FOGLIETTO: ${TIMEOUT_FOGLIETTO:-10}
     user: "${UID_HOST:-1000}:${GID_HOST:-1000}"
     # Il socket appartiene al gruppo «docker», che ha un id diverso su ogni
     # macchina: canizzano.sh lo legge da /var/run/docker.sock e lo passa qui.
     group_add:
       - "${DOCKER_GID:-999}"
+    # "default" resta per uniformita' con gli altri servizi (non gli serve
+    # oggi: parla con Docker via socket, non via rete); la rete condivisa e'
+    # quella su cui raggiunge il container del bot del foglietto.
+    networks:
+      - default
+      - rete_condivisa
     # La cartella del progetto e' montata sullo STESSO percorso assoluto che
     # ha sull'host. Non e' un vezzo: «docker compose» qui dentro parla col
     # demone dell'host, e i bind mount di questo file (./dist, ./frontend/src)
@@ -185,3 +204,12 @@ volumes:
   dati_postgres:
   media:
   statici_cms:
+
+networks:
+  # Rete esterna, creata una tantum con `docker network create <nome>` e
+  # referenziata allo stesso modo nel compose.yaml del bot del foglietto
+  # (repository canizzano-mcp). Deve esistere prima del primo `./canizzano.sh
+  # avvia`, altrimenti l'errore lo dice chiaro invece di un timeout muto.
+  rete_condivisa:
+    name: ${NOME_RETE_CONDIVISA:-canizzano_rete}
+    external: true

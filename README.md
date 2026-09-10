@@ -55,9 +55,10 @@ cp .env.example .env      # poi compila i valori (vedi sotto)
 Gli stessi comandi hanno un bottone su <http://localhost:8000/riservata/>,
 dietro il login dell'admin. È pensata per non dover mai aprire il terminale:
 un collegamento all'admin, uno alle chiavi dell'assistente AI, i bottoni
-**Avvia** / **Anteprima** / **Ferma anteprima**, e — staccato dagli altri,
-rosso, con conferma — **Pubblica tutto**, l'unico che tocca il sito pubblico.
-Sotto, la cronologia delle ultime attività con il dettaglio espandibile.
+**Avvia** / **Anteprima** / **Ferma anteprima**, **Elabora il foglietto**, e
+— staccato dagli altri, rosso, con conferma — **Pubblica tutto**, l'unico che
+tocca il sito pubblico. Sotto, la cronologia delle ultime attività con il
+dettaglio espandibile.
 
 ### Chi esegue i comandi
 
@@ -91,6 +92,86 @@ deve averlo. La lista dei comandi eseguibili è fissa nel codice (in
 `backend/canizzano_cms/views.py` e ripetuta in `esecutore/esecutore.py`): il
 nome passato allo script esce sempre da lì, mai dal contenuto della
 richiesta.
+
+### Elabora il foglietto: il bot che sta in un altro repository
+
+Il bot che scarica il foglietto parrocchiale, lo legge con Gemini e ne scrive
+eventi e articoli nel CMS **non sta qui dentro**: ha un repository suo
+(`canizzano-mcp`), il suo container Docker, sempre acceso, con uno scheduler
+interno che lo fa partire da solo ogni sabato mattina e un controllo ogni
+mezz'ora. Il bottone serve al caso «serve adesso»: il foglietto è uscito prima
+del solito, o qualcosa non è partito.
+
+Non ha la conferma rossa perché non tocca il sito pubblico: scrive nel CMS, e
+quello che scrive resta in redazione finché non lo pubblichi tu — l'assistente
+non pubblica mai.
+
+**Questo comando non esegue niente**, ed è l'unica eccezione al giro qui
+sopra: invece di lanciare `canizzano.sh`, l'esecutore fa una richiesta HTTP al
+container del bot, sulla rete Docker condivisa fra i due stack.
+
+```
+dashboard ──▶ coda/<id>.json ──▶ esecutore ──POST /attiva──▶ container del bot
+                                  (rete Docker condivisa)    prova stato/bot.lock
+                                                                      │
+                                                    ┌─────────────────┴─────────────────┐
+                                               è occupato                          è libero
+                                                    │                                   │
+                                   registro: «errore,                    202, e in un thread:
+                              esecuzione già in corso»               scraper, poi «scansiona»
+                                                                                     │
+                                                                     logs/attivita.log ◀── ci
+                                                                    scrive il bot, col suo nome
+```
+
+Il lucchetto è quello che il bot **già** usa per non pestarsi i piedi da solo
+(vedi `pipeline.lucchetto()` nel suo repository): l'endpoint lo *guarda* prima
+di rispondere, per dare un esito subito in dashboard, ma l'esclusione vera
+resta lì — se un giro programmato e uno chiesto a mano si accavallano, è
+quello arrivato secondo a fermarsi.
+
+La dashboard non aspetta: la riga che compare subito dice «richiesta
+consegnata» (o perché non lo è stata: bot spento, rete condivisa non ancora
+creata, token sbagliato — l'esecutore distingue i casi, non un timeout muto),
+non «foglietto elaborato». L'esito vero arriva dopo, sotto `scraper_foglietto`
+e `ocr_redazione_foglietto`, distinti a colpo d'occhio da
+`avvio_manuale_foglietto` che è l'atto di aver premuto il bottone.
+
+Il tetto di tempo per la *richiesta* è `TIMEOUT_FOGLIETTO` (10 secondi:
+l'endpoint risponde subito, non aspetta l'elaborazione). Il tetto per
+l'elaborazione vera lo tiene il bot stesso, nel suo repository.
+
+Servono due righe nel `.env`:
+
+```
+BOT_FOGLIETTO_URL=http://bot:8088/attiva
+BOT_FOGLIETTO_TOKEN=<la stessa stringa che nel .env del bot si chiama ATTIVA_TOKEN>
+```
+
+`bot` è il nome del servizio nel `compose.yaml` di quel repository — non
+"localhost": i due stack sono due progetti `docker compose` separati, e si
+raggiungono solo perché condividono la rete esterna `NOME_RETE_CONDIVISA`
+(vedi «La rete condivisa» più sotto). Lasciale vuote se il bot non c'è: il
+bottone semplicemente non compare, e il resto funziona come prima.
+
+`FILE_ATTIVITA` in questo `.env` resta quello che è già: il bot scrive nello
+stesso `logs/attivita.log` montandolo lui come bind mount dal proprio
+`compose.yaml` (variabile `CARTELLA_LOG_SITO` nel suo `.env`, puntata
+all'assoluto di questa cartella `logs/`) — non c'è niente da configurare qui
+oltre a quello che già serve alla dashboard.
+
+### La rete condivisa fra i due stack
+
+```bash
+docker network create canizzano_rete   # una tantum, prima del primo avvio
+```
+
+Lo stesso nome deve comparire, identico, in `NOME_RETE_CONDIVISA` in
+**entrambi** i `.env` (questo repository e `canizzano-mcp`). `compose.yaml` la
+referenzia come rete esterna sui servizi `backend` (così il bot può chiamare
+`http://backend:8000/mcp/`) ed `esecutore` (così può chiamare
+`http://bot:8088/attiva`); se la rete non esiste, `docker compose up` si
+ferma con un errore che lo dice, non con un avvio a metà.
 
 ### Su un'altra macchina (Raspberry Pi, server, un altro portatile)
 
@@ -154,11 +235,22 @@ di nuovo «Pubblica tutto».
 ```
 
 `stato` è `ok` oppure `errore`; `dettaglio` è testo libero (l'output del
-comando, o il messaggio d'errore). Ci scrivono `canizzano.sh` e l'esecutore;
-ci scriveranno **lo scraper del foglietto parrocchiale e l'OCR del libretto**
-appena esisteranno, senza che serva cambiare nulla: chi legge non sa quali
-processi esistano, prende le ultime righe, scarta quelle malformate e ordina
-per data. Basta appendere una riga in quel formato.
+comando, o il messaggio d'errore). Chi legge non sa quali processi esistano:
+prende le ultime righe, scarta quelle malformate e ordina per data. Per
+aggiungerne uno basta appendere una riga in quel formato.
+
+Oggi ci scrivono:
+
+| `processo` | Chi lo scrive |
+| --- | --- |
+| `canizzano.sh <comando>` | Lo script, o l'esecutore per conto della dashboard |
+| `avvio_manuale_foglietto` | L'esecutore, quando premi «Elabora il foglietto» |
+| `scraper_foglietto` | Il bot, quando scarica il PDF dal sito della parrocchia |
+| `ocr_redazione_foglietto` | Il bot, quando ha letto un foglietto e scritto nel CMS |
+
+Le ultime due arrivano dall'altro repository, che scrive in questo stesso file
+(`FILE_ATTIVITA` nel suo `.env`). L'OCR del libretto si aggiungerà allo stesso
+modo, senza che qui cambi niente.
 
 ---
 
@@ -174,6 +266,14 @@ Parti da `.env.example`; i valori da compilare per forza sono:
 | `DJANGO_SUPERUSER_USERNAME` / `_PASSWORD` | L'utenza di redazione, creata al primo avvio |
 | `FTP_HOST` / `FTP_USER` / `FTP_PASSWORD` | Credenziali dell'hosting |
 | `FTP_REMOTE_DIR` | Cartella pubblica dell'hosting (spesso `/public_html` o `/htdocs`) |
+
+Due sono facoltative, per il bottone «Elabora il foglietto» (vedi sopra) —
+tutti gli altri percorsi si ricavano da soli:
+
+| Variabile | A cosa serve |
+| --- | --- |
+| `BOT_FOGLIETTO_URL` | Indirizzo dell'endpoint `/attiva` del bot, sulla rete Docker condivisa. Senza, il bottone non compare |
+| `BOT_FOGLIETTO_TOKEN` | Token condiviso col bot — deve combaciare col suo `ATTIVA_TOKEN` |
 
 Prima della prima pubblicazione conviene sempre `./canizzano.sh prova-ftp`:
 elenca i file che verrebbero caricati e cancellati, senza toccare il server.

@@ -107,6 +107,13 @@ DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 DOCKER_GID="${DOCKER_GID:-$(proprietario "$DOCKER_SOCKET" g)}"
 DOCKER_GID="${DOCKER_GID:-999}"
 
+# Il bot del foglietto parrocchiale vive in un repository suo (canizzano-mcp),
+# in un container suo, raggiunto dall'esecutore via HTTP sulla rete Docker
+# condivisa (vedi «networks:» in compose.yaml) — non c'e' nessun percorso su
+# disco da conoscere qui. BOT_FOGLIETTO_URL e BOT_FOGLIETTO_TOKEN li legge
+# compose.yaml direttamente da questo .env (`environment:` dell'esecutore):
+# niente da esportare o dedurre in questo script.
+
 # ── Registro delle attivita' ─────────────────────────────────────────────────
 #
 # Un file JSON Lines condiviso: una riga per evento, sempre nella stessa forma
@@ -237,7 +244,10 @@ prepara_cartelle() {
 # Deve combaciare con «name:» in compose.yaml: i volumi ne prendono il prefisso.
 NOME_PROGETTO=canizzano
 
-compose() { trova_docker; "${DOCKER[@]}" compose "$@"; }
+compose() {
+    trova_docker
+    "${DOCKER[@]}" compose "$@"
+}
 
 verifica_env() {
     [[ -f .env ]] || errore "manca il file .env — copialo da .env.example:  cp .env.example .env"

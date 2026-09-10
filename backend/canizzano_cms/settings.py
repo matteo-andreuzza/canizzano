@@ -160,5 +160,13 @@ FILE_ATTIVITA = Path(os.environ.get("FILE_ATTIVITA", CARTELLA_LOG / "attivita.lo
 # condiviso con quel container: Django ci scrive, l'esecutore ci legge.
 CARTELLA_CODA = Path(os.environ.get("CARTELLA_CODA", BASE_DIR / "coda"))
 
+# Il bot del foglietto parrocchiale vive in un repository suo (canizzano-mcp),
+# in un container proprio, raggiungibile solo sulla rete Docker condivisa —
+# vedi «networks: rete_condivisa» nel compose.yaml. Qui a Django serve solo
+# come interruttore: se l'URL e' vuoto, il bottone «Elabora il foglietto» non
+# compare. La chiamata vera all'endpoint /attiva la fa l'esecutore, che e'
+# l'unico sulla stessa rete del bot — Django non ci parla direttamente.
+BOT_FOGLIETTO_URL = os.environ.get("BOT_FOGLIETTO_URL", "").strip()
+
 # Quante attivita' mostrare a pagina aperta, prima di «mostra altre».
 CRONOLOGIA_INIZIALE = 3

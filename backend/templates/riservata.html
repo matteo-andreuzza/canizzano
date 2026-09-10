@@ -177,6 +177,23 @@
       opacity: .75; line-height: 1.35;
     }
 
+    /* La redazione automatica. Non tocca il sito pubblico — scrive nel CMS, e
+       quello che scrive resta in redazione finche' una persona non lo pubblica
+       — quindi niente rosso e niente conferma. Ma non e' nemmeno uno dei tre
+       qui sopra: dura minuti, chiama servizi esterni, e vale la pena vederlo
+       subito. Riga sua, e la rampa verde di Organic per dire «sicuro». */
+    .bottone--foglietto {
+      width: 100%; flex-direction: row; align-items: center; gap: var(--space-4);
+      font-size: 21px; margin-bottom: var(--space-4);
+      background: var(--color-accent-2-100); color: var(--color-accent-2-800);
+      border-color: color-mix(in srgb, var(--color-accent-2-700) 30%, transparent);
+    }
+    .bottone--foglietto:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--color-accent-2-100) 92%, var(--color-text));
+    }
+    .bottone--foglietto .simbolo { font-size: 27px; line-height: 1; flex: none; }
+    .bottone--foglietto .spiega { display: block; opacity: .85; }
+
     /* L'unico che tocca il sito pubblico: piu' grande, rosso, da solo su una
        riga sua. Deve essere impossibile confonderlo con gli altri tre. */
     .bottone--pubblica {
@@ -395,6 +412,20 @@
         <span class="spiega">Spegne solo l'anteprima.</span>
       </button>
     </div>
+
+    {% if foglietto_attivo %}
+      <button type="button" class="bottone bottone--foglietto"
+              data-azione="foglietto" data-etichetta="Elabora il foglietto">
+        <span class="simbolo" aria-hidden="true">📰</span>
+        <span>
+          Elabora il foglietto
+          <span class="spiega">
+            Scarica il foglietto della settimana e ne prepara eventi e articoli
+            in redazione. Non pubblica niente sul sito.
+          </span>
+        </span>
+      </button>
+    {% endif %}
 
     <button type="button" class="bottone bottone--pubblica" data-azione="tutto" data-conferma="1">
       Pubblica tutto
@@ -697,7 +728,10 @@
   bottoni.forEach(function (bottone) {
     bottone.addEventListener("click", function () {
       var azione = bottone.getAttribute("data-azione");
-      var etichetta = bottone.firstChild.textContent.trim();
+      // «data-etichetta» quando c'e': i bottoni che cominciano con un'icona
+      // non hanno il proprio nome nel primo nodo di testo.
+      var etichetta = bottone.getAttribute("data-etichetta")
+        || bottone.firstChild.textContent.trim();
       if (bottone.hasAttribute("data-conferma")) {
         inSospeso = { azione: azione, etichetta: etichetta };
         // showModal() manca solo su browser molto vecchi: li' si ripiega sul

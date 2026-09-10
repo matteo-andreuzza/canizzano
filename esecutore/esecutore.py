@@ -21,6 +21,10 @@ La coda e' un confine di fiducia: chi riesce a scriverci dentro ottiene
 l'esecuzione di uno dei comandi in COMANDI. Per questo la lista bianca e'
 ripetuta qui e non arriva mai dal file del lavoro: il nome del comando passato
 allo script esce sempre da questo dizionario, mai dal contenuto del JSON.
+
+C'e' un secondo giro, piu' corto, per il bot del foglietto parrocchiale: la',
+invece di eseguire, si fa una richiesta HTTP al suo container, sulla rete
+Docker condivisa. Vedi avvia_foglietto().
 """
 
 from __future__ import annotations
@@ -32,6 +36,8 @@ import signal
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -63,6 +69,31 @@ COMANDI: dict[str, tuple[str, int]] = {
     "ferma-dev": ("ferma-dev", _tetto("TIMEOUT_FERMA_DEV", 300)),
     "tutto": ("tutto", _tetto("TIMEOUT_TUTTO", 7200)),
 }
+
+# ── Il bot del foglietto parrocchiale ───────────────────────────────────────
+#
+# Vive in un repository suo (canizzano-mcp), in un container suo, e non passa
+# da canizzano.sh: e' l'unico comando della dashboard che non esegue niente
+# qui dentro, chiede a un altro container di farlo.
+#
+# Il container del bot espone un endpoint HTTP (/attiva) protetto da un
+# token condiviso, raggiungibile solo sulla rete Docker esterna che i due
+# stack hanno in comune (vedi «networks:» nel compose.yaml di entrambi i
+# repository — non e' mai pubblicato su una porta dell'host). Noi scriviamo
+# nel registro che il bottone e' stato premuto e come e' andata la
+# *consegna* della richiesta; l'esito vero dell'elaborazione lo scrive il
+# bot stesso, col suo nome di processo, quando avra' finito.
+BOT_FOGLIETTO_URL = os.environ.get("BOT_FOGLIETTO_URL", "").strip()
+BOT_FOGLIETTO_TOKEN = os.environ.get("BOT_FOGLIETTO_TOKEN", "").strip()
+
+# Il container del bot risponde subito (occupato/libero) e basta: non c'e'
+# niente da aspettare oltre al tempo di una richiesta HTTP.
+TIMEOUT_FOGLIETTO = _tetto("TIMEOUT_FOGLIETTO", 10)
+
+# Il nome che compare nel registro per l'atto di aver premuto il bottone,
+# tenuto distinto da «scraper_foglietto» e «ocr_redazione_foglietto», che sono
+# le righe che scrive il bot per il proprio esito.
+PROCESSO_FOGLIETTO = "avvio_manuale_foglietto"
 
 IN_CORSO = CODA / "in-corso"
 BATTITO = CODA / ".vivo"
@@ -198,6 +229,100 @@ def batti() -> None:
         pass
 
 
+# ── Il bot del foglietto ────────────────────────────────────────────────────
+
+
+def avvia_foglietto(lavoro: dict, identificativo: str) -> None:
+    """Chiede al bot del foglietto di partire adesso, senza aspettarlo.
+
+    Una singola POST /attiva, con un timeout breve: il container del bot
+    risponde subito (occupato o libero), non fa aspettare l'esecutore fino a
+    elaborazione finita. La riga che scriviamo nel registro dice sempre
+    «richiesta consegnata» o perche' non lo e' stata — mai «foglietto
+    elaborato»: l'esito vero arriva dopo, quando il bot avra' finito, e la
+    dashboard lo mostrera' da sola alla prossima lettura della cronologia.
+    """
+    if not BOT_FOGLIETTO_URL:
+        registra(
+            PROCESSO_FOGLIETTO,
+            "errore",
+            "Non so dove sia il bot del foglietto: BOT_FOGLIETTO_URL non è "
+            "impostata. Scrivi l'indirizzo del suo container nel .env e rilancia "
+            "«./canizzano.sh avvia».",
+            identificativo,
+        )
+        return
+
+    richiesta = urllib.request.Request(
+        BOT_FOGLIETTO_URL,
+        method="POST",
+        headers={"Authorization": f"Bearer {BOT_FOGLIETTO_TOKEN}"},
+        data=b"",
+    )
+    try:
+        with urllib.request.urlopen(richiesta, timeout=TIMEOUT_FOGLIETTO) as risposta:
+            risposta.read()  # scarichiamo il corpo solo per chiudere pulito la connessione
+    except urllib.error.HTTPError as errore:
+        if errore.code == 409:
+            registra(
+                PROCESSO_FOGLIETTO,
+                "errore",
+                "Esecuzione già in corso, avvio ignorato.\n\n"
+                "Il bot sta già lavorando — di solito perché è partito da solo "
+                "poco fa (lo scheduler interno gira ogni mezz'ora). Non serve "
+                "fare niente: quando avrà finito, l'esito comparirà qui nel "
+                "registro.",
+                identificativo,
+            )
+        elif errore.code in (401, 403):
+            registra(
+                PROCESSO_FOGLIETTO,
+                "errore",
+                f"Il bot ha rifiutato la richiesta (HTTP {errore.code}): "
+                "BOT_FOGLIETTO_TOKEN non corrisponde a quello impostato nel .env "
+                "del bot (ATTIVA_TOKEN). Controlla che siano la stessa stringa "
+                "nei due repository.",
+                identificativo,
+            )
+        else:
+            registra(
+                PROCESSO_FOGLIETTO,
+                "errore",
+                f"Il bot ha risposto con un errore inatteso (HTTP {errore.code}): "
+                f"{errore.reason}",
+                identificativo,
+            )
+        return
+    except urllib.error.URLError as errore:
+        # Connessione rifiutata, host sconosciuto, timeout: il bot è spento,
+        # non è ancora stato avviato, o la rete Docker condivisa non esiste
+        # ancora. Un esito chiaro in dashboard, non un timeout silenzioso.
+        registra(
+            PROCESSO_FOGLIETTO,
+            "errore",
+            f"Non riesco a raggiungere il bot del foglietto su {BOT_FOGLIETTO_URL} "
+            f"({errore.reason}).\n\n"
+            "Controlla che il container del bot sia acceso (nel suo repository: "
+            "«docker compose up -d») e che la rete Docker condivisa esista "
+            "(«docker network create canizzano_rete», una tantum) e sia "
+            "referenziata allo stesso modo nei due .env.",
+            identificativo,
+        )
+        return
+
+    registra(
+        PROCESSO_FOGLIETTO,
+        "ok",
+        "Richiesta consegnata al bot del foglietto.\n\n"
+        "Adesso scarica il foglietto, lo legge e scrive nel CMS quello che trova: "
+        "ci vogliono alcuni minuti. Non pubblica niente sul sito — al massimo "
+        "lascia contenuti da rivedere in redazione.\n\n"
+        "Com'è andata lo scrive lui qui nel registro, sotto «scraper_foglietto» e "
+        "«ocr_redazione_foglietto», e nella mail di riepilogo.",
+        identificativo,
+    )
+
+
 # ── Ciclo di lavoro ─────────────────────────────────────────────────────────
 
 
@@ -205,7 +330,7 @@ def esegui(lavoro: dict, percorso: Path) -> None:
     azione = lavoro.get("azione")
     identificativo = str(lavoro.get("id") or percorso.stem)
 
-    if azione not in COMANDI:
+    if azione not in COMANDI and azione != "foglietto":
         registra(
             f"azione sconosciuta: {azione!r}",
             "errore",
@@ -215,8 +340,12 @@ def esegui(lavoro: dict, percorso: Path) -> None:
         percorso.unlink(missing_ok=True)
         return
 
-    sottocomando, timeout = COMANDI[azione]
-    processo = f"canizzano.sh {sottocomando}"
+    if azione == "foglietto":
+        processo = PROCESSO_FOGLIETTO
+        sottocomando, timeout = "", 0
+    else:
+        sottocomando, timeout = COMANDI[azione]
+        processo = f"canizzano.sh {sottocomando}"
 
     # Una richiesta che ha aspettato troppo non si esegue: quasi sempre vuol
     # dire che la macchina si e' spenta subito dopo il clic, e nessuno si
@@ -234,6 +363,13 @@ def esegui(lavoro: dict, percorso: Path) -> None:
             "Se serve ancora, premi di nuovo il bottone.",
             identificativo,
         )
+        percorso.unlink(missing_ok=True)
+        return
+
+    # Il foglietto non passa da «in-corso»: non c'e' niente da eseguire, si
+    # deposita una richiesta e si scrive subito com'e' andata la consegna.
+    if azione == "foglietto":
+        avvia_foglietto(lavoro, identificativo)
         percorso.unlink(missing_ok=True)
         return
 
@@ -311,9 +447,12 @@ def recupera_interrotti() -> None:
         except (OSError, ValueError):
             lavoro = {}
         azione = lavoro.get("azione", "?")
-        sottocomando = COMANDI.get(azione, (azione, 0))[0]
+        if azione == "foglietto":
+            processo = PROCESSO_FOGLIETTO
+        else:
+            processo = f"canizzano.sh {COMANDI.get(azione, (azione, 0))[0]}"
         registra(
-            f"canizzano.sh {sottocomando}",
+            processo,
             "errore",
             "L'esecutore si è fermato mentre il comando era in corso: esito sconosciuto.",
             str(lavoro.get("id") or percorso.stem),
@@ -340,6 +479,8 @@ def main() -> int:
 
     recupera_interrotti()
     print(f"→ esecutore in ascolto su {CODA} (script: {SCRIPT})", flush=True)
+    if BOT_FOGLIETTO_URL:
+        print(f"→ bot del foglietto: {BOT_FOGLIETTO_URL}", flush=True)
 
     while not _fermati:
         # Il battito dice alla dashboard che qualcuno sta ascoltando: senza,

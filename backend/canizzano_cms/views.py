@@ -67,6 +67,22 @@ AZIONI: dict[str, dict[str, str]] = {
         "processo": "canizzano.sh tutto",
         "etichetta": "Pubblica tutto",
     },
+    # L'unica azione che non lancia canizzano.sh: il bot del foglietto vive in
+    # un repository suo, un container a parte, e l'esecutore non lo esegue —
+    # gli fa una richiesta HTTP sulla rete Docker condivisa (vedi
+    # avvia_foglietto() in esecutore.py). Da qui la differenza non si vede: si
+    # accoda un lavoro e si aspetta una riga nel registro, come per tutti gli
+    # altri.
+    #
+    # Non ha la conferma rossa di «Pubblica tutto», e non e' una dimenticanza:
+    # non tocca mai il sito pubblico. Scrive nel CMS, e quello che scrive resta
+    # in redazione finche' una persona non lo pubblica — l'assistente non
+    # pubblica mai.
+    "foglietto": {
+        "comando": "",
+        "processo": "avvio_manuale_foglietto",
+        "etichetta": "Elabora il foglietto",
+    },
 }
 
 # Oltre questo silenzio il battito dell'esecutore e' considerato morto. Il
@@ -266,6 +282,9 @@ def pagina_riservata(request):
             "altre_voci": altre,
             "esecutore": stato,
             "esecutore_pronto": _pronto(stato),
+            # Senza l'URL del bot il bottone non compare: meglio niente che
+            # un bottone che fallisce sempre.
+            "foglietto_attivo": bool(settings.BOT_FOGLIETTO_URL),
             "quante_iniziali": settings.CRONOLOGIA_INIZIALE,
         },
     )
@@ -287,6 +306,19 @@ def esegui_azione(request):
             status=400,
         )
 
+    if azione == "foglietto" and not settings.BOT_FOGLIETTO_URL:
+        return JsonResponse(
+            {
+                "ok": False,
+                "errore": (
+                    "Non è configurato l'indirizzo del bot del foglietto. Scrivi "
+                    "«BOT_FOGLIETTO_URL» (e «BOT_FOGLIETTO_TOKEN») nel .env e "
+                    "rilancia «./canizzano.sh avvia»."
+                ),
+            },
+            status=400,
+        )
+
     stato = _stato_esecutore()
     if not stato["vivo"]:
         return JsonResponse(
@@ -299,7 +331,12 @@ def esegui_azione(request):
             },
             status=503,
         )
-    if not stato["docker"]:
+    # Il foglietto e' l'unico comando che non ha bisogno del demone Docker
+    # dell'host: l'esecutore fa una richiesta HTTP al container del bot sulla
+    # rete condivisa, non passa da canizzano.sh. Rifiutarlo perche' il demone
+    # non risponde vorrebbe dire bloccare l'unica cosa che, in quella
+    # situazione, funzionerebbe ancora.
+    if not stato["docker"] and azione != "foglietto":
         # Meglio rifiutare subito che accodare un lavoro destinato a fallire
         # con un messaggio incomprensibile.
         return JsonResponse(
