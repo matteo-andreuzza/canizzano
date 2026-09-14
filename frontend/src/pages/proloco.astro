@@ -20,6 +20,7 @@ import BannerSagra from '../components/BannerSagra.astro';
 import Bottone from '../components/Bottone.astro';
 import Etichetta from '../components/Etichetta.astro';
 import Foto from '../components/Foto.astro';
+import Marchio from '../components/Marchio.astro';
 import { CONTATTI, ROTTE } from '../lib/sito.ts';
 import { eventiDi, fotoDi, impostazioni, perStagione } from '../lib/contenuti.ts';
 
@@ -132,7 +133,7 @@ const RESTO = [
   sottotitoloLockup="tutto l’anno · canizzano.it"
   coloreAttivo="var(--color-accent-2-800)"
 >
-  <!-- Hero verde con il mosaico di tre foto -->
+  <!-- Hero verde con una foto orizzontale -->
   <section class="apertura">
     <span class="apertura__bolla apertura__bolla--alta" aria-hidden="true"></span>
     <span class="apertura__bolla apertura__bolla--bassa" aria-hidden="true"></span>
@@ -156,28 +157,14 @@ const RESTO = [
         </div>
       </div>
 
-      <div class="apertura__mosaico">
-        <Foto
-          class="apertura__larga"
-          src={foto[0]?.immagine}
-          alt={foto[0]?.testo_alternativo ?? ''}
-          attesa="Il piazzale pieno di gente"
-          altezza={190}
-        />
-        <Foto
-          src={foto[1]?.immagine}
-          alt={foto[1]?.testo_alternativo ?? ''}
-          attesa="Bambini che giocano"
-          altezza={200}
-          forma="cerchio"
-        />
-        <Foto
-          src={foto[2]?.immagine}
-          alt={foto[2]?.testo_alternativo ?? ''}
-          attesa="Volontari all’opera"
-          altezza={200}
-        />
-      </div>
+      <Foto
+        class="apertura__foto"
+        src={foto[0]?.immagine}
+        alt={foto[0]?.testo_alternativo ?? ''}
+        attesa="Il piazzale pieno di gente"
+        altezza={340}
+        ombra="lg"
+      />
     </div>
   </section>
 
@@ -272,7 +259,7 @@ const RESTO = [
               Manda le tue foto
             </Bottone>
           </div>
-          <MosaicoFoto foto={foto.slice(6)} minimo={8} />
+          <MosaicoFoto foto={foto.slice(6, 10)} minimo={4} />
         </div>
       </Sezione>
     )
@@ -315,22 +302,27 @@ const RESTO = [
           </Bottone>
         </div>
       </div>
-      <div class="socio__foto">
-        <Foto
-          src={foto[8]?.immagine}
-          alt={foto[8]?.testo_alternativo ?? ''}
-          attesa="Volontari in cucina"
-          altezza={180}
-          forma="cerchio"
-        />
-        <Foto
-          class="socio__foto-bassa"
-          src={foto[9]?.immagine}
-          alt={foto[9]?.testo_alternativo ?? ''}
-          attesa="Volontari che montano il tendone"
-          altezza={180}
-          forma="cerchio"
-        />
+      <div class="socio__tessera">
+        <div class="tessera" aria-hidden="true">
+          <svg class="tessera__onda" viewBox="0 0 300 70" preserveAspectRatio="none">
+            <path d="M0,44 C60,64 120,24 180,40 C240,56 270,24 300,40 L300,70 L0,70 Z" fill="rgba(240,250,225,0.14)" />
+          </svg>
+          <div class="tessera__testata">
+            <Marchio variante="proloco" dimensione={36} />
+            <div class="tessera__lockup">
+              <span class="tessera__ente">A.R.C. Cannetum</span>
+              <span class="tessera__sotto">Pro Loco di Canizzano</span>
+            </div>
+          </div>
+          <div class="tessera__corpo">
+            <span class="tessera__etichetta">Tessera socio</span>
+            <span class="tessera__nome">Nome Cognome</span>
+          </div>
+          <div class="tessera__piede">
+            <span>Socio n. 000</span>
+            <span>Stagione 2026</span>
+          </div>
+        </div>
       </div>
     </div>
   </Fascia>
@@ -413,8 +405,7 @@ const RESTO = [
     margin: 0;
   }
 
-  .apertura__mosaico { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .apertura__larga { grid-column: span 2; }
+  .apertura__foto { width: 100%; }
 
   /* — sezioni — */
   /* La barra numeri sale di 34px: quello che segue recupera lo spazio. */
@@ -437,8 +428,51 @@ const RESTO = [
   .socio__testo { display: flex; flex-direction: column; gap: 22px; }
   .socio__titolo { font-size: 46px; line-height: 1.02; margin: 0; }
   .socio__paragrafo { font-size: 17px; line-height: 1.6; max-width: 50ch; opacity: 0.92; margin: 0; }
-  .socio__foto { display: flex; gap: 16px; justify-content: flex-end; }
-  .socio__foto-bassa { margin-top: 46px; }
+
+  /* — mockup della tessera socio — */
+  .socio__tessera { display: flex; justify-content: center; }
+  .tessera {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 360px;
+    aspect-ratio: 1.58;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--color-accent-2-600), var(--color-accent-2-900));
+    box-shadow: var(--shadow-lg);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: var(--color-accent-2-100);
+    transform: rotate(-3deg);
+  }
+  .tessera__onda { position: absolute; inset: auto 0 0 0; width: 100%; height: 70px; }
+  .tessera__testata { position: relative; display: flex; align-items: center; gap: 12px; }
+  .tessera__lockup { display: flex; flex-direction: column; }
+  .tessera__ente { font-family: var(--font-heading); font-size: 18px; line-height: 1.1; }
+  .tessera__sotto {
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent-2-200);
+  }
+  .tessera__corpo { position: relative; display: flex; flex-direction: column; gap: 6px; }
+  .tessera__etichetta {
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent-2-300);
+  }
+  .tessera__nome { font-family: var(--font-heading); font-size: 23px; }
+  .tessera__piede {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--color-accent-2-200);
+  }
 
   /* — chi siamo — */
   .chi-siamo {
@@ -467,8 +501,8 @@ const RESTO = [
     .apertura h1 { font-size: 52px; }
     .apertura__bolla--bassa { display: none; }
     .socio__titolo { font-size: 34px; }
-    .socio__foto { justify-content: flex-start; }
-    .socio__foto-bassa { margin-top: 0; }
+    .socio__tessera { justify-content: flex-start; }
+    .tessera { max-width: 320px; }
     .chi-siamo { padding: 30px; }
   }
   @media (max-width: 640px) { .apertura h1 { font-size: 42px; } }

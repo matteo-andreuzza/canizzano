@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canizzano.it — Prossimamente</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='23' fill='%237a8a5e'/%3E%3Cpath d='M17 36c0-9 1-15 3-21M24 36c0-11 1.5-18 4-24M31 36c0-8-.5-13-2-18' stroke='%23f5ead8' stroke-width='2.75' stroke-linecap='round' fill='none'/%3E%3Cpath d='M11 32c4 2 7-1 11 0s6 2 10 0' stroke='%23c67139' stroke-width='2.75' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo:wght@400&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-bg: #f5ead8;
+    --color-surface: #ebddc5;
+    --color-text: #201e1d;
+    --color-accent: #c67139;
+    --color-accent-2: #7a8a5e;
+    --color-divider: color-mix(in srgb, #201e1d 16%, transparent);
+
+    --color-accent-100: #fff2eb;
+    --color-accent-200: #ffe1d0;
+    --color-accent-600: #b2622d;
+    --color-accent-700: #8c491a;
+    --color-accent-900: #402310;
+
+    --color-accent-2-100: #f0fae1;
+    --color-accent-2-800: #3d472b;
+
+    --font-heading: "Caprasimo", system-ui, sans-serif;
+    --font-body: "Figtree", system-ui, sans-serif;
+
+    --radius-lg: 28px;
+    --radius-md: 16px;
+    --shadow-lg: 0 12px 32px color-mix(in srgb, #2e2b25 22%, transparent);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Onda del Sile, sullo sfondo — lo stesso motivo del marchio, appena accennato. */
+  .onda-sfondo {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .onda-sfondo svg { position: absolute; width: 100%; height: auto; }
+  .onda-sfondo .sopra { top: -4vw; left: 0; }
+  .onda-sfondo .sotto { bottom: -6vw; left: 0; transform: scaleY(-1); }
+
+  .pagina {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 34px;
+  }
+
+  .marchio {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .marchio__lockup {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+  .marchio__nome {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    line-height: 1;
+  }
+  .marchio__sotto {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent-700);
+  }
+
+  .occhiello {
+    font-size: 12.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent-700);
+  }
+
+  h1 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    margin: 0;
+    font-size: clamp(32px, 6vw, 54px);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    max-width: 16ch;
+  }
+
+  h1 .accento { color: var(--color-accent); }
+
+  .sottotitolo {
+    font-size: 17px;
+    line-height: 1.6;
+    max-width: 46ch;
+    color: color-mix(in srgb, var(--color-text) 78%, transparent);
+    margin: 0;
+  }
+
+  /* — il conto, stessa impronta del componente ContoRovescia del sito — */
+  .conto {
+    background: var(--color-accent-900);
+    color: var(--color-accent-100);
+    border-radius: var(--radius-lg);
+    padding: 34px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+  }
+  .conto__occhiello {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent-200);
+  }
+  .conto__numeri { display: flex; gap: clamp(10px, 4vw, 30px); }
+  .conto__numeri[hidden] { display: none; }
+  .conto__voce { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 56px; }
+  .conto__valore {
+    font-family: var(--font-heading);
+    font-size: clamp(38px, 9vw, 68px);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .conto__unita {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent-200);
+  }
+  .conto__separatore {
+    font-family: var(--font-heading);
+    font-size: clamp(28px, 6vw, 48px);
+    color: var(--color-accent-300, #ffc6a5);
+    align-self: center;
+    padding-bottom: 20px;
+  }
+  .conto__adesso {
+    font-family: var(--font-heading);
+    font-size: clamp(22px, 4vw, 30px);
+    line-height: 1.3;
+    max-width: 20ch;
+  }
+  .conto__adesso[hidden] { display: none; }
+
+  .data-obiettivo {
+    font-size: 13px;
+    color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: var(--color-accent-2-100);
+    color: var(--color-accent-2-800);
+  }
+
+  @media (max-width: 520px) {
+    .conto { padding: 26px 18px; }
+    .conto__numeri { gap: 10px; }
+    .conto__voce { min-width: 44px; }
+    .conto__separatore { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="onda-sfondo" aria-hidden="true">
+    <svg class="sopra" viewBox="0 0 1440 220" preserveAspectRatio="none">
+      <path d="M0,120 C240,180 480,60 720,110 C960,160 1200,60 1440,110 L1440,0 L0,0 Z" fill="#e1eecc"/>
+    </svg>
+    <svg class="sotto" viewBox="0 0 1440 220" preserveAspectRatio="none">
+      <path d="M0,120 C240,180 480,60 720,110 C960,160 1200,60 1440,110 L1440,0 L0,0 Z" fill="#ffe1d0"/>
+    </svg>
+  </div>
+
+  <main class="pagina">
+
+    <div class="marchio">
+      <svg width="40" height="40" viewBox="0 0 48 48" aria-hidden="true" style="flex:none">
+        <circle cx="24" cy="24" r="23" fill="#7a8a5e" />
+        <path d="M17 36c0-9 1-15 3-21M24 36c0-11 1.5-18 4-24M31 36c0-8-.5-13-2-18"
+              stroke="#f5ead8" stroke-width="2.75" stroke-linecap="round" fill="none" />
+        <path d="M11 32c4 2 7-1 11 0s6 2 10 0"
+              stroke="#c67139" stroke-width="2.75" stroke-linecap="round" fill="none" />
+      </svg>
+      <div class="marchio__lockup">
+        <span class="marchio__nome">Canizzano.it</span>
+        <span class="marchio__sotto">Quartiere online</span>
+      </div>
+    </div>
+
+    <span class="occhiello">Sta per cominciare</span>
+
+    <h1>Qualcosa di nuovo sta arrivando a Canizzano, <span class="accento">finalmente</span>.</h1>
+
+    <p class="sottotitolo">
+      Il nuovo canizzano.it è quasi pronto. Manca pochissimo: qui sotto il conto alla rovescia.
+    </p>
+
+    <div
+      class="conto"
+      data-conto-rovescia
+      data-inizio="2026-09-15T08:00:00+02:00"
+    >
+      <span class="conto__occhiello" data-conto-titolo>Si va online tra</span>
+      <div class="conto__numeri" data-conto-numeri>
+        <div class="conto__voce">
+          <span class="conto__valore" data-conto="giorni">00</span>
+          <span class="conto__unita">giorni</span>
+        </div>
+        <span class="conto__separatore">:</span>
+        <div class="conto__voce">
+          <span class="conto__valore" data-conto="ore">00</span>
+          <span class="conto__unita">ore</span>
+        </div>
+        <span class="conto__separatore">:</span>
+        <div class="conto__voce">
+          <span class="conto__valore" data-conto="minuti">00</span>
+          <span class="conto__unita">minuti</span>
+        </div>
+        <span class="conto__separatore">:</span>
+        <div class="conto__voce">
+          <span class="conto__valore" data-conto="secondi">00</span>
+          <span class="conto__unita">secondi</span>
+        </div>
+      </div>
+      <span class="conto__adesso" data-conto-adesso hidden>Ci siamo: il nuovo sito è online.</span>
+    </div>
+
+    <span class="data-obiettivo">Martedì 15 settembre, ore 8:00</span>
+
+    <span class="tag">canizzano.it</span>
+
+  </main>
+
+  <script>
+    (function () {
+      var UNITA = ['giorni', 'ore', 'minuti', 'secondi'];
+
+      function avvia(blocco) {
+        var inizio = Date.parse(blocco.dataset.inizio || '');
+        if (isNaN(inizio)) return;
+
+        var titolo = blocco.querySelector('[data-conto-titolo]');
+        var numeri = blocco.querySelector('[data-conto-numeri]');
+        var adesso = blocco.querySelector('[data-conto-adesso]');
+        var celle = {};
+        UNITA.forEach(function (nome) {
+          celle[nome] = blocco.querySelector('[data-conto="' + nome + '"]');
+        });
+
+        var ultimo = '';
+
+        function aggiorna() {
+          var mancano = inizio - Date.now();
+
+          if (mancano <= 0) {
+            numeri && numeri.setAttribute('hidden', '');
+            if (adesso) adesso.removeAttribute('hidden');
+            if (titolo) titolo.textContent = 'È il momento';
+            return true;
+          }
+
+          var valori = {
+            giorni: Math.floor(mancano / 86400000),
+            ore: Math.floor((mancano % 86400000) / 3600000),
+            minuti: Math.floor((mancano % 3600000) / 60000),
+            secondi: Math.floor((mancano % 60000) / 1000),
+          };
+
+          var firma = UNITA.map(function (n) { return valori[n]; }).join(':');
+          if (firma === ultimo) return false;
+          ultimo = firma;
+
+          UNITA.forEach(function (nome) {
+            var cella = celle[nome];
+            if (!cella) return;
+            cella.textContent = String(valori[nome]).padStart(2, '0');
+          });
+          return false;
+        }
+
+        if (aggiorna()) return;
+        var battito = setInterval(function () {
+          if (aggiorna()) clearInterval(battito);
+        }, 1000);
+      }
+
+      document.querySelectorAll('[data-conto-rovescia]').forEach(avvia);
+    })();
+  </script>
+
+</body>
+</html>
