@@ -15,7 +15,7 @@ FTP_REMOTE_DIR="${FTP_REMOTE_DIR:-/}"
 FTP_PROTOCOLLO="${FTP_PROTOCOLLO:-ftp}"     # ftp | ftps
 FTP_VERIFICA_CERTIFICATO="${FTP_VERIFICA_CERTIFICATO:-true}"
 DRY_RUN="${DRY_RUN:-false}"
-PARALLELI="${FTP_TRASFERIMENTI_PARALLELI:-4}"
+PARALLELI="${FTP_TRASFERIMENTI_PARALLELI:-1}"
 
 if [ ! -d "$SORGENTE" ] || [ -z "$(ls -A "$SORGENTE" 2>/dev/null)" ]; then
     echo "✗ $SORGENTE e' vuota: esegui prima il build del sito." >&2
@@ -29,7 +29,8 @@ else
 fi
 
 OPZIONI_MIRROR="--reverse --delete --verbose --parallel=$PARALLELI \
-    --exclude-glob .DS_Store --exclude-glob .git*"
+    --exclude-glob .DS_Store --exclude-glob .git* \
+    --exclude-glob .ftpquota --exclude-glob .htaccess"
 [ "$DRY_RUN" = "true" ] && OPZIONI_MIRROR="$OPZIONI_MIRROR --dry-run"
 
 echo "→ carico $SORGENTE su ftp://$FTP_HOST:$FTP_PORT$FTP_REMOTE_DIR"
@@ -41,7 +42,8 @@ LFTP_PASSWORD="$FTP_PASSWORD" lftp -u "$FTP_USER" --env-password \
 set cmd:fail-exit true;
 set ssl:verify-certificate $FTP_VERIFICA_CERTIFICATO;
 set ftp:passive-mode ${FTP_PASSIVO:-true};
-set net:max-retries 3;
+set net:max-retries 10;
+set net:reconnect-interval-base 5;
 set net:timeout 20;
 $IMPOSTAZIONI_TLS
 mirror $OPZIONI_MIRROR "$SORGENTE" "$FTP_REMOTE_DIR";

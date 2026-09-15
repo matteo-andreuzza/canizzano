@@ -25,6 +25,7 @@ const config = await impostazioni();
 const giornate = await programma('sagra');
 const menu = await menuDellaSagra('sagra');
 const foto = await fotoDi('sagra');
+const locandina = (await fotoDi('sagra-locandina'))[0];
 
 // Il programma sta su due colonne: primo weekend a sinistra, secondo a destra.
 const meta = Math.ceil(giornate.length / 2);
@@ -46,7 +47,7 @@ const inizioSagra =
 
 const INFO = [
   { etichetta: 'Dove', valore: 'Via Canizzano 110' },
-  { etichetta: 'Cucina', valore: 'dalle 19.00' },
+  { etichetta: 'Cucina', valore: 'dalle 19.30' },
   { etichetta: 'Ingresso', valore: 'libero, tendone coperto' },
   { etichetta: 'Prenotazioni', valore: CONTATTI.proLocoTelefono },
 ];
@@ -54,19 +55,19 @@ const INFO = [
 const TENDONE = [
   {
     titolo: 'Tombola',
-    testo: 'Le domeniche alle 21.00, cartelle a 1 €, premi offerti dai negozi del quartiere.',
+    testo: 'Durante pranzi e cene',
   },
   {
-    titolo: 'Pesca di beneficenza',
+    titolo: 'Lotteria di beneficenza',
     testo: 'Tutti i giorni. Il ricavato va alle opere della parrocchia.',
   },
   {
     titolo: 'Giochi per i più piccoli',
-    testo: 'Gonfiabili e giochi di legno nel prato, sorvegliati dagli animatori.',
+    testo: '',
   },
   {
-    titolo: 'Mostra fotografica',
-    testo: 'Canizzano di una volta: mulini, campi, sagre. Porta le tue foto, le scansioniamo.',
+    titolo: 'Stand Gastronomico & bar',
+    testo: 'Salato e Dolce',
   },
 ];
 
@@ -130,6 +131,13 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
           <Bottone href="#programma" variante="contorno-chiaro">
             Programma completo
           </Bottone>
+          {
+            locandina?.immagine && (
+              <Bottone href={locandina.immagine} variante="contorno-chiaro" scarica>
+                Scarica la locandina
+              </Bottone>
+            )
+          }
         </div>
       </div>
 
@@ -252,7 +260,7 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
     <div class="volontari">
       <div class="volontari__testo">
         <span class="occhiello" style="color:var(--color-accent-300)">Diventa volontario</span>
-        <h2 class="volontari__titolo">La sagra la fanno ottanta persone</h2>
+        <h2 class="volontari__titolo">La sagra la fanno i volontari</h2>
         <p class="volontari__paragrafo">
           Cucina, griglia, bar, tavoli, cassa, allestimenti, pulizie. Anche solo una sera: basta
           dire quando puoi e ti mettiamo in squadra con qualcuno che sa già cosa fare.
@@ -271,23 +279,12 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
           </Bottone>
         </div>
       </div>
-      <div class="volontari__foto">
-        <Foto
-          src={foto[1]?.immagine}
-          alt={foto[1]?.testo_alternativo ?? ''}
-          attesa="Volontari in cucina"
-          altezza={170}
-          forma="cerchio"
-        />
-        <Foto
-          class="volontari__foto-bassa"
-          src={foto[2]?.immagine}
-          alt={foto[2]?.testo_alternativo ?? ''}
-          attesa="Volontari al bar"
-          altezza={170}
-          forma="cerchio"
-        />
-      </div>
+      <Foto
+        src={foto[1]?.immagine}
+        alt={foto[1]?.testo_alternativo ?? ''}
+        attesa="Volontari al lavoro"
+        altezza={300}
+      />
     </div>
   </Fascia>
 
@@ -312,12 +309,14 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
           </Bottone>
         </div>
       </div>
-      <Foto
-        src={foto[3]?.immagine}
-        alt={foto[3]?.testo_alternativo ?? ''}
-        attesa="Mappa o foto del piazzale"
-        altezza={280}
-      />
+      <iframe
+        class="arrivare__mappa"
+        title="Mappa: Via Canizzano 110, Treviso"
+        src="https://www.google.com/maps?q=Via%20Canizzano%20110%2C%20Treviso&output=embed"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allowfullscreen
+      ></iframe>
     </div>
   </Sezione>
 
@@ -331,10 +330,6 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
           organizza la sagra insieme alla parrocchia, e durante l’anno tiene vive le feste, le
           camminate lungo il Sile e la memoria del quartiere. Il nome viene dal latino
           <em>cannetum</em>: il canneto.
-        </p>
-        <p class="chi-siamo__testo">
-          Le assemblee sono aperte a tutti: si trovano in sala NOI, il primo martedì del mese alle
-          21.00.
         </p>
       </div>
       <div class="pila" style="gap:12px">
@@ -434,11 +429,10 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
   .volontari__testo { display: flex; flex-direction: column; gap: 22px; }
   .volontari__titolo { font-size: 46px; line-height: 1.02; margin: 0; }
   .volontari__paragrafo { font-size: 17px; line-height: 1.6; max-width: 50ch; opacity: 0.92; margin: 0; }
-  .volontari__foto { display: flex; gap: 16px; justify-content: flex-end; }
-  .volontari__foto-bassa { margin-top: 40px; }
 
   /* — come arrivare — */
   .arrivare { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  .arrivare__mappa { width: 100%; height: 280px; border: 0; border-radius: var(--radius-lg); display: block; }
   .arrivare__tag { align-self: flex-start; }
   .arrivare__titolo { font-size: 34px; line-height: 1.05; margin: 0; }
   .arrivare__testo { font-size: 15.5px; line-height: 1.65; color: var(--color-neutral-800); margin: 0; }
@@ -494,8 +488,6 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
     .apertura h1 { font-size: 54px; }
     .apertura__periodo { font-size: 34px; }
     .volontari__titolo { font-size: 34px; }
-    .volontari__foto { justify-content: flex-start; }
-    .volontari__foto-bassa { margin-top: 0; }
     .chi-siamo { padding: 30px; }
   }
   @media (max-width: 640px) {

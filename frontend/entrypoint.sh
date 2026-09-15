@@ -33,7 +33,8 @@ case "${1:-build}" in
         fi
         ;;
     dev)
-        sincronizza_media
+        # Niente copia: in anteprima compose.yaml monta il volume delle foto
+        # direttamente su public/media, cosi' quelle nuove compaiono subito.
         # Astro segna il server di sviluppo con un lock in .astro/dev.json e
         # lo cancella solo se lo spegni con garbo. Un container fermato di
         # colpo lo lascia li', e al riavvio Astro crede che ci sia gia' un

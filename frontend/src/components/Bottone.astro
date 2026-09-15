@@ -10,6 +10,8 @@ interface Props {
   href?: string;
   variante?: 'primario' | 'secondario' | 'ghost' | 'chiaro' | 'contorno-chiaro';
   esterno?: boolean;
+  /** Il link scarica il file invece di aprirlo (es. la locandina). */
+  scarica?: boolean;
   tipo?: 'button' | 'submit';
   /** Coppia sfondo/testo per la variante «chiaro»: token del sistema. */
   sfondo?: string;
@@ -21,6 +23,7 @@ const {
   href,
   variante = 'primario',
   esterno = false,
+  scarica = false,
   tipo = 'button',
   sfondo,
   inchiostro,
@@ -48,7 +51,13 @@ const attributiEsterni = esterno ? { target: '_blank', rel: 'noopener noreferrer
 
 {
   href ? (
-    <a href={href} class={classi} style={stile || undefined} {...attributiEsterni}>
+    <a
+      href={href}
+      class={classi}
+      style={stile || undefined}
+      download={scarica || undefined}
+      {...attributiEsterni}
+    >
       <slot />
     </a>
   ) : (

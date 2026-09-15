@@ -122,7 +122,7 @@ ATTIVITA = [
         "icona": Icona.PERSONE,
         "tono": Tono.ACCENT_200,
         "sfondo_caldo": True,
-        "collegamento": "",
+        "collegamento": "/gruppi",
         "etichetta_collegamento": "canizzano.it/gruppi",
         "ordine": 7,
     },

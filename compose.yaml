@@ -180,14 +180,16 @@ services:
       NODE_ENV: development
       CMS_URL: http://backend:8000
       SITE_BASE_URL: http://localhost:${DEV_PORT:-4321}
-      MEDIA_SORGENTE: /media
     ports:
       - "${DEV_PORT:-4321}:4321"
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
       - ./frontend/astro.config.mjs:/app/astro.config.mjs:ro
-      - media:/media:ro
+      # In anteprima il volume delle foto e' montato direttamente dove Astro
+      # lo serve, invece di copiarlo all'avvio: una foto caricata in admin
+      # compare subito, senza riavviare il container.
+      - media:/app/public/media:ro
     command: ["dev"]
 
   deploy:
