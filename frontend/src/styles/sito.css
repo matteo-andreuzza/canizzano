@@ -49,8 +49,8 @@ html { scroll-behavior: smooth; }
 .titolo-sezione { font-size: 40px; line-height: 1.03; }
 
 /* Le pagine Pro Loco e Grest portano i link sul verde del sistema. */
-.tema--verde a { color: var(--color-accent-2-800); }
-.tema--verde a:hover { color: var(--color-accent-2-900); }
+.tema--verde a { color: var(--color-inchiostro-salvia); }
+.tema--verde a:hover { color: var(--color-inchiostro-salvia-forte); }
 
 /* Su fondo scuro i link ereditano il colore della fascia. */
 .su-scuro a { color: inherit; }

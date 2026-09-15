@@ -1,0 +1,210 @@
+---
+/**
+ * I gruppi del quartiere — coro, chierichetti, Circolo NOI.
+ *
+ * Sono realta' piccole, senza un calendario loro: a chi arriva qui serve
+ * sapere cosa fanno e chi chiamare. Una scheda ciascuno, con l'ancora per
+ * poterla linkare da fuori (`/gruppi#coro`).
+ *
+ * I recapiti stanno nella tabella qui sotto. Un telefono vuoto non rompe
+ * niente: la scheda dice che il numero sta arrivando e rimanda alla
+ * parrocchia.
+ */
+import Base from '../layouts/Base.astro';
+import Sezione from '../components/Sezione.astro';
+import BloccoAzione from '../components/BloccoAzione.astro';
+import DiscoIcona from '../components/DiscoIcona.astro';
+import Bottone from '../components/Bottone.astro';
+import Etichetta from '../components/Etichetta.astro';
+import type { NomeIcona } from '../components/Icona.astro';
+import { CONTATTI, ROTTE } from '../lib/sito.ts';
+
+interface Gruppo {
+  id: string;
+  nome: string;
+  occhiello: string;
+  icona: NomeIcona;
+  tono: string;
+  testo: string;
+  /** Chi rispondere al telefono: il nome basta. */
+  referente: string;
+  /** Formato «333 1234567». Vuoto finche' non ce lo danno. */
+  telefono: string;
+}
+
+const GRUPPI: Gruppo[] = [
+  {
+    id: 'coro',
+    nome: 'Il coro',
+    occhiello: 'La voce delle messe',
+    icona: 'musica',
+    tono: 'accent-300',
+    testo:
+      'Canta alle messe della domenica e nelle feste grandi dell’anno. Non serve saper leggere la musica: serve la voglia di esserci alle prove.',
+    referente: 'Bruna',
+    telefono: '',
+  },
+  {
+    id: 'chierichetti',
+    nome: 'I chierichetti',
+    occhiello: 'All’altare, la domenica',
+    icona: 'croce',
+    tono: 'accent-2-300',
+    testo:
+      'Ragazzi e ragazze che servono all’altare durante le celebrazioni. Si comincia dopo la prima comunione, affiancati da chi lo fa da più tempo.',
+    referente: '',
+    telefono: '',
+  },
+  {
+    id: 'noi',
+    nome: 'Il Circolo NOI',
+    occhiello: 'Il bar dell’oratorio',
+    icona: 'casa',
+    tono: 'neutral-700',
+    testo:
+      'Il bar dell’oratorio, la sala per le feste, il tesseramento e i tornei di carte. È anche la merenda del Grest e la sala dove si fanno le assemblee.',
+    referente: '',
+    telefono: '',
+  },
+];
+
+const numero = (telefono: string) => `tel:+39${telefono.replace(/\s/g, '')}`;
+---
+
+<Base
+  pagina="gruppi"
+  titolo="Coro, chierichetti e Circolo NOI"
+  descrizione="I gruppi della parrocchia di Canizzano: il coro, i chierichetti e il Circolo NOI. Cosa fanno e chi chiamare per entrarci."
+  nomeLockup="I gruppi"
+  sottotitoloLockup="coro · chierichetti · NOI"
+>
+  <!-- Apertura -->
+  <Sezione stacco="primo">
+    <div class="apertura">
+      <Etichetta tono="accent-2" class="apertura__tag">Parrocchia della Visitazione</Etichetta>
+      <h1 class="titolo-pagina">I gruppi<br />del quartiere</h1>
+      <p class="apertura__occhiello">
+        Non hanno un tendone né un calendario tutto loro, ma senza di loro la domenica sarebbe
+        un’altra cosa. Qui c’è cosa fanno e a chi telefonare se vuoi darci una mano.
+      </p>
+      <nav class="apertura__salti" aria-label="I gruppi in questa pagina">
+        {GRUPPI.map((gruppo) => <a href={`#${gruppo.id}`}>{gruppo.nome}</a>)}
+      </nav>
+    </div>
+  </Sezione>
+
+  <!-- Le schede -->
+  <Sezione stacco="corto">
+    <div class="griglia griglia--3 gruppi">
+      {
+        GRUPPI.map((gruppo) => (
+          <article class="gruppo" id={gruppo.id}>
+            <DiscoIcona icona={gruppo.icona} tono={gruppo.tono} dimensione={58} />
+            <div class="gruppo__testa">
+              <span class="gruppo__occhiello">{gruppo.occhiello}</span>
+              <h2 class="gruppo__nome">{gruppo.nome}</h2>
+            </div>
+            <p class="gruppo__testo">{gruppo.testo}</p>
+
+            <div class="gruppo__contatto">
+              <span class="gruppo__chi">
+                {gruppo.referente ? `Chiedi di ${gruppo.referente}` : 'Il referente'}
+              </span>
+              {gruppo.telefono ? (
+                <Bottone href={numero(gruppo.telefono)} variante="secondario" class="gruppo__bottone">
+                  Chiama {gruppo.telefono}
+                </Bottone>
+              ) : (
+                <span class="gruppo__attesa">
+                  Il numero arriva a breve: intanto chiedi in canonica, al{' '}
+                  <a href={CONTATTI.parrocchiaTel}>{CONTATTI.parrocchiaTelefono}</a>.
+                </span>
+              )}
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </Sezione>
+
+  <!-- Chiusura -->
+  <Sezione stacco="corto">
+    <BloccoAzione
+      titolo="Manca un gruppo?"
+      testo="Catechisti, lettori, chi pulisce la chiesa il sabato: se il tuo gruppo non c’è, mandaci il nome e un numero e lo aggiungiamo."
+    >
+      <Bottone href={`mailto:${CONTATTI.email}?subject=Un%20gruppo%20per%20il%20sito`}>
+        Segnala un gruppo
+      </Bottone>
+      <Bottone href={ROTTE.calendario} variante="secondario">Il calendario del quartiere</Bottone>
+    </BloccoAzione>
+  </Sezione>
+</Base>
+
+<style>
+  /* — apertura — */
+  .apertura { display: flex; flex-direction: column; gap: 24px; max-width: 760px; }
+  .apertura__tag { align-self: flex-start; }
+  .apertura h1 { margin: 0; }
+  .apertura__occhiello {
+    font-size: 19px;
+    line-height: 1.6;
+    max-width: 50ch;
+    color: var(--color-neutral-800);
+    margin: 0;
+  }
+  .apertura__salti { display: flex; flex-wrap: wrap; gap: 10px; }
+  .apertura__salti a {
+    font-weight: 700;
+    font-size: 14.5px;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--color-divider);
+    color: var(--color-text);
+  }
+  .apertura__salti a:hover { background: var(--color-neutral-200); color: var(--color-text); }
+
+  /* — schede dei gruppi — */
+  .gruppi { align-items: stretch; gap: 20px; }
+  .gruppo {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .gruppo__testa { display: flex; flex-direction: column; gap: 6px; }
+  .gruppo__occhiello {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-inchiostro-accento);
+  }
+  .gruppo__nome { font-size: 30px; line-height: 1.04; margin: 0; }
+  .gruppo__testo {
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--color-neutral-800);
+    margin: 0;
+    flex: 1;
+  }
+  .gruppo__contatto {
+    border-top: 1px solid var(--color-divider);
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .gruppo__chi { font-family: var(--font-heading); font-size: 20px; line-height: 1.15; }
+  .gruppo__bottone { align-self: flex-start; }
+  .gruppo__attesa { font-size: 14px; line-height: 1.55; color: var(--color-neutral-700); }
+
+  @media (max-width: 900px) {
+    .gruppo { padding: 26px; }
+    .gruppo__nome { font-size: 26px; }
+  }
+</style>

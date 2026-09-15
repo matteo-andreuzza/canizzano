@@ -51,7 +51,7 @@ const { articolo, evento, attivita } = Astro.props as Props;
 
 const salvia = articolo.identita !== 'terracotta';
 const tinta = leggiTono(articolo.tono || (salvia ? 'accent-2-700' : 'accent'));
-const accento = salvia ? 'var(--color-accent-2-700)' : 'var(--color-accent-700)';
+const accento = salvia ? 'var(--color-inchiostro-salvia)' : 'var(--color-inchiostro-accento)';
 
 // La scheda pratica: le righe scritte in redazione. Se non ce ne sono, si
 // ripiega su quello che l'evento ha comunque — data, luogo, ingresso — cosi'

@@ -1,0 +1,482 @@
+---
+/**
+ * Pastoria del Borgo Furo — il gruppo folcloristico di via Canizzano.
+ *
+ * Registro della pagina Storia: si racconta, con le date che si sanno e le
+ * fonti in fondo. Colore di casa la terracotta scura del legno e della lana,
+ * con il salvia del Sile per il casone.
+ *
+ * Le notizie vengono da fonti pubbliche (FITP, CIOFF, parrocchia, stampa
+ * locale: vedi in fondo) e sono scritte per essere corrette dal gruppo.
+ * Eventi e foto arrivano dal CMS: l'attivita' «Pastoria del Borgo Furo» si
+ * crea in admin, e il suo slug deve restare quello qui sotto.
+ */
+import Base from '../layouts/Base.astro';
+import Sezione from '../components/Sezione.astro';
+import Fascia from '../components/Fascia.astro';
+import TestataSezione from '../components/TestataSezione.astro';
+import SezioneEventi from '../components/SezioneEventi.astro';
+import VoceTempo from '../components/VoceTempo.astro';
+import SchedaNota from '../components/SchedaNota.astro';
+import BarraCifre from '../components/BarraCifre.astro';
+import RigaElenco from '../components/RigaElenco.astro';
+import Bottone from '../components/Bottone.astro';
+import Etichetta from '../components/Etichetta.astro';
+import Foto from '../components/Foto.astro';
+import { CONTATTI, ROTTE } from '../lib/sito.ts';
+import { eventiDi, fotoDi, snapshot } from '../lib/contenuti.ts';
+
+/** Lo slug che Django genera dal nome «Pastoria del Borgo Furo». */
+const SLUG_ATTIVITA = 'pastoria-del-borgo-furo';
+
+const { attivita } = await snapshot();
+const adesso = Date.now();
+const prossimi = (await eventiDi(SLUG_ATTIVITA))
+  .filter((evento) => new Date(evento.fine ?? evento.inizio).getTime() >= adesso)
+  .slice(0, 3);
+const foto = await fotoDi('pastoria');
+
+const FONTI = {
+  fitp: 'https://www.fitp.org/pastoria-del-borgo-furo/',
+  parrocchia: 'http://www.parrocchie.it/treviso/canizzano/pastoria.htm',
+  cioff: 'https://www.cioff.org/festival/italy/2711',
+  museo: 'https://culturalimentare.beniculturali.it/sources/pastoria-del-borgo-furo',
+};
+
+const CIFRE = [
+  { valore: '1988', etichetta: 'la prima uscita, a Natale' },
+  { valore: 'luglio', etichetta: 'il Sile Folk, festival internazionale' },
+  { valore: '24 dic', etichetta: 'il presepe vivente in piazza dei Signori' },
+  { valore: 'via Canizzano', etichetta: 'la sede, al civico 10' },
+];
+
+const ANNO = [
+  {
+    periodo: 'Primavera',
+    titolo: 'La Festa del Cason',
+    testo:
+      'A Canizzano, lungo il Sile. È la festa con cui il gruppo dice grazie a chi, durante l’anno, lo aiuta a portare avanti l’associazione: una tavolata, la musica, gli amici di sempre.',
+    salvia: true,
+  },
+  {
+    periodo: 'Prima metà di luglio',
+    titolo: 'Il Sile Folk',
+    testo:
+      'Il festival internazionale del folclore che la Pastoria organizza da diciassette edizioni, riconosciuto dal CIOFF. Più di duecento danzatori arrivano da mezzo mondo e ballano a Treviso e nei paesi del Parco del Sile — Quinto, Casier, Mogliano, Zero Branco. Una delle serate si fa di casa: sotto il tendone della Pro Loco di Canizzano.',
+    salvia: true,
+  },
+  {
+    periodo: 'I giorni prima di Natale',
+    titolo: 'La piva per le strade e la Ciara Stea',
+    testo:
+      'I suonatori girano per vie e piazze con le melodie di Natale, come facevano i pastori scesi in pianura. Poi la Ciara Stea: una processione cantata con le lanterne che girano, che una volta andava di casa in casa per festeggiare il ritorno della luce.',
+  },
+  {
+    periodo: '24 dicembre',
+    titolo: 'Il presepe vivente',
+    testo:
+      'La vigilia il corteo attraversa il centro e arriva in piazza dei Signori, a Treviso. Nel 2024 l’hanno dedicato alla pace e alla fratellanza.',
+    ultima: true,
+  },
+];
+
+const IN_SCENA = [
+  {
+    titolo: 'I mestieri scomparsi',
+    icona: 'pennello' as const,
+    tono: 'accent-200',
+    testo:
+      'Balli e canti nati dal lavoro di una volta: il falegname, l’artigiano, la vita dei campi. Ogni coreografia racconta un pezzo di vita popolare.',
+  },
+  {
+    titolo: 'Gli strumenti antichi',
+    icona: 'musica' as const,
+    tono: 'accent-2-300',
+    testo:
+      'Si è cominciato con la piva e la baga, le cornamuse della tradizione veneta. Oggi ci sono anche flauti e gli strumenti d’epoca, suonati dal vivo.',
+  },
+  {
+    titolo: 'I vestiti di festa',
+    icona: 'stella' as const,
+    tono: 'accent-300',
+    testo:
+      'I costumi rifanno gli abiti con cui ci si vestiva per le feste nel trevigiano all’inizio del Novecento. Si riconoscono da lontano.',
+  },
+];
+
+const IL_CASONE = [
+  ['Com’è fatto', 'Su palafitte, in un’ansa del Sile, costruito con le tecniche di una volta.'],
+  ['La cavana', 'La darsena coperta dove stanno le paltane e i saltafossi, le barche a fondo piatto del fiume.'],
+  ['Dentro', 'Attrezzi, oggetti e foto della vita sul fiume: pescatori e uccellatori.'],
+  ['Accanto', 'Una cucina di un tempo e la stanza dei mestieri che si facevano in bicicletta.'],
+];
+
+const IN_GIRO = [
+  'Romania', 'Bielorussia', 'Olanda', 'Portogallo', 'Croazia', 'Svizzera', 'Scozia', 'Germania',
+  'Polonia', 'Russia', 'Brasile', 'Grecia', 'Spagna', 'Ungheria', 'Francia', 'Messico',
+];
+---
+
+<Base
+  pagina="pastoria"
+  titolo="Pastoria del Borgo Furo"
+  descrizione="La Pastoria del Borgo Furo, il gruppo folcloristico di via Canizzano: balli e canti dei mestieri di una volta, il Sile Folk di luglio, la Ciara Stea e il presepe vivente di Natale."
+  marchio="pastoria"
+  nomeLockup="Pastoria del Borgo Furo"
+  sottotitoloLockup="folclore · via Canizzano 10"
+>
+  <!-- Hero -->
+  <Sezione stacco="primo">
+    <div class="apertura">
+      <div class="apertura__testo">
+        <Etichetta tono="accent" class="apertura__tag">Gruppo folcloristico, dal 1988</Etichetta>
+        <h1 class="apertura__titolo">Pastoria del<br />Borgo Furo</h1>
+        <p class="apertura__occhiello">
+          Balli, canti e musica dei mestieri che non ci sono più, con gli abiti di festa di inizio
+          Novecento. Hanno portato il trevigiano in mezzo mondo, e ogni luglio il mondo lo portano
+          qui, fino al tendone di Canizzano.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone href="#anno">Un anno con la Pastoria</Bottone>
+          <Bottone href="#contatti" variante="secondario">Come entrare nel gruppo</Bottone>
+        </div>
+      </div>
+      <div class="apertura__foto">
+        <Foto
+          src={foto[0]?.immagine}
+          alt={foto[0]?.testo_alternativo ?? 'La Pastoria del Borgo Furo in costume'}
+          attesa="Il gruppo in costume, durante un ballo"
+          altezza={420}
+          ombra="md"
+        />
+        <span class="apertura__bollo" aria-hidden="true"></span>
+      </div>
+    </div>
+  </Sezione>
+
+  <div class="barra-pastoria">
+    <BarraCifre voci={CIFRE} scostamento={0} colore="var(--color-inchiostro-accento)" />
+  </div>
+
+  <!-- Il nome -->
+  <Sezione id="nome" stacco="corto">
+    <div class="nome">
+      <div class="pila" style="gap:16px">
+        <Etichetta tono="accent-2" class="apertura__tag">Da dove viene il nome</Etichetta>
+        <h2 class="titolo-sezione">I pastori fuori dalle mura</h2>
+      </div>
+      <div class="pila" style="gap:16px">
+        <p class="nome__testo">
+          I <em>borghi furi</em> erano i borghi «di fuori»: le case oltre le porte della città, dove
+          si fermavano i pastori scesi dalle montagne a svernare in pianura con le greggi. Lì
+          vendevano, compravano, suonavano, e con gli artigiani del posto facevano comunità.
+        </p>
+        <p class="nome__testo">
+          Il gruppo nasce così, a Natale del 1988, con una prima esibizione al Caffè Pedrocchi di
+          Padova: la musica della piva e della baga, quella dei pastori. Poi arrivano i mestieri, i
+          balli e i canti, e le uscite in tutto il Veneto.
+        </p>
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Cosa portano in scena -->
+  <Sezione id="in-scena">
+    <div class="pila" style="gap:30px">
+      <TestataSezione
+        titolo="Cosa portano in scena"
+        tag="Il repertorio"
+        tonoTag="accent"
+        testo="Spettacoli vivaci, pensati per la piazza: «El bal del caciator», «La campagnola» e i balli dei mestieri, con la musica suonata dal vivo."
+      />
+      <div class="griglia griglia--3">
+        {
+          IN_SCENA.map((voce) => (
+            <SchedaNota
+              titolo={voce.titolo}
+              testo={voce.testo}
+              icona={voce.icona}
+              tono={voce.tono}
+              sfondo="var(--color-surface)"
+              dimensioneDisco={52}
+              dimensioneTitolo={26}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Un anno con la Pastoria -->
+  <Sezione id="anno">
+    <div class="pila" style="gap:32px">
+      <div class="pila" style="gap:12px">
+        <Etichetta tono="accent" class="apertura__tag">Un anno con la Pastoria</Etichetta>
+        <h2 class="titolo-sezione">Dalla Festa del Cason al presepe</h2>
+      </div>
+      <div class="tempo">
+        {
+          ANNO.map((voce) => (
+            <VoceTempo
+              periodo={voce.periodo}
+              titolo={voce.titolo}
+              testo={voce.testo}
+              salvia={voce.salvia}
+              ultima={voce.ultima}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Prossimi appuntamenti: dal CMS, solo se ce ne sono -->
+  {
+    prossimi.length > 0 && (
+      <SezioneEventi
+        id="prossimi"
+        titolo="I prossimi appuntamenti"
+        tag="In calendario"
+        eventi={prossimi}
+        attivita={attivita}
+        link={{ testo: 'Tutto il calendario →', href: ROTTE.calendario }}
+      />
+    )
+  }
+
+  <!-- Il casone sul Sile -->
+  <Fascia id="casone" sfondo="var(--color-accent-2-700)">
+    <div class="casone">
+      <div class="pila" style="gap:22px">
+        <span class="occhiello" style="color:var(--color-accent-2-300)">Il casone sul Sile</span>
+        <h2 class="casone__titolo">Un museo piccolo, con i piedi nell’acqua</h2>
+        <p class="casone__testo">
+          La Pastoria custodisce un casone come quelli che c’erano sul fiume: è schedato fra i musei
+          etnografici italiani, per gli attrezzi del lavoro nei campi, della pastorizia e della vita
+          sull’acqua.
+        </p>
+        <div class="pila" style="gap:14px">
+          {
+            IL_CASONE.map(([voce, testo], indice) => (
+              <RigaElenco
+                voce={voce}
+                testo={testo}
+                larghezzaVoce={130}
+                divisore={indice < IL_CASONE.length - 1}
+              />
+            ))
+          }
+        </div>
+      </div>
+      <div class="pila" style="gap:16px">
+        <Foto
+          src={foto[1]?.immagine}
+          alt={foto[1]?.testo_alternativo ?? 'Il casone della Pastoria sul Sile'}
+          attesa="Il casone sulle palafitte"
+          altezza={280}
+        />
+        <Foto
+          src={foto[2]?.immagine}
+          alt={foto[2]?.testo_alternativo ?? ''}
+          attesa="Una paltana nella cavana"
+          altezza={180}
+        />
+      </div>
+    </div>
+  </Fascia>
+
+  <!-- In giro per il mondo -->
+  <Sezione id="mondo">
+    <div class="mondo">
+      <div class="pila" style="gap:16px">
+        <Etichetta tono="accent-2" class="apertura__tag">In giro per il mondo</Etichetta>
+        <h2 class="titolo-sezione">Il trevigiano, ballato fino in Messico</h2>
+        <p class="testo-guida">
+          Festival in Europa e oltreoceano, e nel 2022 il primo premio al «Leron» di Dignano, in
+          Istria: nove gruppi da Italia, Croazia e Slovacchia, e la giuria ha scelto la Pastoria
+          come la più completa — strumenti originali, musica, costumi e storie di vita popolare
+          raccontate con i passi di danza.
+        </p>
+      </div>
+      <ul class="mondo__paesi" aria-label="Paesi dove si è esibito il gruppo">
+        {IN_GIRO.map((paese) => <li>{paese}</li>)}
+      </ul>
+    </div>
+  </Sezione>
+
+  <!-- Contatti -->
+  <Sezione id="contatti">
+    <div class="contatti">
+      <span class="contatti__bolla" aria-hidden="true"></span>
+      <div class="contatti__testo">
+        <span class="occhiello" style="color:var(--color-accent-200)">Entrare nel gruppo</span>
+        <h2 class="contatti__titolo">Si balla anche senza saper ballare</h2>
+        <p class="contatti__paragrafo">
+          Servono ballerini, musici e mani per costumi e casone. La sede è in via Canizzano 10: il
+          modo più semplice è una telefonata o due righe per email.
+        </p>
+        <div class="riga riga--bottoni">
+          <Bottone href={CONTATTI.pastoriaTel} variante="chiaro" sfondo="#fff2eb">
+            Chiama {CONTATTI.pastoriaTelefono}
+          </Bottone>
+          <Bottone href={`mailto:${CONTATTI.pastoriaEmail}`} variante="contorno-chiaro">
+            {CONTATTI.pastoriaEmail}
+          </Bottone>
+        </div>
+      </div>
+      <div class="contatti__scheda">
+        <span class="contatti__occhiello">Chi c’è</span>
+        <div class="contatti__righe">
+          <span><strong>Presidente e direzione artistica</strong> · Gianni Marini</span>
+          <span><strong>Direzione musicale</strong> · Andrea Sartorato, Enrico Ervas</span>
+          <span><strong>Sede</strong> · via Canizzano 10, Treviso</span>
+        </div>
+        <div class="contatti__social">
+          <a href={CONTATTI.pastoriaFacebook} target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href={CONTATTI.pastoriaInstagram} target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href={CONTATTI.pastoriaYoutube} target="_blank" rel="noopener noreferrer">YouTube</a>
+        </div>
+      </div>
+    </div>
+  </Sezione>
+
+  <!-- Fonti -->
+  <Sezione stacco="corto">
+    <div class="pila" style="gap:16px">
+      <span class="fonti__occhiello">Da dove vengono queste notizie</span>
+      <p class="fonti__testo">
+        Storia, repertorio e direttivo vengono dalla
+        <a href={FONTI.fitp} target="_blank" rel="noopener noreferrer">scheda della Federazione Italiana Tradizioni Popolari</a>
+        e dalla
+        <a href={FONTI.parrocchia} target="_blank" rel="noopener noreferrer">pagina della parrocchia</a>;
+        il festival dalla
+        <a href={FONTI.cioff} target="_blank" rel="noopener noreferrer">scheda CIOFF del Sile Folk</a>;
+        il casone dal
+        <a href={FONTI.museo} target="_blank" rel="noopener noreferrer">censimento dei musei etnografici</a>.
+        Le feste dai servizi di Antenna Tre e dai giornali locali. Se qualcosa è cambiato,
+        <a href={`mailto:${CONTATTI.email}`}>diccelo</a> e lo correggiamo.
+      </p>
+    </div>
+  </Sezione>
+</Base>
+
+<style>
+  /* — hero — */
+  .apertura { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 52px; align-items: center; }
+  .apertura__testo { display: flex; flex-direction: column; gap: 24px; }
+  .apertura__tag { align-self: flex-start; }
+  .apertura__titolo { font-size: 72px; line-height: 0.97; margin: 0; }
+  .apertura__occhiello {
+    font-size: 19px; line-height: 1.6; max-width: 46ch;
+    color: var(--color-neutral-800); margin: 0;
+  }
+  .apertura__foto { position: relative; isolation: isolate; }
+  /* Il cerchio terracotta che spunta da sotto la foto, come nella Storia. */
+  .apertura__bollo {
+    position: absolute;
+    right: -26px; bottom: -26px; width: 140px; height: 140px;
+    border-radius: 999px;
+    background: var(--color-accent-300);
+    z-index: -1;
+  }
+
+  .barra-pastoria { margin-top: 60px; }
+
+  /* — il nome — */
+  .nome { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 52px; align-items: start; }
+  .nome__testo { font-size: 17px; line-height: 1.7; max-width: 60ch; color: var(--color-neutral-800); margin: 0; }
+
+  /* — l'anno — */
+  .tempo { display: flex; flex-direction: column; }
+
+  /* — casone — */
+  .casone { display: grid; grid-template-columns: 1fr 0.9fr; gap: 52px; align-items: center; }
+  .casone__titolo { font-size: 44px; line-height: 1.02; margin: 0; }
+  .casone__testo { font-size: 16.5px; line-height: 1.6; max-width: 50ch; opacity: 0.92; margin: 0; }
+
+  /* — mondo — */
+  .mondo { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 52px; align-items: center; }
+  .mondo .testo-guida { margin: 0; }
+  .mondo__paesi {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .mondo__paesi li {
+    background: var(--color-neutral-100);
+    border: 1px solid var(--color-divider);
+    border-radius: 999px;
+    padding: 7px 15px;
+    font-size: 14.5px;
+    font-weight: 600;
+  }
+  /* Il Messico e' l'amicizia di piu' lunga data: sta in fondo e si nota. */
+  .mondo__paesi li:last-child { background: var(--color-accent-200); color: var(--color-accent-800); border-color: transparent; }
+
+  /* — contatti — */
+  .contatti {
+    background: var(--color-accent-700);
+    color: #fff2eb;
+    border-radius: var(--radius-lg);
+    padding: 46px 48px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 46px;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+  }
+  .contatti__bolla {
+    position: absolute;
+    right: -140px; top: -160px; width: 400px; height: 400px;
+    border-radius: 999px;
+    background: var(--color-accent-600);
+    opacity: 0.5;
+  }
+  .contatti__testo { display: flex; flex-direction: column; gap: 18px; position: relative; }
+  .contatti__titolo { font-size: 42px; line-height: 1.02; margin: 0; }
+  .contatti__paragrafo { font-size: 16.5px; line-height: 1.6; max-width: 50ch; opacity: 0.94; margin: 0; }
+  .contatti__testo :global(.bottone--contorno-chiaro) {
+    color: #fff2eb;
+    border-color: rgba(255, 242, 235, 0.45);
+  }
+  .contatti__scheda {
+    position: relative;
+    background: #fff2eb;
+    color: var(--color-accent-900);
+    border-radius: var(--radius-lg);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transform: rotate(1.5deg);
+  }
+  .contatti__occhiello {
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--color-accent-700);
+  }
+  .contatti__righe { display: flex; flex-direction: column; gap: 9px; font-size: 15.5px; line-height: 1.5; }
+  .contatti__social { display: flex; flex-wrap: wrap; gap: 16px; font-weight: 700; font-size: 14.5px; }
+  .contatti__social a { color: var(--color-accent-700); }
+  .contatti__social a:hover { color: var(--color-accent-900); }
+
+  /* — fonti — */
+  .fonti__occhiello {
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--color-neutral-700);
+  }
+  .fonti__testo { font-size: 15px; line-height: 1.7; max-width: 78ch; color: var(--color-neutral-800); margin: 0; }
+
+  @media (max-width: 900px) {
+    .apertura, .nome, .casone, .mondo, .contatti { grid-template-columns: 1fr; gap: 34px; }
+    .apertura__titolo { font-size: 48px; }
+    .apertura__bollo { display: none; }
+    .casone__titolo, .contatti__titolo { font-size: 32px; }
+    .contatti { padding: 34px 26px; }
+    .contatti__scheda { transform: none; }
+  }
+</style>

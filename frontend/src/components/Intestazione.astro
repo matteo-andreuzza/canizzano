@@ -13,7 +13,7 @@ import { AZIONE_TESTATA, MENU, type ChiavePagina } from '../lib/sito.ts';
 
 interface Props {
   pagina: ChiavePagina;
-  marchio?: 'base' | 'proloco' | 'sagra' | 'grest' | 'storia';
+  marchio?: 'base' | 'proloco' | 'sagra' | 'grest' | 'storia' | 'pastoria';
   nome: string;
   sottotitolo: string;
   /** Le pagine verdi usano `accent-2-800` per la voce corrente. */
@@ -25,7 +25,7 @@ const {
   marchio = 'base',
   nome,
   sottotitolo,
-  coloreAttivo = 'var(--color-accent-700)',
+  coloreAttivo = 'var(--color-inchiostro-accento)',
 } = Astro.props;
 
 const voci = MENU[pagina];
@@ -57,7 +57,37 @@ const azione = AZIONE_TESTATA[pagina];
         {azione.testo}
       </Bottone>
     </div>
+
+    {/* Fuori dal menu a scomparsa: su telefono deve restare a portata di pollice. */}
+    <button type="button" class="testata__tema" data-interruttore-tema aria-label="Cambia tema: chiaro o scuro">
+      <svg class="testata__tema-luna" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <svg class="testata__tema-sole" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.25" />
+        <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" />
+      </svg>
+    </button>
   </nav>
+
+  <script is:inline>
+    // Il tema effettivo e' la scelta salvata oppure, senza scelta, quello del
+    // sistema: il clic passa sempre all'altro e lo ricorda.
+    (function () {
+      var radice = document.documentElement;
+      document.querySelectorAll('[data-interruttore-tema]').forEach(function (bottone) {
+        bottone.addEventListener('click', function () {
+          var scelto = radice.getAttribute('data-tema');
+          var scuro = scelto
+            ? scelto === 'scuro'
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var nuovo = scuro ? 'chiaro' : 'scuro';
+          radice.setAttribute('data-tema', nuovo);
+          try { localStorage.setItem('tema', nuovo); } catch (errore) {}
+        });
+      });
+    })();
+  </script>
 </header>
 
 <style>
@@ -85,23 +115,47 @@ const azione = AZIONE_TESTATA[pagina];
     font-weight: 600;
   }
   .testata__voce { text-decoration: none; color: inherit; }
-  .testata__voce:hover { color: var(--color-accent-700); }
+  .testata__voce:hover { color: var(--color-inchiostro-accento); }
   .testata__corrente {
     border-bottom: 2px solid currentColor;
     padding-bottom: 2px;
   }
+
+  .testata__tema {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid var(--color-divider);
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .testata__tema:hover { background: color-mix(in srgb, var(--color-text) 8%, transparent); }
+  /* Quale icona si vede lo decidono i token del tema in organic.css. */
+  .testata__tema-luna { display: var(--tema-icona-luna); }
+  .testata__tema-sole { display: var(--tema-icona-sole); }
 
   /* L'interruttore del menu mobile: niente JavaScript, solo CSS. */
   .testata__interruttore { position: absolute; opacity: 0; width: 0; height: 0; }
   .testata__hamburger { display: none; }
 
   @media (max-width: 900px) {
+    /* Su telefono: marchio, tema, hamburger; il menu va a capo sotto. */
+    .testata__tema { order: 1; margin-left: auto; }
+    /* Un nome lungo («Pastoria del Borgo Furo») va a capo lui, non i bottoni.
+       Con `flex-wrap` una base «auto» manderebbe a capo gli elementi prima di
+       restringerli: la base a zero tiene il marchio sulla prima riga. */
+    .testata__barra > :global(.lockup) { min-width: 0; flex: 1 1 0; }
     .testata__hamburger {
+      order: 2;
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 5px;
-      margin-left: auto;
       width: 42px;
       height: 42px;
       padding: 10px;

@@ -13,7 +13,7 @@ interface Props {
   pagina: ChiavePagina;
   titolo: string;
   descrizione?: string;
-  marchio?: 'base' | 'proloco' | 'sagra' | 'grest' | 'storia';
+  marchio?: 'base' | 'proloco' | 'sagra' | 'grest' | 'storia' | 'pastoria';
   nomeLockup: string;
   sottotitoloLockup: string;
   coloreAttivo?: string;
@@ -54,7 +54,23 @@ const canonico = new URL(Astro.url.pathname, Astro.site ?? 'https://canizzano.it
     <meta property="og:locale" content="it_IT" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <meta name="theme-color" content="#f5ead8" />
+    <meta name="theme-color" content="#f5ead8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1b1916" media="(prefers-color-scheme: dark)" />
+    {/*
+      Il tema scelto a mano va applicato prima che la pagina si disegni,
+      altrimenti chi ha scelto lo scuro vede un lampo chiaro a ogni pagina.
+      Senza una scelta salvata il sito segue il sistema (solo CSS).
+    */}
+    <script is:inline>
+      (function () {
+        try {
+          var scelto = localStorage.getItem('tema');
+          if (scelto === 'scuro' || scelto === 'chiaro') {
+            document.documentElement.setAttribute('data-tema', scelto);
+          }
+        } catch (errore) {}
+      })();
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -86,7 +102,7 @@ const canonico = new URL(Astro.url.pathname, Astro.site ?? 'https://canizzano.it
         padding: 10px 16px;
         border-radius: 999px;
         background: var(--color-accent);
-        color: var(--color-bg);
+        color: #f5ead8;
         font-weight: 700;
         text-decoration: none;
       }

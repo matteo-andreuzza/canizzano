@@ -81,6 +81,88 @@
   --shadow-sm: 0 1px 2px color-mix(in srgb, #2e2b25 14%, transparent);
   --shadow-md: 0 3px 10px color-mix(in srgb, #2e2b25 16%, transparent);
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2e2b25 22%, transparent);
+
+  /* Inchiostri d'accento: il testo colorato che sta sul fondo della pagina.
+     Sono token a parte perche' in modalita' scura devono schiarirsi, mentre
+     le fasce e i dischi pieni delle stesse rampe restano scuri. */
+  --color-inchiostro-accento: var(--color-accent-700);
+  --color-inchiostro-accento-forte: var(--color-accent-800);
+  --color-inchiostro-salvia: var(--color-accent-2-800);
+  --color-inchiostro-salvia-forte: var(--color-accent-2-900);
+
+  /* Il fondo del footer: resta scuro in entrambe le modalita'. */
+  --color-pie: #2e2b25;
+  --filtro-foto-luce: 1.1;
+
+  /* Quale icona mostra l'interruttore del tema (vedi Intestazione). */
+  --tema-icona-luna: block;
+  --tema-icona-sole: none;
+}
+
+/* ═══ Modalita' scura ════════════════════════════════════════════════════════
+   Stesso sistema, di sera: si scambiano solo fondo, superfici, testo e la
+   rampa neutra (rovesciata, cosi' «neutral-100» resta la superficie piu'
+   vicina al fondo e «neutral-800» il testo secondario). Terracotta, salvia e
+   blu non cambiano: le fasce colorate sono l'identita' del sito.
+
+   Il blocco e' ripetuto due volte perche' il CSS non sa unire una media query
+   e un attributo: vale se il sistema e' scuro e chi guarda non ha scelto il
+   chiaro, oppure se ha scelto esplicitamente lo scuro. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="chiaro"]) {
+    color-scheme: dark;
+    --color-bg: #1b1916;
+    --color-surface: #28241f;
+    --color-text: #efe6d8;
+    --color-divider: color-mix(in srgb, #efe6d8 15%, transparent);
+    --color-neutral-100: #24211d;
+    --color-neutral-200: #2f2b26;
+    --color-neutral-300: #3b3630;
+    --color-neutral-400: #544d44;
+    --color-neutral-500: #70685c;
+    --color-neutral-600: #8f8779;
+    --color-neutral-700: #aca395;
+    --color-neutral-800: #cac1b2;
+    --color-neutral-900: #e7dfd1;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 3px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.6);
+    --color-inchiostro-accento: var(--color-accent-300);
+    --color-inchiostro-accento-forte: var(--color-accent-200);
+    --color-inchiostro-salvia: var(--color-accent-2-300);
+    --color-inchiostro-salvia-forte: var(--color-accent-2-200);
+    --color-pie: #121110;
+    --filtro-foto-luce: 0.92;
+    --tema-icona-luna: none;
+    --tema-icona-sole: block;
+  }
+}
+:root[data-tema="scuro"] {
+  color-scheme: dark;
+  --color-bg: #1b1916;
+  --color-surface: #28241f;
+  --color-text: #efe6d8;
+  --color-divider: color-mix(in srgb, #efe6d8 15%, transparent);
+  --color-neutral-100: #24211d;
+  --color-neutral-200: #2f2b26;
+  --color-neutral-300: #3b3630;
+  --color-neutral-400: #544d44;
+  --color-neutral-500: #70685c;
+  --color-neutral-600: #8f8779;
+  --color-neutral-700: #aca395;
+  --color-neutral-800: #cac1b2;
+  --color-neutral-900: #e7dfd1;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 3px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.6);
+  --color-inchiostro-accento: var(--color-accent-300);
+  --color-inchiostro-accento-forte: var(--color-accent-200);
+  --color-inchiostro-salvia: var(--color-accent-2-300);
+  --color-inchiostro-salvia-forte: var(--color-accent-2-200);
+  --color-pie: #121110;
+  --filtro-foto-luce: 0.92;
+  --tema-icona-luna: none;
+  --tema-icona-sole: block;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -107,8 +189,8 @@ h5 { font-size: 16px; }
 h6 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
 p { margin: 0 0 var(--space-3); }
 
-a { color: var(--color-accent-700); text-decoration-thickness: 1px; text-underline-offset: 3px; }
-a:hover { color: var(--color-accent-800); }
+a { color: var(--color-inchiostro-accento); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--color-inchiostro-accento-forte); }
 
 img { display: block; max-width: 100%; }
 figure { margin: 0; }
@@ -136,8 +218,9 @@ figcaption {
 }
 .btn svg { display: block; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn-primary { background: var(--color-accent); color: var(--color-bg); }
-.btn-primary:hover { background: var(--color-accent-600); color: var(--color-bg); }
+/* Crema fissa, non `--color-bg`: di sera il fondo diventa scuro, il bottone no. */
+.btn-primary { background: var(--color-accent); color: #f5ead8; }
+.btn-primary:hover { background: var(--color-accent-600); color: #f5ead8; }
 .btn-primary:active { background: var(--color-accent-700); }
 .btn-secondary { border-color: var(--color-divider); color: var(--color-text); }
 .btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); color: var(--color-text); }
@@ -216,4 +299,4 @@ textarea.input { min-height: 90px; resize: vertical; }
 .input { padding-inline: 14px; }
 
 /* — trattamento fotografico del sistema: ogni foto di contenuto passa di qui — */
-.washed { filter: saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94); }
+.washed { filter: saturate(0.6) contrast(0.85) brightness(var(--filtro-foto-luce)) opacity(0.94); }

@@ -13,6 +13,9 @@ export type ChiavePagina =
   | 'grest'
   | 'storia'
   | 'archivio'
+  /** Coro, chierichetti, Circolo NOI: i gruppi senza una pagina tutta loro. */
+  | 'gruppi'
+  | 'pastoria'
   /** Le pagine di approfondimento degli eventi: `/eventi/<slug>`. */
   | 'evento';
 
@@ -53,6 +56,13 @@ export const CONTATTI = {
   parrocchiaEmail: 'canizzano@diocesitv.it',
   grestEmail: 'canizzano.grest2021@gmail.com',
   parcoSile: 'https://www.parcosile.it',
+  // Recapiti pubblicati dalla Federazione Italiana Tradizioni Popolari.
+  pastoriaTelefono: '347 2119331',
+  pastoriaTel: 'tel:+393472119331',
+  pastoriaEmail: 'pastoriaborgofuro@libero.it',
+  pastoriaFacebook: 'https://www.facebook.com/pastoriaborgofuro/',
+  pastoriaInstagram: 'https://www.instagram.com/pastoriadelborgofuro/',
+  pastoriaYoutube: 'https://www.youtube.com/channel/UC3coKr0ssD6G1svY36UvPCg',
 } as const;
 
 /** Le rotte del sito: un solo posto da cambiare se un indirizzo si sposta. */
@@ -64,6 +74,8 @@ export const ROTTE: Record<ChiavePagina, string> = {
   grest: '/grest',
   storia: '/storia',
   archivio: '/archivio',
+  gruppi: '/gruppi',
+  pastoria: '/pastoria',
   evento: '/eventi',
 };
 
@@ -123,6 +135,20 @@ export const MENU: Record<ChiavePagina, VoceMenu[]> = {
     { testo: 'Storia', href: ROTTE.storia, chiave: 'storia' },
     { testo: 'Calendario', href: ROTTE.calendario, chiave: 'calendario' },
   ],
+  gruppi: [
+    { testo: 'Home', href: ROTTE.home, chiave: 'home' },
+    { testo: 'Coro', href: '#coro' },
+    { testo: 'Chierichetti', href: '#chierichetti' },
+    { testo: 'Circolo NOI', href: '#noi' },
+    { testo: 'Calendario', href: ROTTE.calendario, chiave: 'calendario' },
+  ],
+  pastoria: [
+    { testo: 'Home', href: ROTTE.home, chiave: 'home' },
+    { testo: 'Il nome', href: '#nome' },
+    { testo: 'L’anno', href: '#anno' },
+    { testo: 'Il casone', href: '#casone' },
+    { testo: 'Storia', href: ROTTE.storia, chiave: 'storia' },
+  ],
   evento: [
     { testo: 'Home', href: ROTTE.home, chiave: 'home' },
     { testo: 'Calendario', href: ROTTE.calendario, chiave: 'calendario' },
@@ -141,6 +167,8 @@ export const AZIONE_TESTATA: Record<ChiavePagina, Azione> = {
   grest: { testo: 'Iscriviti', href: '#iscrizioni', sfondo: 'var(--color-accent-2-600)' },
   storia: { testo: 'Porta le tue foto', href: ROTTE.archivio },
   archivio: { testo: 'Manda le tue foto', href: 'mailto:proloco@canizzano.it' },
+  gruppi: { testo: 'Tutto il calendario', href: ROTTE.calendario },
+  pastoria: { testo: 'Scrivi alla Pastoria', href: 'mailto:pastoriaborgofuro@libero.it' },
   evento: { testo: 'Tutto il calendario', href: ROTTE.calendario },
 };
 
@@ -159,6 +187,7 @@ export const PIE_PAGINA = {
         { testo: 'Grest', href: ROTTE.grest },
         { testo: 'Storia di Canizzano', href: ROTTE.storia },
         { testo: 'Archivio fotografico', href: ROTTE.archivio },
+        { testo: 'Coro, chierichetti e NOI', href: ROTTE.gruppi },
       ],
     },
     {
@@ -166,7 +195,8 @@ export const PIE_PAGINA = {
       voci: [
         { testo: 'Parrocchia della Visitazione', href: CONTATTI.parrocchiaSito, esterno: true },
         { testo: 'A.R.C. Cannetum · Pro Loco', href: ROTTE.proloco },
-        { testo: 'Circolo NOI di Canizzano', href: '' },
+        { testo: 'Circolo NOI di Canizzano', href: ROTTE.gruppi + '#noi' },
+        { testo: 'Pastoria del Borgo Furo', href: ROTTE.pastoria },
         { testo: 'Principato di Canizzano', href: ROTTE.storia + '#principato' },
       ],
     },

@@ -5,14 +5,20 @@
  * intestazioni delle giornate del programma della sagra.
  */
 import { francobollo } from '../lib/date.ts';
+import { tonoOpzionale } from '../lib/toni.ts';
 
 interface Props {
   inizio: string;
   tono?: 'accent' | 'accent-2' | 'accent-pieno' | 'accent-2-pieno';
+  /**
+   * Il tono scelto in redazione per l'evento («blu-300», «accent-2-600»…).
+   * Quando c'e' vince su `tono`: e' il colore che la redazione vuole vedere.
+   */
+  tonoEvento?: string | null;
   dimensione?: number;
 }
 
-const { inizio, tono = 'accent', dimensione = 62 } = Astro.props;
+const { inizio, tono = 'accent', tonoEvento, dimensione = 62 } = Astro.props;
 const { giorno, mese } = francobollo(inizio);
 
 const TONI: Record<string, [string, string]> = {
@@ -21,7 +27,10 @@ const TONI: Record<string, [string, string]> = {
   'accent-pieno': ['var(--color-accent)', '#fff2eb'],
   'accent-2-pieno': ['var(--color-accent-2-600)', '#f0fae1'],
 };
-const [sfondo, inchiostro] = TONI[tono] ?? TONI.accent;
+const tintaEvento = tonoOpzionale(tonoEvento);
+const [sfondo, inchiostro] = tintaEvento
+  ? [tintaEvento.sfondo, tintaEvento.inchiostro]
+  : (TONI[tono] ?? TONI.accent);
 ---
 
 <div

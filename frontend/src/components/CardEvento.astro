@@ -2,8 +2,9 @@
 /**
  * La card di un appuntamento, come nella sezione «Prossimi appuntamenti».
  *
- * I dati arrivano dal CMS: il francobollo della data e il tag della realta'
- * prendono la tinta dall'identita' cromatica dell'attivita'.
+ * I dati arrivano dal CMS: il tag della realta' prende la tinta
+ * dall'identita' cromatica dell'attivita'; il francobollo della data usa il
+ * tono dell'evento quando la redazione ne ha scelto uno.
  */
 import PastigliaData from './PastigliaData.astro';
 import Etichetta from './Etichetta.astro';
@@ -35,7 +36,7 @@ const luogoEora = [quandoBreve(evento), evento.dove].filter(Boolean).join(' · '
 
 <article class="evento">
   <div class="evento__testa">
-    <PastigliaData inizio={evento.inizio} tono={tonoData} />
+    <PastigliaData inizio={evento.inizio} tono={tonoData} tonoEvento={evento.tono} />
     <Etichetta tono={tonoTag}>{attivita?.nome ?? evento.categoria}</Etichetta>
   </div>
   <div class="evento__corpo">
