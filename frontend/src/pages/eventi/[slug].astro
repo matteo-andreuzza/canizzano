@@ -106,12 +106,22 @@ const descrizione =
         {articolo.sottotitolo && <p class="testa__sottotitolo">{articolo.sottotitolo}</p>}
         <div class="testa__firma">
           {articolo.firma && <span>di {articolo.firma}</span>}
-          {dataLeggibile && <span>{dataLeggibile}</span>}
+          {
+            dataLeggibile && (
+              <span class="testa__voce">
+                <span class="testa__voce-etichetta">Data di pubblicazione</span>
+                {dataLeggibile}
+              </span>
+            )
+          }
           {
             evento && (
-              <time datetime={iso(evento.inizio)}>
-                {evento.etichetta_data || quandoEsteso(evento)}
-              </time>
+              <span class="testa__voce">
+                <span class="testa__voce-etichetta">Data</span>
+                <time datetime={iso(evento.inizio)}>
+                  {evento.etichetta_data || quandoEsteso(evento)}
+                </time>
+              </span>
             )
           }
         </div>
@@ -154,13 +164,28 @@ const descrizione =
   {
     (articolo.copertina || articolo.copertina_alt) && (
       <Sezione stacco="nessuno" class="sezione-copertina">
-        <Foto
-          src={articolo.copertina}
-          alt={articolo.copertina_alt}
-          attesa={articolo.copertina_alt || 'Foto di apertura dell’articolo'}
-          altezza={400}
-          ombra="md"
-        />
+        {articolo.copertina ? (
+          <a
+            class="ingrandisci"
+            href={articolo.copertina}
+            target="_blank"
+            rel="noopener"
+            aria-label="Apri l’immagine a grandezza piena"
+          >
+            <Foto
+              src={articolo.copertina}
+              alt={articolo.copertina_alt}
+              altezza={400}
+              ombra="md"
+            />
+          </a>
+        ) : (
+          <Foto
+            attesa={articolo.copertina_alt || 'Foto di apertura dell’articolo'}
+            altezza={400}
+            ombra="md"
+          />
+        )}
       </Sezione>
     )
   }
@@ -218,12 +243,19 @@ const descrizione =
           <div class="galleria">
             {galleria.map((scatto) => (
               <figure class="galleria__voce">
-                <Foto
-                  src={scatto.immagine}
-                  alt={scatto.testo_alternativo || scatto.didascalia}
-                  attesa={scatto.didascalia || 'Foto da caricare'}
-                  altezza={240}
-                />
+                <a
+                  class="ingrandisci"
+                  href={scatto.immagine}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="Apri la foto a grandezza piena"
+                >
+                  <Foto
+                    src={scatto.immagine}
+                    alt={scatto.testo_alternativo || scatto.didascalia}
+                    altezza={240}
+                  />
+                </a>
                 {scatto.didascalia && <figcaption>{scatto.didascalia}</figcaption>}
               </figure>
             ))}
@@ -295,11 +327,26 @@ const descrizione =
   .testa__firma {
     display: flex;
     flex-wrap: wrap;
-    gap: 18px;
+    align-items: flex-end;
+    gap: 12px 28px;
     font-size: 13.5px;
     font-weight: 600;
     color: var(--tenue);
   }
+
+  .testa__voce { display: flex; flex-direction: column; gap: 3px; }
+  .testa__voce-etichetta {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.8;
+  }
+
+  /* L'immagine si apre a grandezza piena in una nuova scheda. */
+  .ingrandisci { display: block; cursor: zoom-in; border-radius: var(--radius-lg); }
+  .ingrandisci:hover :global(img) { transform: scale(1.02); }
+  .ingrandisci :global(img) { transition: transform 0.25s ease; }
 
   /* — scheda pratica — */
   .scheda {
