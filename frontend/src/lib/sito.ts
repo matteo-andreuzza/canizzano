@@ -45,12 +45,13 @@ export const SITO = {
 export const CONTATTI = {
   indirizzo: 'Via Canizzano, 31100 Treviso',
   email: 'info@canizzano.it',
+  instagram: 'https://www.instagram.com/canizzano.it/',
   proLocoTelefono: '328 2143250',
-  proLocoEmail: 'proloco@canizzano.it',
+  proLocoEmail: 'adriano.vania@inwind.it',
   proLocoTel: 'tel:+393282143250',
   parrocchiaTelefono: '0422 379269',
   redazioneTelefono:'3801510324',
-  redazioneEmail:'canizzano@altervista.org',
+  redazioneEmail:'efish@altervista.org',
   parrocchiaTel: 'tel:+390422379269',
   parrocchiaSito: 'https://www.parrocchiacanizzano.it',
   parrocchiaEmail: 'canizzano@diocesitv.it',
@@ -194,7 +195,7 @@ export const PIE_PAGINA = {
       titolo: 'Chi organizza',
       voci: [
         { testo: 'Parrocchia della Visitazione', href: CONTATTI.parrocchiaSito, esterno: true },
-        { testo: 'A.R.C. Cannetum · Pro Loco', href: ROTTE.proloco },
+        { testo: 'Associazione Ricreativo Culturale Pro-Loco Canizzano e San Vitale Ets', href: ROTTE.proloco },
         { testo: 'Circolo NOI di Canizzano', href: ROTTE.gruppi + '#noi' },
         { testo: 'Pastoria del Borgo Furo', href: ROTTE.pastoria },
         { testo: 'Principato di Canizzano', href: ROTTE.storia + '#principato' },
@@ -213,5 +214,9 @@ export const PIE_PAGINA = {
   ],
   chiusura: 'canizzano.it — made with ❤️ by',
   chiusuraAutore: { testo: 'Matteo', href: 'https://github.com/matteo-andreuzza' },
-  social: 'Instagram · Facebook · WhatsApp',
+  social: [
+    { testo: 'Instagram', href: CONTATTI.instagram },
+    { testo: 'Facebook', href: '' },
+    { testo: 'WhatsApp', href: '' },
+  ],
 } as const;

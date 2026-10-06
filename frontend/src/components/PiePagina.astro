@@ -48,7 +48,18 @@ import { PIE_PAGINA, SITO } from '../lib/sito.ts';
           {PIE_PAGINA.chiusuraAutore.testo}
         </a>
       </span>
-      <span>{PIE_PAGINA.social}</span>
+      <span>
+        {PIE_PAGINA.social.map((voce, i) => (
+          <>
+            {i > 0 && ' · '}
+            {voce.href ? (
+              <a href={voce.href} target="_blank" rel="noopener noreferrer">{voce.testo}</a>
+            ) : (
+              voce.testo
+            )}
+          </>
+        ))}
+      </span>
     </div>
   </div>
 </footer>

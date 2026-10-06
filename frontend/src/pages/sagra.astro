@@ -26,6 +26,8 @@ const giornate = await programma('sagra');
 const menu = await menuDellaSagra('sagra');
 const foto = await fotoDi('sagra');
 const locandina = (await fotoDi('sagra-locandina'))[0];
+// Le locandine delle singole serate: raccolta «sagra-serate» in admin.
+const locandineSerate = (await fotoDi('sagra-serate')).filter((scatto) => scatto.immagine);
 
 // Il programma sta su due colonne: primo weekend a sinistra, secondo a destra.
 const meta = Math.ceil(giornate.length / 2);
@@ -54,12 +56,8 @@ const INFO = [
 
 const TENDONE = [
   {
-    titolo: 'Tombola',
+    titolo: 'Musica e spettacolo',
     testo: 'Durante pranzi e cene',
-  },
-  {
-    titolo: 'Lotteria di beneficenza',
-    testo: 'Tutti i giorni. Il ricavato va alle opere della parrocchia.',
   },
   {
     titolo: 'Giochi per i più piccoli',
@@ -71,9 +69,26 @@ const TENDONE = [
   },
 ];
 
+/** Il menù fisso: lo stesso tutte le sere, accanto al piatto del giorno. */
+const MENU_FISSO = [
+  { titolo: 'Primi', piatti: ['Pennette / gnocchi al pomodoro / ragù d’anatra'] },
+  {
+    titolo: 'Secondi',
+    piatti: [
+      'Frittura mista di pesce',
+      'Grigliata mista di carne',
+      'Primo sale alla piastra',
+      'Baccalà alla vicentina',
+      'Piadina vegetariana',
+    ],
+  },
+  { titolo: 'Per i più piccoli', piatti: ['Piatto baby (wurstel e patatine)'] },
+  { titolo: 'Contorni', piatti: ['Patate fritte', 'Fagioli con cipolla', 'Funghi'] },
+];
+
 const SOSTENITORI = [
   'Parrocchia della Visitazione della B.V. Maria',
-  'Ascoltare Costruire',
+  'Aps Ascoltare per Costruire',
   'Comune di Treviso',
   'Provincia di Treviso',
   'A.R.C. Cannetum',
@@ -116,7 +131,7 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
     <span class="apertura__bolla" aria-hidden="true"></span>
     <div class="contenitore apertura__griglia">
       <div class="apertura__testo">
-        <span class="apertura__pillola">Pro Loco Cannetum · Canizzano</span>
+        <span class="apertura__pillola">Associazione Ricreativo Culturale Pro-Loco Canizzano e San Vitale Ets· Canizzano</span>
         <h1>Canizzano<br />in Festa</h1>
         <p class="apertura__occhiello">
           La sagra paesana del quartiere: dieci giorni di cucina, musica, giochi e gente che si
@@ -196,6 +211,69 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
           </p>
         )
       }
+    </div>
+  </Sezione>
+
+  <!-- Locandine delle serate: compaiono quando la redazione le carica -->
+  {
+    locandineSerate.length > 0 && (
+      <Sezione id="locandine">
+        <div class="pila" style="gap:24px">
+          <TestataSezione
+            titolo="Serata per serata"
+            tag="Le locandine"
+            tonoTag="accent"
+            testo="Tocca una locandina per aprirla a grandezza piena."
+          />
+          <div class="locandine">
+            {locandineSerate.map((scatto) => (
+              <figure class="locandine__voce">
+                <a
+                  class="locandine__link"
+                  href={scatto.immagine}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="Apri la locandina a grandezza piena"
+                >
+                  <img
+                    src={scatto.immagine}
+                    alt={scatto.testo_alternativo || scatto.didascalia || 'Locandina di una serata della sagra'}
+                    loading="lazy"
+                    decoding="async"
+                    width="800"
+                    height="1131"
+                  />
+                </a>
+                {scatto.didascalia && <figcaption>{scatto.didascalia}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        </div>
+      </Sezione>
+    )
+  }
+
+  <!-- Menù fisso -->
+  <Sezione id="menu">
+    <div class="pila" style="gap:24px">
+      <TestataSezione
+        titolo="Il menù fisso"
+        tag="Ogni giorno"
+        tonoTag="accent"
+        testo="Lo trovi a ogni pranzo e cena della sagra, accanto al piatto del giorno."
+      />
+      <div class="menu-fisso">
+        {
+          MENU_FISSO.map((gruppo) => (
+            <div class="menu-fisso__gruppo">
+              <h3 class="menu-fisso__titolo">{gruppo.titolo}</h3>
+              <ul class="menu-fisso__piatti">
+                {gruppo.piatti.map((piatto) => <li>{piatto}</li>)}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
     </div>
   </Sezione>
 
@@ -326,7 +404,7 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
       <div class="pila" style="gap:14px">
         <h2 class="chi-siamo__titolo">Chi siamo</h2>
         <p class="chi-siamo__testo">
-          L’Associazione Ricreativo Culturale <strong>Cannetum</strong> — la Pro Loco di Canizzano —
+          L'Associazione Ricreativo Culturale Pro-Loco Canizzano e San Vitale Ets
           organizza la sagra insieme alla parrocchia, e durante l’anno tiene vive le feste, le
           camminate lungo il Sile e la memoria del quartiere. Il nome viene dal latino
           <em>cannetum</em>: il canneto.
@@ -337,7 +415,6 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
         <div class="chi-siamo__contatti">
           <span><strong>Telefono</strong> · {CONTATTI.proLocoTelefono}</span>
           <span><strong>Email</strong> · {CONTATTI.proLocoEmail}</span>
-          <span><strong>Instagram</strong> · @prolococanizzano</span>
         </div>
         <Bottone href={ROTTE.proloco} class="chi-siamo__bottone">Tutto l’anno con la Pro Loco</Bottone>
       </div>
@@ -418,6 +495,64 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
     margin: 0;
   }
 
+  /* — locandine — le stampe non vanno ritagliate ne' sbiadite. */
+  .locandine { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: start; }
+  .locandine__voce { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+  .locandine__link {
+    display: block;
+    cursor: zoom-in;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .locandine__link img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform 0.25s ease;
+  }
+  .locandine__link:hover img { transform: scale(1.02); }
+  .locandine__voce figcaption {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-neutral-700);
+  }
+
+  /* — menù fisso — */
+  .menu-fisso {
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 36px 40px;
+    display: grid;
+    grid-template-columns: 0.9fr 1.3fr 0.9fr 0.9fr;
+    gap: 32px;
+  }
+  .menu-fisso__gruppo { display: flex; flex-direction: column; gap: 12px; }
+  .menu-fisso__titolo {
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent);
+    margin: 0;
+  }
+  .menu-fisso__piatti {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .menu-fisso__piatti li {
+    font-size: 16px;
+    line-height: 1.45;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--color-divider);
+  }
+  .menu-fisso__piatti li:last-child { border-bottom: 0; }
+
   /* — cucina — */
   .cucina { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 40px; align-items: start; }
   /* La tabella non deve mai far scorrere la pagina intera. */
@@ -479,6 +614,8 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
   @media (max-width: 1000px) {
     .programma__colonne { grid-template-columns: 1fr; }
     .sostegno__griglia { grid-template-columns: repeat(3, 1fr); }
+    .locandine { grid-template-columns: repeat(3, 1fr); }
+    .menu-fisso { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 900px) {
     .apertura__griglia, .cucina, .volontari, .arrivare, .chi-siamo {
@@ -493,5 +630,7 @@ const numeroWhatsApp = `39${CONTATTI.proLocoTelefono.replace(/\s/g, '')}`;
   @media (max-width: 640px) {
     .apertura h1 { font-size: 44px; }
     .sostegno__griglia { grid-template-columns: repeat(2, 1fr); }
+    .locandine { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .menu-fisso { grid-template-columns: 1fr; padding: 26px 22px; gap: 22px; }
   }
 </style>
